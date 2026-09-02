@@ -9,3 +9,17 @@ coverage/
 
 prisma/*.db
 prisma/*.db-journal
+# Prisma generated AI skill files
+.agents/skills/prisma-8/
+.claude/skills/prisma-8/
+.cursor/skills/prisma-8/
+.devin/skills/prisma-8/
+
+# Prisma generated config build files
+prisma.config.js
+prisma.config.js.map
+prisma.config.d.ts
+prisma.config.d.ts.map
+
+# TypeScript build output
+dist/

@@ -4,27 +4,36 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "contract:emit": "prisma contract emit",
     "postinstall": "prisma skills sync || exit 0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
-    "@prisma/client": "^7.10.0",
+    "@prisma/orm-postgres": "^8.0.0-rc.8",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.12.0",
-    "prisma": "^8.0.0-rc.12",
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@prisma/cli-engine": "^0.3.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^26.4.1",
+    "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
 }
