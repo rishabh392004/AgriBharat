@@ -9,3 +9,14 @@ model User {
   createdAt    TimestamptzString  @default(now())
   updatedAt    temporal.updatedAtString()
 }
+
+// model farm will come here
+
+model Scan {
+  id          Int               @id @default(autoincrement())
+  farmId      Int
+  imageUrl    String
+  status      String            @default("PENDING")
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+}
