@@ -6,6 +6,7 @@ import morgan from "morgan";
 import authRoutes from "./auth/auth.routes.js";
 import { errorMiddleware } from "./common/error.middleware.js";
 import { env } from "./config/env.js";
+import scanRoutes from "./scan/scan.routes.js";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/scans", scanRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({
