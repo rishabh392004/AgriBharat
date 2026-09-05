@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "contract:emit": "prisma contract emit",
-    "postinstall": "prisma skills sync || exit 0"
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "contract:emit": "prisma contract emit",
+  "postinstall": "prisma skills sync || exit 0"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +36,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.4.1",
     "tsx": "^4.23.13",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   }
 }
