@@ -1,0 +1,122 @@
+[
+  {
+    "id": "table.farm",
+    "label": "Create table \"farm\"",
+    "summary": "Creates table \"farm\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "farm"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"farm\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"farm\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"farm\"",
+        "sql": "CREATE TABLE \"public\".\"farm\" (\n  \"area\" float8 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"cropType\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"location\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"farm\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"farm\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.farm.farm_userId_idx_a489d58a",
+    "label": "Create index \"farm_userId_idx_a489d58a\" on \"farm\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "farm_userId_idx_a489d58a",
+        "table": "farm"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"farm_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"farm_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"farm_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"farm_userId_idx_a489d58a\" ON \"public\".\"farm\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"farm_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"farm_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.farm.farm_userId_fkey",
+    "label": "Add foreign key \"farm_userId_fkey\" on \"farm\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "farm_userId_fkey",
+        "table": "farm"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"farm_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "farm_userId_fkey",
+          "public",
+          "\"public\".\"farm\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"farm_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"farm\"\nADD CONSTRAINT \"farm_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"farm_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "farm_userId_fkey",
+          "public",
+          "\"public\".\"farm\""
+        ]
+      }
+    ]
+  }
+]
