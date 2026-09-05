@@ -62,8 +62,15 @@ export async function getScanController(
     });
     return;
   }
+  console.log("SCAN ACCESS:", {
+    scanId: result.data.id,
+    userId: req.user.userId,
+  });
 
-  const scan = await getScanById(result.data.id);
+  const scan = await getScanById(
+  result.data.id,
+  req.user.userId
+  );
 
   res.status(200).json({
     scan,

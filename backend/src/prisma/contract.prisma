@@ -1,16 +1,16 @@
 // use prisma-next
 
 model User {
-  id           Int                @id @default(autoincrement())
-  email        String             @unique
+  id           Int               @id @default(autoincrement())
+  email        String            @unique
   passwordHash String
   name         String?
   role         String             @default("USER")
-  createdAt    TimestamptzString  @default(now())
+  createdAt    TimestamptzString @default(now())
   updatedAt    temporal.updatedAtString()
-}
 
-// model farm will come here
+  farms        Farm[]
+}
 
 model Scan {
   id          Int               @id @default(autoincrement())
@@ -19,4 +19,20 @@ model Scan {
   status      String            @default("PENDING")
   createdAt   TimestamptzString @default(now())
   updatedAt   temporal.updatedAtString()
+
+  farm        Farm              @relation(fields: [farmId], references: [id])
+}
+
+model Farm {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  name      String
+  location  String
+  cropType  String
+  area      Float
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  user      User              @relation(fields: [userId], references: [id])
+  scans     Scan[]
 }

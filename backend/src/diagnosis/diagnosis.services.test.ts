@@ -33,7 +33,7 @@ describe("diagnoseScan", () => {
   it("throws 404 when the scan does not exist", async () => {
     firstMock.mockResolvedValue(null);
 
-    await expect(diagnoseScan(999999)).rejects.toMatchObject({
+    await expect(diagnoseScan(999999,999999)).rejects.toMatchObject({
       message: "Scan not found",
       statusCode: 404,
     });
@@ -46,7 +46,7 @@ describe("diagnoseScan", () => {
       status: "COMPLETED",
     });
 
-    await expect(diagnoseScan(1)).rejects.toMatchObject({
+    await expect(diagnoseScan(1,1)).rejects.toMatchObject({
       message: "Diagnosis already completed",
       statusCode: 409,
     });
@@ -59,7 +59,7 @@ describe("diagnoseScan", () => {
       status: "PROCESSING",
     });
 
-    await expect(diagnoseScan(1)).rejects.toMatchObject({
+    await expect(diagnoseScan(1,1)).rejects.toMatchObject({
       message: "Diagnosis already in progress",
       statusCode: 409,
     });
@@ -81,7 +81,7 @@ describe("diagnoseScan", () => {
       provider: "mock",
     });
 
-    await expect(diagnoseScan(1)).resolves.toEqual({
+    await expect(diagnoseScan(1,1)).resolves.toEqual({
       scanId: 1,
       imageUrl: "https://example.com/plant.jpg",
       disease: "Healthy",
@@ -110,7 +110,7 @@ describe("diagnoseScan", () => {
     new Error("Provider unavailable")
    );
 
-  await expect(diagnoseScan(2)).rejects.toMatchObject({
+  await expect(diagnoseScan(2,2)).rejects.toMatchObject({
     message: "Diagnosis failed",
     statusCode: 502,
     });
@@ -135,7 +135,7 @@ describe("diagnoseScan", () => {
     new AppError("Diagnosis provider failed", 502)
   );
 
-  await expect(diagnoseScan(3)).rejects.toMatchObject({
+  await expect(diagnoseScan(3,3)).rejects.toMatchObject({
     message: "Diagnosis provider failed",
     statusCode: 502,
     });

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "index.scan.scan_farmId_idx_786bd89b",
+    "label": "Create index \"scan_farmId_idx_786bd89b\" on \"scan\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "scan_farmId_idx_786bd89b",
+        "table": "scan"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"scan_farmId_idx_786bd89b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"scan_farmId_idx_786bd89b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"scan_farmId_idx_786bd89b\"",
+        "sql": "CREATE INDEX \"scan_farmId_idx_786bd89b\" ON \"public\".\"scan\" (\"farmId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"scan_farmId_idx_786bd89b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"scan_farmId_idx_786bd89b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.scan.scan_farmId_fkey",
+    "label": "Add foreign key \"scan_farmId_fkey\" on \"scan\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "scan_farmId_fkey",
+        "table": "scan"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"scan_farmId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "scan_farmId_fkey",
+          "public",
+          "\"public\".\"scan\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"scan_farmId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"scan\"\nADD CONSTRAINT \"scan_farmId_fkey\"\nFOREIGN KEY (\"farmId\")\nREFERENCES \"public\".\"farm\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"scan_farmId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "scan_farmId_fkey",
+          "public",
+          "\"public\".\"scan\""
+        ]
+      }
+    ]
+  }
+]

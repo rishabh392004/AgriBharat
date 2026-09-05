@@ -21,8 +21,11 @@ export async function diagnoseScanController(
     });
     return;
   }
-
-  const diagnosis = await diagnoseScan(result.data.id);
+  
+  const diagnosis = await diagnoseScan(
+    result.data.id,
+    req.user.userId
+  );
 
   res.status(200).json({
     message: "Diagnosis completed successfully",
