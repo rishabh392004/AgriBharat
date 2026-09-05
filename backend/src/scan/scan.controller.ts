@@ -2,8 +2,7 @@ import type { Response } from "express";
 
 import {
   createScanSchema,
-  scanIdSchema,
-  updateScanStatusSchema,
+  scanIdSchema
 } from "./scan.schema.js";
 
 import type { AuthenticatedRequest } from "../auth/auth.middleware.js";
@@ -12,8 +11,7 @@ import { AppError } from "../common/AppError.js";
 import {
   createScan,
   getScanById,
-  getScansByUser,
-  updateScanStatus,
+  getScansByUser
 } from "./scan.service.js";
 
 export async function createScanController(
@@ -84,43 +82,5 @@ export async function getScansController(
 
   res.status(200).json({
     scans,
-  });
-}
-
-export async function updateScanStatusController(
-  req: AuthenticatedRequest,
-  res: Response
-) {
-  if (!req.user) {
-    throw new AppError("Authentication required", 401);
-  }
-
-  const idResult = scanIdSchema.safeParse(req.params);
-
-  if (!idResult.success) {
-    res.status(400).json({
-      message: "Invalid scan ID",
-    });
-    return;
-  }
-
-  const statusResult = updateScanStatusSchema.safeParse(req.body);
-
-  if (!statusResult.success) {
-    res.status(400).json({
-      message: "Validation failed",
-      errors: statusResult.error.flatten().fieldErrors,
-    });
-    return;
-  }
-
-  const scan = await updateScanStatus(
-    idResult.data.id,
-    statusResult.data.status
-  );
-
-  res.status(200).json({
-    message: "Scan status updated successfully",
-    scan,
   });
 }
