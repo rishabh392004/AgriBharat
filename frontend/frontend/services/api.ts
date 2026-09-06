@@ -1,0 +1,2 @@
+import { alerts, farms, hotspots, prediction, reports, scans, weather } from '@/data/mock'
+export const api = { login: async () => ({ success: true }), getFarms: async () => farms, createFarm: async (farm: typeof farms[number]) => farm, predictCrop: async () => ({ success: true, data: prediction }), getScanHistory: async () => scans, getWeather: async () => weather, getAlerts: async () => alerts, getAdvisory: async () => prediction, getHotspots: async () => hotspots, getReports: async () => reports, submitValidation: async (valid: boolean) => ({ success: valid }) }
