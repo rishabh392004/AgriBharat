@@ -17,19 +17,22 @@ export function authMiddleware(
 ) {
   const authorization = req.headers.authorization;
 
+  // BUG FIX: Express 4 does NOT catch synchronous throws in middleware.
+  // Must call next(error) to route to the error handler.
   if (!authorization) {
-    throw new AppError("Authentication required", 401);
+    return next(new AppError("Authentication required", 401));
   }
 
   if (!authorization.startsWith("Bearer ")) {
-    throw new AppError("Invalid authorization format", 401);
+    return next(new AppError("Invalid authorization format", 401));
   }
 
   const token = authorization.substring(7);
 
   if (!token) {
-    throw new AppError("Authentication token missing", 401);
+    return next(new AppError("Authentication token missing", 401));
   }
+
   try {
     const payload = verifyToken(token);
 
@@ -39,7 +42,7 @@ export function authMiddleware(
     };
 
     next();
-  } catch (error) {
-  throw new AppError("Invalid or expired token", 401);
- }
-}
+  } catch {
+    next(new AppError("Invalid or expired token", 401));
+  }
+}
