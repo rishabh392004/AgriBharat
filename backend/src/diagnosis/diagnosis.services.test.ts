@@ -3,6 +3,7 @@ import { AppError } from "../common/AppError.js";
 
 const firstMock = vi.fn();
 const updateMock = vi.fn();
+const farmFirstMock = vi.fn();
 
 vi.mock("../prisma/db.js", () => ({
   db: {
@@ -12,6 +13,11 @@ vi.mock("../prisma/db.js", () => ({
           where: vi.fn(() => ({
             first: firstMock,
             update: updateMock,
+          })),
+        },
+        Farm: {
+          where: vi.fn(() => ({
+            first: farmFirstMock,
           })),
         },
       },
@@ -33,7 +39,7 @@ describe("diagnoseScan", () => {
   it("throws 404 when the scan does not exist", async () => {
     firstMock.mockResolvedValue(null);
 
-    await expect(diagnoseScan(999999,999999)).rejects.toMatchObject({
+    await expect(diagnoseScan(999999, 999999)).rejects.toMatchObject({
       message: "Scan not found",
       statusCode: 404,
     });
@@ -42,11 +48,14 @@ describe("diagnoseScan", () => {
   it("throws 409 when diagnosis is already completed", async () => {
     firstMock.mockResolvedValue({
       id: 1,
+      farmId: 1,
       imageUrl: "https://example.com/plant.jpg",
       status: "COMPLETED",
     });
 
-    await expect(diagnoseScan(1,1)).rejects.toMatchObject({
+    farmFirstMock.mockResolvedValue({ id: 1 });
+
+    await expect(diagnoseScan(1, 1)).rejects.toMatchObject({
       message: "Diagnosis already completed",
       statusCode: 409,
     });
@@ -55,11 +64,14 @@ describe("diagnoseScan", () => {
   it("throws 409 when diagnosis is already in progress", async () => {
     firstMock.mockResolvedValue({
       id: 1,
+      farmId: 1,
       imageUrl: "https://example.com/plant.jpg",
       status: "PROCESSING",
     });
 
-    await expect(diagnoseScan(1,1)).rejects.toMatchObject({
+    farmFirstMock.mockResolvedValue({ id: 1 });
+
+    await expect(diagnoseScan(1, 1)).rejects.toMatchObject({
       message: "Diagnosis already in progress",
       statusCode: 409,
     });
@@ -68,9 +80,12 @@ describe("diagnoseScan", () => {
   it("completes diagnosis successfully", async () => {
     firstMock.mockResolvedValue({
       id: 1,
+      farmId: 1,
       imageUrl: "https://example.com/plant.jpg",
       status: "PENDING",
     });
+
+    farmFirstMock.mockResolvedValue({ id: 1 });
 
     diagnoseMock.mockResolvedValue({
       scanId: 1,
@@ -81,7 +96,7 @@ describe("diagnoseScan", () => {
       provider: "mock",
     });
 
-    await expect(diagnoseScan(1,1)).resolves.toEqual({
+    await expect(diagnoseScan(1, 1)).resolves.toEqual({
       scanId: 1,
       imageUrl: "https://example.com/plant.jpg",
       disease: "Healthy",
@@ -100,48 +115,75 @@ describe("diagnoseScan", () => {
   });
 
   it("marks the scan as FAILED when the diagnosis provider fails", async () => {
-  firstMock.mockResolvedValue({
-    id: 2,
-    imageUrl: "https://example.com/plant.jpg",
-    status: "PENDING",
+    firstMock.mockResolvedValue({
+      id: 2,
+      farmId: 2,
+      imageUrl: "https://example.com/plant.jpg",
+      status: "PENDING",
     });
 
-   diagnoseMock.mockRejectedValue(
-    new Error("Provider unavailable")
-   );
+    farmFirstMock.mockResolvedValue({ id: 2 });
 
-  await expect(diagnoseScan(2,2)).rejects.toMatchObject({
-    message: "Diagnosis failed",
-    statusCode: 502,
+    diagnoseMock.mockRejectedValue(
+      new Error("Provider unavailable")
+    );
+
+    await expect(diagnoseScan(2, 2)).rejects.toMatchObject({
+      message: "Diagnosis failed",
+      statusCode: 502,
     });
 
-  expect(updateMock).toHaveBeenCalledWith({
-    status: "PROCESSING",
+    expect(updateMock).toHaveBeenCalledWith({
+      status: "PROCESSING",
     });
 
-  expect(updateMock).toHaveBeenCalledWith({
-    status: "FAILED",
+    expect(updateMock).toHaveBeenCalledWith({
+      status: "FAILED",
     });
   });
 
   it("preserves AppError from the diagnosis provider", async () => {
-  firstMock.mockResolvedValue({
-    id: 3,
-    imageUrl: "https://example.com/plant.jpg",
-    status: "PENDING",
+    firstMock.mockResolvedValue({
+      id: 3,
+      farmId: 3,
+      imageUrl: "https://example.com/plant.jpg",
+      status: "PENDING",
     });
 
-  diagnoseMock.mockRejectedValue(
-    new AppError("Diagnosis provider failed", 502)
-  );
+    farmFirstMock.mockResolvedValue({ id: 3 });
 
-  await expect(diagnoseScan(3,3)).rejects.toMatchObject({
-    message: "Diagnosis provider failed",
-    statusCode: 502,
+    diagnoseMock.mockRejectedValue(
+      new AppError("Diagnosis provider failed", 502)
+    );
+
+    await expect(diagnoseScan(3, 3)).rejects.toMatchObject({
+      message: "Diagnosis provider failed",
+      statusCode: 502,
     });
 
-  expect(updateMock).toHaveBeenCalledWith({
-    status: "FAILED",
+    expect(updateMock).toHaveBeenCalledWith({
+      status: "PROCESSING",
+    });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      status: "FAILED",
     });
   });
+  it("throws 404 when the scan does not belong to the user", async () => {
+  firstMock.mockResolvedValue({
+    id: 11,
+    farmId: 4,
+    imageUrl: "https://example.com/plant.jpg",
+    status: "PENDING",
+  });
+
+  farmFirstMock.mockResolvedValue(null);
+
+  await expect(diagnoseScan(11, 14)).rejects.toMatchObject({
+    message: "Scan not found",
+    statusCode: 404,
+  });
+
+  expect(diagnoseMock).not.toHaveBeenCalled();
+ });
 });
