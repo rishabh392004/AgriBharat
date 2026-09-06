@@ -12,13 +12,27 @@ async function setScanStatus(
   });
 }
 
-export async function diagnoseScan(scanId: number): Promise<DiagnosisResult> {
+export async function diagnoseScan(
+  scanId: number,
+  userId: number
+ ): Promise<DiagnosisResult> {
   const scan = await db.orm.public.Scan.where({ id: scanId }).first();
 
   if (!scan) {
-    throw new AppError("Scan not found", 404);
-  }
-  
+  throw new AppError("Scan not found", 404);
+}
+
+const farm = await db.orm.public.Farm
+  .where({
+    id: scan.farmId,
+    userId,
+  })
+  .first();
+
+if (!farm) {
+  throw new AppError("Scan not found", 404);
+}
+
   if (scan.status === "PROCESSING") {
   throw new AppError("Diagnosis already in progress", 409);
   }

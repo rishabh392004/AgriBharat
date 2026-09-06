@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0dea0b671eaf4c9a638e07849be66695a9ed68c0c748bf2b58435d93ffa804d2'>;
+  StorageHashBase<'aaee25f7415688fd9e9ae96ab6001b76c2c97f74e725388691e44edc739f85bc'>;
 export type ExecutionHash =
   ExecutionHashBase<'4247f5faef0360340d7436d15db6b0870155924a3ff6aec9d001f792c7dd7a36'>;
 export type ProfileHash =
@@ -498,28 +498,8 @@ type ContractBase = Omit<
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [];
-              indexes: readonly [
-                {
-                  readonly name: 'scan_farmId_idx_786bd89b';
-                  readonly prefix: 'scan_farmId_idx';
-                  readonly columns: readonly ['farmId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'scan';
-                    readonly columns: readonly ['farmId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'farm';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
+              indexes: readonly [];
+              foreignKeys: readonly [];
             };
             readonly user: {
               columns: {
@@ -634,14 +614,6 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
-              readonly scans: {
-                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Scan' };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['farmId'];
-                };
-              };
               readonly user: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: 'N:1';
@@ -699,16 +671,7 @@ type ContractBase = Omit<
                 };
               };
             };
-            readonly relations: {
-              readonly farm: {
-                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Farm' };
-                readonly cardinality: 'N:1';
-                readonly on: {
-                  readonly localFields: readonly ['farmId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-            };
+            readonly relations: Record<string, never>;
             readonly storage: {
               readonly table: 'scan';
               readonly namespaceId: 'public';
