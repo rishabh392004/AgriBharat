@@ -9,7 +9,9 @@ model User {
   createdAt    TimestamptzString @default(now())
   updatedAt    temporal.updatedAtString()
 
-  farms        Farm[]
+  farms            Farm[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
 }
 
 model Scan {
@@ -21,6 +23,21 @@ model Scan {
   updatedAt   temporal.updatedAtString()
 
   farm        Farm              @relation(fields: [farmId], references: [id])
+  result      DiseaseResult?
+}
+
+model DiseaseResult {
+  id             Int               @id @default(autoincrement())
+  scanId         Int               @unique
+  disease        String
+  confidence     Float
+  severity       String
+  actions        String
+  precautions    String
+  provider       String
+  createdAt      TimestamptzString @default(now())
+
+  scan           Scan              @relation(fields: [scanId], references: [id])
 }
 
 model Farm {
@@ -36,3 +53,15 @@ model Farm {
   user      User              @relation(fields: [userId], references: [id])
   scans     Scan[]
 }
+
+model Message {
+  id         Int               @id @default(autoincrement())
+  fromUserId Int
+  toUserId   Int
+  content    String
+  isRead     Boolean           @default(false)
+  createdAt  TimestamptzString @default(now())
+
+  from       User              @relation("SentMessages",     fields: [fromUserId], references: [id])
+  to         User              @relation("ReceivedMessages", fields: [toUserId],   references: [id])
+}

@@ -3,7 +3,7 @@ import type { Response } from "express";
 import type { AuthenticatedRequest } from "../auth/auth.middleware.js";
 import { AppError } from "../common/AppError.js";
 import { diagnosisScanIdSchema } from "./diagnosis.schema.js";
-import { diagnoseScan } from "./diagnosis.service.js";
+import { diagnoseScan, getDiagnosis } from "./diagnosis.service.js";
 
 export async function diagnoseScanController(
   req: AuthenticatedRequest,
@@ -21,7 +21,7 @@ export async function diagnoseScanController(
     });
     return;
   }
-  
+
   const diagnosis = await diagnoseScan(
     result.data.id,
     req.user.userId
@@ -29,6 +29,33 @@ export async function diagnoseScanController(
 
   res.status(200).json({
     message: "Diagnosis completed successfully",
+    diagnosis,
+  });
+}
+
+export async function getDiagnosisController(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  if (!req.user) {
+    throw new AppError("Authentication required", 401);
+  }
+
+  const result = diagnosisScanIdSchema.safeParse(req.params);
+
+  if (!result.success) {
+    res.status(400).json({
+      message: "Invalid scan ID",
+    });
+    return;
+  }
+
+  const diagnosis = await getDiagnosis(
+    result.data.id,
+    req.user.userId
+  );
+
+  res.status(200).json({
     diagnosis,
   });
 }

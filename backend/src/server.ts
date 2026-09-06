@@ -8,6 +8,7 @@ import { errorMiddleware } from "./common/error.middleware.js";
 import { env } from "./config/env.js";
 import scanRoutes from "./scan/scan.routes.js";
 import farmRoutes from "./farm/farm.routes.js";
+import messageRoutes from "./message/message.routes.js";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/scans", scanRoutes);
 app.use("/api/v1/farms", farmRoutes);
+app.use("/api/v1/messages", messageRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({

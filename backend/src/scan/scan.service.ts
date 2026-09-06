@@ -69,7 +69,8 @@ export async function getScansByUser(userId: number) {
     .where({ userId })
     .all();
 
-  const scans = [];
+  // BUG FIX: explicit type to avoid `never[]` inference
+  const scans: Awaited<ReturnType<typeof db.orm.public.Scan.where>>["0"][] = [];
 
   for (const farm of farms) {
     const farmScans = await db.orm.public.Scan
