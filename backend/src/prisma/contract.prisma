@@ -12,6 +12,7 @@ model User {
   farms            Farm[]
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  officerProfile   OfficerProfile?
 }
 
 model Scan {
@@ -64,4 +65,24 @@ model Message {
 
   from       User              @relation("SentMessages",     fields: [fromUserId], references: [id])
   to         User              @relation("ReceivedMessages", fields: [toUserId],   references: [id])
-}
+}
+
+model OfficerProfile {
+  id               Int               @id @default(autoincrement())
+  userId           Int               @unique
+  badgeNumber      String            @unique
+  designation      String
+  department       String
+  jurisdiction     String
+  district         String
+  state            String
+  phone            String?
+  officeAddress    String?
+  isActive         Boolean           @default(true)
+  flaggedScansCount Int              @default(0)
+  createdAt        TimestamptzString @default(now())
+  updatedAt        temporal.updatedAtString()
+
+  user             User              @relation(fields: [userId], references: [id])
+}
+

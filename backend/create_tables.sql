@@ -40,3 +40,23 @@ CREATE TABLE IF NOT EXISTS public."scan" (
 );
 
 CREATE INDEX IF NOT EXISTS "scan_farmId_idx_786bd89b" ON public."scan" ("farmId");
+
+-- 4. Officer Profile table
+CREATE TABLE IF NOT EXISTS public."officerProfile" (
+  "id"                SERIAL PRIMARY KEY,
+  "userId"            INT4 NOT NULL UNIQUE REFERENCES public."user"("id"),
+  "badgeNumber"       TEXT NOT NULL UNIQUE,
+  "designation"       TEXT NOT NULL,
+  "department"        TEXT NOT NULL,
+  "jurisdiction"      TEXT NOT NULL,
+  "district"          TEXT NOT NULL,
+  "state"             TEXT NOT NULL,
+  "phone"             TEXT,
+  "officeAddress"     TEXT,
+  "isActive"          BOOLEAN NOT NULL DEFAULT true,
+  "flaggedScansCount" INT4 NOT NULL DEFAULT 0,
+  "createdAt"         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt"         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS "officerProfile_userId_idx" ON public."officerProfile" ("userId");
