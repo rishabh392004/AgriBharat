@@ -47,6 +47,10 @@ class FAQAnswer(BaseModel):
     answer: str
     status: str
 
+@app.get("/health")
+def health():
+    return {"status": "online", "service": "Kisan Salahkar", "model": "gemini-2.5-flash"}
+
 @app.post("/ask", response_model=FAQAnswer)
 async def ask_farmer_faq(payload: FAQQuery):
     if not payload.question.strip():
@@ -74,4 +78,4 @@ async def ask_farmer_faq(payload: FAQQuery):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("faq_bot:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run("faq_bot:app", host="0.0.0.0", port=8001, reload=True)

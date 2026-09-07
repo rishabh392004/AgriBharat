@@ -10,6 +10,7 @@ import scanRoutes from "./scan/scan.routes.js";
 import farmRoutes from "./farm/farm.routes.js";
 import messageRoutes from "./message/message.routes.js";
 import officerRoutes from "./officer/officer.routes.js";
+import chatbotRoutes from "./chatbot/chatbot.routes.js";
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use("/api/v1/scans", scanRoutes);
 app.use("/api/v1/farms", farmRoutes);
 app.use("/api/v1/messages", messageRoutes);
 app.use("/api/v1/officer", officerRoutes);
+app.use("/api/v1/chatbot", chatbotRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({
