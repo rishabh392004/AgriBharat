@@ -13,6 +13,20 @@ import torch.nn.functional as F
 from torchvision import transforms, models
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from google import genai
+from google.genai import types
+import os
+from dotenv import load_dotenv
+
+# Load key-value pairs from .env into os.environ
+load_dotenv()
+
+# Verify your key is picked up
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+print("Loaded Key Prefix:", GEMINI_API_KEY[:8] if GEMINI_API_KEY else "KEY NOT FOUND")
+
+from google import genai
+ai_client = genai.Client(api_key=GEMINI_API_KEY)
 
 # --- GRAD-CAM ENGINE ---
 class GradCAM:
@@ -116,7 +130,6 @@ def calculate_disease_severity(pil_img: Image.Image, cam_map: np.ndarray) -> dic
     img_np = np.array(pil_img)
     orig_h, orig_w, _ = img_np.shape
     
-    # 1. Segment leaf body by excluding pure white/light backgrounds
     gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
     _, leaf_mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
     total_leaf_pixels = int(np.count_nonzero(leaf_mask))
@@ -124,16 +137,13 @@ def calculate_disease_severity(pil_img: Image.Image, cam_map: np.ndarray) -> dic
     if total_leaf_pixels == 0:
         total_leaf_pixels = orig_h * orig_w
         
-    # 2. Threshold high-activation Grad-CAM zones representing lesions
     cam_resized = cv2.resize(cam_map, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
     lesion_mask = (cam_resized >= 0.55) & (leaf_mask > 0)
     lesion_pixels = int(np.count_nonzero(lesion_mask))
     
-    # 3. Calculate infected area percentage
     affected_ratio = round((lesion_pixels / total_leaf_pixels) * 100, 2)
     affected_ratio = max(1.5, min(affected_ratio, 95.0))
     
-    # 4. Map to agronomical action plan
     if affected_ratio < 10.0:
         stage = "Stage 1: Early / Mild"
         action = "Apply organic bio-pesticide or neem extract. Re-scan in 48 hours."
@@ -169,6 +179,41 @@ def evaluate_weather_risk(lat: float, lon: float, api_key: str = "demo_key"):
         }
     except Exception:
         return {"temperature_celsius": 28.0, "humidity_percent": 82.0, "risk_level": "HIGH"}
+
+def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_risk: str) -> dict:
+    """Uses Gemini API to dynamically generate agricultural solutions in structured JSON."""
+    prompt = f"""
+    Act as an Indian agricultural extension specialist.
+    A crop scan diagnosed: '{pred_disease}'.
+    Current infestation severity: '{severity_stage}'.
+    Weather pathogen risk level: '{weather_risk}'.
+
+    Provide the recommended remedy tailored to Indian farmers.
+    Output MUST be valid JSON with the following keys:
+    - vernacular_name: Regional Indian common name (Hindi/Marathi transliteration)
+    - organic_treatment: 1-2 practical organic/biological remedies (e.g. Neem oil, Trichoderma)
+    - chemical_treatment: Exact chemical formulation and water dilution dosage (e.g. Mancozeb 75 WP @ 2g/L)
+    - cultural_practices: 1-2 agronomic steps (drainage, pruning, spacing)
+    """
+
+    try:
+        response = ai_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.3
+            )
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        return {
+            "vernacular_name": pred_disease.replace("_", " "),
+            "organic_treatment": "Spray Neem oil 10,000 PPM @ 3ml per liter of water.",
+            "chemical_treatment": "Consult nearest Krishi Vigyan Kendra (KVK) for specific chemical spray dosage.",
+            "cultural_practices": "Prune visibly infected leaf foliage and avoid excess moisture accumulation.",
+            "api_notice": f"Generated via fallback due to API response: {str(e)}"
+        }
 
 # --- APPLICATION INITIALIZATION ---
 app = FastAPI(title="AgriScan ML Inference Engine", version="1.0.0")
@@ -282,8 +327,18 @@ async def predict(
     cam_map = grad_cam.generate_heatmap(tensor, pred_idx)
     heatmap_base64 = generate_cam_overlay_base64(raw_img, cam_map)
     
-    # 3. Disease Severity & Infestation Assessment
+    # 3. Disease Severity Assessment
     severity = calculate_disease_severity(raw_img, cam_map)
+    
+    # 4. Regional Climate Risk
+    weather = evaluate_weather_risk(latitude, longitude)
+    
+    # 5. Dynamic Gemini Solution (zero manual chatting needed by farmer)
+    recommended_solution = generate_gemini_advisory(
+        pred_disease=pred_class,
+        severity_stage=severity["infection_stage"],
+        weather_risk=weather["risk_level"]
+    )
     
     top_3 = [
         {
@@ -293,12 +348,11 @@ async def predict(
         for prob, idx in zip(top_probs, top_indices)
     ]
     
-    weather = evaluate_weather_risk(latitude, longitude)
-    
     return {
         "status": "success",
         "predicted_disease": pred_class,
         "confidence": round(confidence, 4),
+        "recommended_solution": recommended_solution,
         "severity_analysis": severity,
         "flag_officer_review": bool(confidence < 0.75 or is_blurry or severity["recommended_urgency"] == "CRITICAL"),
         "image_quality": {
