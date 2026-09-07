@@ -6,7 +6,6 @@ import requests
 import cv2
 import numpy as np
 from PIL import Image
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -123,17 +122,12 @@ def generate_cam_overlay_base64(pil_img: Image.Image, cam_map: np.ndarray) -> st
     return f"data:image/jpeg;base64,{base64_str}"
 
 def calculate_disease_severity(pil_img: Image.Image, cam_map: np.ndarray) -> dict:
-    """
-    Estimates the percentage of leaf tissue affected by the pathogen
-    and maps it to an agricultural severity index.
-    """
     img_np = np.array(pil_img)
     orig_h, orig_w, _ = img_np.shape
     
     gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
     _, leaf_mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
     total_leaf_pixels = int(np.count_nonzero(leaf_mask))
-    
     if total_leaf_pixels == 0:
         total_leaf_pixels = orig_h * orig_w
         
@@ -144,56 +138,117 @@ def calculate_disease_severity(pil_img: Image.Image, cam_map: np.ndarray) -> dic
     affected_ratio = round((lesion_pixels / total_leaf_pixels) * 100, 2)
     affected_ratio = max(1.5, min(affected_ratio, 95.0))
     
-    if affected_ratio < 10.0:
-        stage = "Stage 1: Early / Mild"
-        action = "Apply organic bio-pesticide or neem extract. Re-scan in 48 hours."
+    # ETL (Economic Threshold Level) Classification
+    if affected_ratio < 5.0:
+        etl_status = "Below ETL"
+        etl_color = "Green"
         urgency = "LOW"
-    elif 10.0 <= affected_ratio < 25.0:
-        stage = "Stage 2: Moderate Infestation"
-        action = "Targeted curative fungicide spray recommended within 24 hours."
+        action = "Deploy sticky traps and spray Neem formulation (3ml/L)."
+    elif 5.0 <= affected_ratio < 15.0:
+        etl_status = "Approaching ETL"
+        etl_color = "Amber"
+        urgency = "MEDIUM"
+        action = "Apply bio-insecticide (Beauveria bassiana or Bt) within 36 hours."
+    else:
+        etl_status = "Breached ETL"
+        etl_color = "Red"
+        urgency = "CRITICAL"
+        action = "Immediate chemical spray required to prevent full defoliation."
+        
+    return {
+        "foliar_damage_percent": affected_ratio,
+        "economic_threshold_status": etl_status,
+        "etl_badge_color": etl_color,
+        "recommended_urgency": urgency,
+        "pest_management_action": action
+    }
+
+def calculate_disease_severity(pil_img: Image.Image, cam_map: np.ndarray) -> dict:
+    img_np = np.array(pil_img)
+    orig_h, orig_w, _ = img_np.shape
+    
+    # 1. Segment foliage area
+    gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+    _, leaf_mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
+    total_leaf_pixels = int(np.count_nonzero(leaf_mask))
+    if total_leaf_pixels == 0:
+        total_leaf_pixels = orig_h * orig_w
+        
+    # 2. Extract feeding punctures / necrotic lesions via Grad-CAM
+    cam_resized = cv2.resize(cam_map, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
+    lesion_mask = (cam_resized >= 0.55) & (leaf_mask > 0)
+    lesion_pixels = int(np.count_nonzero(lesion_mask))
+    
+    affected_ratio = round((lesion_pixels / total_leaf_pixels) * 100, 2)
+    affected_ratio = max(1.5, min(affected_ratio, 95.0))
+    
+    # 3. Agronomic ETL Mapping for Pest Control
+    if affected_ratio < 5.0:
+        etl_status = "Below ETL (Monitoring Stage)"
+        action = "Deploy yellow/blue sticky traps and pheromone lures. Apply Neem oil 10,000 PPM (3 ml/L)."
+        urgency = "LOW"
+    elif 5.0 <= affected_ratio < 18.0:
+        etl_status = "Approaching ETL (Warning Threshold)"
+        action = "Foliar application of entomopathogenic bio-pesticides (Beauveria bassiana or Bacillus thuringiensis) within 36 hours."
         urgency = "MEDIUM"
     else:
-        stage = "Stage 3: Severe Defoliation Risk"
-        action = "Immediate chemical intervention required across farm block to prevent epidemic spread."
+        etl_status = "Breached ETL (Action Threshold)"
+        action = "Immediate targeted chemical insecticide/acaricide application required across crop block."
         urgency = "CRITICAL"
         
     return {
+        "foliar_damage_percent": affected_ratio,
         "affected_leaf_area_percent": affected_ratio,
-        "infection_stage": stage,
+        "economic_threshold_status": etl_status,
+        "infection_stage": etl_status,
         "recommended_urgency": urgency,
         "action_plan": action
     }
 
 def evaluate_weather_risk(lat: float, lon: float, api_key: str = "demo_key"):
-    """Fetches local climate metrics and computes environmental pathogen risk."""
     try:
         url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
         res = requests.get(url, timeout=2).json()
         temp = res["main"]["temp"]
         humidity = res["main"]["humidity"]
-        is_high = humidity > 80 and (20.0 <= temp <= 30.0)
-        return {
-            "temperature_celsius": temp,
-            "humidity_percent": humidity,
-            "risk_level": "HIGH" if is_high else "MODERATE"
-        }
     except Exception:
-        return {"temperature_celsius": 28.0, "humidity_percent": 82.0, "risk_level": "HIGH"}
+        temp, humidity = 29.0, 78.0
+
+    sucking_pest_active = (24.0 <= temp <= 34.0) and (40.0 <= humidity <= 70.0)
+    borer_vector_active = (22.0 <= temp <= 30.0) and (humidity > 75.0)
+
+    if borer_vector_active:
+        outbreak_risk = "HIGH_BORER_VECTOR_RISK"
+        forecast = "Warm and humid conditions accelerate caterpillar hatching and vector transmission."
+    elif sucking_pest_active:
+        outbreak_risk = "ELEVATED_SUCKING_PEST_RISK"
+        forecast = "Moderate humidity favors sap-sucking insects like aphids, whiteflies, and thrips."
+    else:
+        outbreak_risk = "LOW_MONITORING_RISK"
+        forecast = "Microclimate is not conducive to rapid pest swarming."
+
+    return {
+        "temperature_celsius": temp,
+        "humidity_percent": humidity,
+        "pest_outbreak_risk": outbreak_risk,
+        "climate_pest_forecast": forecast
+    }
 
 def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_risk: str) -> dict:
-    """Uses Gemini API to dynamically generate agricultural solutions in structured JSON."""
     prompt = f"""
-    Act as an Indian agricultural extension specialist.
-    A crop scan diagnosed: '{pred_disease}'.
-    Current infestation severity: '{severity_stage}'.
-    Weather pathogen risk level: '{weather_risk}'.
+    You are an expert agricultural entomologist.
+    Diagnosed condition: '{pred_disease}'.
+    Infestation status: '{severity_stage}'.
+    Weather risk: '{weather_risk}'.
 
-    Provide the recommended remedy tailored to Indian farmers.
-    Output MUST be valid JSON with the following keys:
-    - vernacular_name: Regional Indian common name (Hindi/Marathi transliteration)
-    - organic_treatment: 1-2 practical organic/biological remedies (e.g. Neem oil, Trichoderma)
-    - chemical_treatment: Exact chemical formulation and water dilution dosage (e.g. Mancozeb 75 WP @ 2g/L)
-    - cultural_practices: 1-2 agronomic steps (drainage, pruning, spacing)
+    Return an IPM advisory strictly as JSON with this exact key structure:
+    {{
+      "vernacular_name": "Local Indian common name",
+      "pest_vector": "Primary pest or insect vector causing/spreading this (e.g. Whiteflies, Fruit Borer, Aphids)",
+      "biological_control": "Organic or biological measure (e.g. Neem oil 10,000 PPM, Trichoderma, pheromone traps)",
+      "chemical_control": "Commercial active ingredient with exact water dilution dosage (e.g. Imidacloprid 17.8% SL @ 0.5 ml/L)",
+      "mechanical_control": "Field cultural practices (e.g. sticky cards, pruning infected branches)"
+    }}
     """
 
     try:
@@ -202,19 +257,19 @@ def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_ris
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                temperature=0.3
+                temperature=0.2
             )
         )
         return json.loads(response.text)
     except Exception as e:
         return {
             "vernacular_name": pred_disease.replace("_", " "),
-            "organic_treatment": "Spray Neem oil 10,000 PPM @ 3ml per liter of water.",
-            "chemical_treatment": "Consult nearest Krishi Vigyan Kendra (KVK) for specific chemical spray dosage.",
-            "cultural_practices": "Prune visibly infected leaf foliage and avoid excess moisture accumulation.",
-            "api_notice": f"Generated via fallback due to API response: {str(e)}"
+            "pest_vector": "Insect puncture vector / Foliar feeding pests",
+            "biological_control": "Neem seed extract 5% or Neem oil 10,000 PPM @ 3ml/L.",
+            "chemical_control": "Consult local KVK for verified active pesticide formulation.",
+            "mechanical_control": "Deploy yellow sticky traps (15 traps/acre) and rogue infected leaves.",
+            "fallback_notice": str(e)
         }
-
 # --- APPLICATION INITIALIZATION ---
 app = FastAPI(title="AgriScan ML Inference Engine", version="1.0.0")
 
@@ -334,10 +389,11 @@ async def predict(
     weather = evaluate_weather_risk(latitude, longitude)
     
     # 5. Dynamic Gemini Solution (zero manual chatting needed by farmer)
+    # 5. Dynamic Gemini Solution
     recommended_solution = generate_gemini_advisory(
         pred_disease=pred_class,
-        severity_stage=severity["infection_stage"],
-        weather_risk=weather["risk_level"]
+        severity_stage=severity.get("economic_threshold_status", severity.get("infection_stage", "Moderate")),
+        weather_risk=weather.get("pest_outbreak_risk", weather.get("risk_level", "MODERATE"))
     )
     
     top_3 = [
@@ -352,9 +408,19 @@ async def predict(
         "status": "success",
         "predicted_disease": pred_class,
         "confidence": round(confidence, 4),
+        "foliar_damage_percent": severity.get("foliar_damage_percent", severity.get("affected_leaf_area_percent", 0.0)),
+        "economic_threshold_status": severity.get("economic_threshold_status", "Below ETL"),
+        "etl_badge_color": severity.get("etl_badge_color", "Green"),
+        "pest_outbreak_risk": weather.get("pest_outbreak_risk", "LOW_MONITORING_RISK"),
+        "pest_vector_profile": recommended_solution,
         "recommended_solution": recommended_solution,
         "severity_analysis": severity,
-        "flag_officer_review": bool(confidence < 0.75 or is_blurry or severity["recommended_urgency"] == "CRITICAL"),
+        "weather_context": weather,
+        "flag_officer_review": bool(
+            confidence < 0.75 or 
+            is_blurry or 
+            severity.get("recommended_urgency") == "CRITICAL"
+        ),
         "image_quality": {
             "blur_score": float(blur_val),
             "is_blurry": bool(is_blurry)
@@ -364,6 +430,5 @@ async def predict(
             "target_layer": "layer4",
             "heatmap_base64": heatmap_base64
         },
-        "top_3_predictions": top_3,
-        "weather_context": weather
+        "top_3_predictions": top_3
     }
