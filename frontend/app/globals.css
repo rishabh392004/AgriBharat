@@ -136,34 +136,35 @@ img { max-width: 100%; }
 .logo-orb-wrap {
   position: relative;
   margin: 0 auto 20px;
-  width: 110px;
-  height: 110px;
+  width: 116px;
+  height: 116px;
 }
 .logo-orb-ring {
   position: absolute;
   inset: -8px;
-  border-radius: 38px;
-  border: 2px dashed rgba(232, 200, 104, 0.4);
-  animation: ringRotate 20s linear infinite;
+  border-radius: 50%;
+  border: 2px dashed rgba(232, 200, 104, 0.45);
+  animation: ringRotate 24s linear infinite;
 }
 @keyframes ringRotate {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 .logo-orb {
-  width: 110px;
-  height: 110px;
-  border-radius: 34px;
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #143525;
-  background: linear-gradient(145deg, #f0d57e 0%, #d4a017 55%, #a67c00 100%);
-  box-shadow: 0 20px 40px rgba(212, 160, 23, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.6);
-  animation: sway 5s ease-in-out infinite;
+  background: radial-gradient(circle at 35% 30%, #1c5236 0%, #103823 65%, #092416 100%);
+  border: 2.5px solid rgba(232, 200, 104, 0.75);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4), 0 0 36px rgba(232, 200, 104, 0.28), inset 0 2px 6px rgba(255, 255, 255, 0.25);
+  animation: sway 6s ease-in-out infinite;
   position: relative;
   z-index: 2;
+  backdrop-filter: blur(8px);
 }
-.logo-orb svg { width: 66px; height: 66px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18)); }
+.logo-orb svg { width: 72px; height: 72px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3)); }
 
 .splash-brand {
   margin: 0;

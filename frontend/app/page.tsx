@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { LanguageSelector } from '@/components/language-selector'
 import { LeafMark } from '@/components/leaf-mark'
-import { Plant3DBackground } from '@/components/plant-3d-background'
 import { useI18n } from '@/lib/i18n'
 import { ArrowRight, ShieldCheck, Sparkles, CloudSun, CheckCircle2 } from 'lucide-react'
 
@@ -22,9 +21,6 @@ export default function SplashPage() {
 
   return (
     <main className="splash">
-      {/* 3D Animated Organic Crop Plant & Atmosphere */}
-      <Plant3DBackground />
-
       {/* Top Bar for Language Switcher on Splash */}
       <div style={{ position: 'absolute', top: 20, right: 24, zIndex: 50 }}>
         <LanguageSelector />
