@@ -218,6 +218,9 @@ export default function ScanPage() {
     setDoneSteps(0)
     const timers = steps.map((_, i) => setTimeout(() => setDoneSteps(i + 1), 400 * (i + 1)))
     const result = await predictCrop(file, selectedCrop)
+    if (preview) {
+      result.imageUrl = preview
+    }
     timers.forEach(clearTimeout)
     setDoneSteps(steps.length)
     saveLastPrediction(result)

@@ -37,7 +37,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'गेहूं',
     marathi: 'गहू',
     icon: '🌾',
-    image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/wheat.jpg',
     commonDiseases: ['Leaf Rust', 'Powdery Mildew', 'Yellow Rust'],
   },
   Tomato: {
@@ -45,7 +45,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'टमाटर',
     marathi: 'टोमॅटो',
     icon: '🍅',
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/tomato.jpg',
     commonDiseases: ['Early Blight', 'Late Blight', 'Leaf Mold'],
   },
   Rice: {
@@ -53,7 +53,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'धान / चावल',
     marathi: 'भात / तांदूळ',
     icon: '🌱',
-    image: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/rice.jpg',
     commonDiseases: ['Brown Spot', 'Bacterial Leaf Blight', 'Blast'],
   },
   Cotton: {
@@ -61,7 +61,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'कपास',
     marathi: 'कापूस',
     icon: '☁️',
-    image: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/cotton.jpg',
     commonDiseases: ['Bacterial Blight', 'Leaf Curl Virus', 'Alternaria Leaf Spot'],
   },
   Onion: {
@@ -69,7 +69,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'प्याज',
     marathi: 'कांदा',
     icon: '🧅',
-    image: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/onion.jpg',
     commonDiseases: ['Purple Blotch', 'Stemphylium Leaf Blight', 'Downy Mildew'],
   },
   Potato: {
@@ -77,7 +77,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'आलू',
     marathi: 'बटाटा',
     icon: '🥔',
-    image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/potato.jpg',
     commonDiseases: ['Late Blight', 'Early Blight', 'Black Scurf'],
   },
   Sugarcane: {
@@ -85,7 +85,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'गन्ना',
     marathi: 'ऊस',
     icon: '🎋',
-    image: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/sugarcane.jpg',
     commonDiseases: ['Red Rot', 'Smut', 'Grassy Shoot'],
   },
   Soybean: {
@@ -93,7 +93,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'सोयाबीन',
     marathi: 'सोयाबीन',
     icon: '🫘',
-    image: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/soybean.jpg',
     commonDiseases: ['Yellow Mosaic Virus', 'Anthracnose', 'Rust'],
   },
   Mustard: {
@@ -101,7 +101,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'सरसों',
     marathi: 'मोहरी',
     icon: '🌼',
-    image: 'https://images.unsplash.com/photo-1508615039623-a25605d2b022?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/mustard.jpg',
     commonDiseases: ['White Rust', 'Alternaria Blight', 'Downy Mildew'],
   },
   Maize: {
@@ -109,7 +109,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'मक्का',
     marathi: 'मका',
     icon: '🌽',
-    image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/maize.jpg',
     commonDiseases: ['Fall Armyworm', 'Turcicum Leaf Blight', 'Common Rust'],
   },
   Chilli: {
@@ -117,7 +117,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'हरी मिर्च',
     marathi: 'मिरची',
     icon: '🌶️',
-    image: 'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/chilli.jpg',
     commonDiseases: ['Chilli Leaf Curl', 'Anthracnose / Die Back', 'Powdery Mildew'],
   },
   Banana: {
@@ -125,7 +125,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'केला',
     marathi: 'केळी',
     icon: '🍌',
-    image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/banana.jpg',
     commonDiseases: ['Sigatoka Leaf Spot', 'Panama Wilt', 'Banana Bunchy Top'],
   },
   Mango: {
@@ -133,7 +133,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'आम',
     marathi: 'आंबा',
     icon: '🥭',
-    image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/mango.jpg',
     commonDiseases: ['Anthracnose', 'Powdery Mildew', 'Die Back'],
   },
   Groundnut: {
@@ -141,7 +141,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'मूंगफली',
     marathi: 'भुईमूग',
     icon: '🥜',
-    image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/groundnut.jpg',
     commonDiseases: ['Tikka Disease (Leaf Spot)', 'Collar Rot', 'Rust'],
   },
   Chickpea: {
@@ -149,7 +149,7 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'चना',
     marathi: 'हरभरा',
     icon: '🥣',
-    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/chickpea.jpg',
     commonDiseases: ['Fusarium Wilt', 'Ascochyta Blight', 'Dry Root Rot'],
   },
   Brinjal: {
@@ -157,23 +157,34 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     hindi: 'बैंगन',
     marathi: 'वांगी',
     icon: '🍆',
-    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=300&auto=format&fit=crop&q=80',
+    image: '/images/crops/brinjal.jpg',
     commonDiseases: ['Shoot & Fruit Borer', 'Phomopsis Blight', 'Little Leaf Disease'],
   },
 }
 
-export async function predictCrop(image: File | Blob | null, crop = 'Wheat'): Promise<Prediction> {
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000)
+export async function predictCrop(image: File | Blob | string | null, crop = 'Wheat'): Promise<Prediction> {
+  await new Promise((resolve) => setTimeout(resolve, 1200))
+  
+  let customImageUrl: string | undefined
+  if (typeof image === 'string') {
+    customImageUrl = image
+  } else if (image instanceof Blob && typeof window !== 'undefined') {
+    customImageUrl = URL.createObjectURL(image)
+  }
+
   const base = predictionsByCrop[crop] ?? predictionsByCrop.Wheat
-
-  // Realistic scanning delay
-  await new Promise((resolve) => setTimeout(resolve, 600))
-  void image
-
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000)
+  
   return {
     ...base,
     scanId: `SCAN-${randomSuffix}`,
-    confidence: Math.floor(89 + Math.random() * 9),
+    confidence: base.confidence || Math.floor(89 + Math.random() * 9),
+    imageUrl: customImageUrl || base.imageUrl,
+    explanation: base.explanation || `AI detected disease patterns on your ${crop} leaf consistent with ${base.disease}.`,
+    attentionPoints: base.attentionPoints || [
+      { x: 45, y: 45, radius: 48, intensity: 0.94, label: 'Primary Pathogen Lesion' },
+      { x: 60, y: 55, radius: 36, intensity: 0.82, label: 'Secondary Symptom Zone' },
+    ],
   }
 }
 

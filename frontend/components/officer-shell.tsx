@@ -33,7 +33,7 @@ export function OfficerShell({ children }: { children: React.ReactNode }) {
     <div className="boot">
       <div className="boot-inner">
         <div className="boot-mark"><LeafMark /></div>
-        KrishiRakshak AI
+        Krishi Darpan
       </div>
     </div>
   )

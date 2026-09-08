@@ -68,6 +68,14 @@ export interface AlertItem {
   read: boolean
 }
 
+export interface AttentionPoint {
+  x: number // percentage 0-100 across image width
+  y: number // percentage 0-100 across image height
+  radius: number // pixel radius relative to canvas
+  intensity: number // 0.0 - 1.0 focus weight
+  label?: string
+}
+
 export interface Prediction {
   scanId: string
   crop: string
@@ -79,6 +87,15 @@ export interface Prediction {
   precautions: string[]
   actions: string[]
   expertHelp: string
+  // Explainable AI / Grad-CAM extensions
+  imageUrl?: string
+  gradCamImage?: string
+  heatmapUrl?: string
+  explanationImage?: string
+  explanation?: string
+  attentionPoints?: AttentionPoint[]
+  voiceAdvisoryUrl?: string
+  voiceAdvisoryDuration?: string
 }
 
 export interface NearbyPlace {

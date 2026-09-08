@@ -50,7 +50,7 @@ export default function PublicPassportVerifyPage() {
             The requested passport reference could not be verified on the system.
           </p>
           <Link href="/" className="btn btn-primary" style={{ width: 'auto', marginTop: 14 }}>
-            Go to KrishiRakshak AI
+            Go to Krishi Darpan
           </Link>
         </div>
       </div>
@@ -73,7 +73,7 @@ export default function PublicPassportVerifyPage() {
               <LeafMark />
             </span>
             <div>
-              <strong style={{ fontSize: 16, color: '#1b3d2a' }}>KrishiRakshak AI</strong>
+              <strong style={{ fontSize: 16, color: '#1b3d2a' }}>Krishi Darpan</strong>
               <small style={{ display: 'block', fontSize: 10, color: '#4a6f54' }}>
                 Digital Crop Health Verification Registry
               </small>
@@ -250,7 +250,7 @@ export default function PublicPassportVerifyPage() {
       {/* Footer */}
       <footer className="public-verify-footer no-print">
         <p style={{ margin: 0, fontSize: 12, color: 'var(--muted)' }}>
-          © 2026 KrishiRakshak AI • Advanced Agricultural Disease Intelligence System
+          © 2026 Krishi Darpan • Advanced Agricultural Disease Intelligence System
         </p>
       </footer>
     </div>

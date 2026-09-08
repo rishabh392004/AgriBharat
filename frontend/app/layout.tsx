@@ -16,8 +16,8 @@ const deva = Noto_Sans_Devanagari({
 })
 
 export const metadata: Metadata = {
-  title: 'KrishiRakshak AI | Detect Early. Protect Your Crop.',
-  description: 'AI-powered crop care for Indian farmers — scan, understand, prevent and find help.',
+  title: 'Krishi Darpan | Detect Early. Protect Your Crop.',
+  description: 'Krishi Darpan — AI-powered agricultural intelligence & explainable crop disease diagnostics for Indian farmers.',
 }
 
 export const viewport: Viewport = {

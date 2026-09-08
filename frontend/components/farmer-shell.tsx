@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { Bell, Bot, Camera, ClipboardList, Home, LogOut, MapPin, UserRound, ShieldCheck } from 'lucide-react'
+import { Bell, Bot, Camera, ClipboardList, Home, LogOut, MapPin, UserRound, ShieldCheck, MessageSquare } from 'lucide-react'
 import { LanguageSelector } from '@/components/language-selector'
 import { LeafMark } from '@/components/leaf-mark'
 import { useAuth } from '@/lib/auth'
@@ -13,6 +13,7 @@ const farmerLinks = [
   { href: '/farmer', key: 'dashboard', icon: Home, dockLabel: 'Home' },
   { href: '/farmer/crop-health-passport', key: 'cropPassport', icon: ShieldCheck, dockLabel: 'Passport' },
   { href: '/farmer/scan', key: 'scan', icon: Camera, dockLabel: 'Scan' },
+  { href: '/farmer/whatsapp', key: 'whatsappChannel', icon: MessageSquare, dockLabel: 'WhatsApp' },
   { href: '/farmer/chat', key: 'assistant', icon: Bot, dockLabel: 'AI' },
   { href: '/farmer/help', key: 'nearby', icon: MapPin, dockLabel: 'Help' },
   { href: '/farmer/history', key: 'history', icon: ClipboardList, dockLabel: 'History' },
@@ -39,7 +40,7 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
       <div className="boot">
         <div className="boot-inner">
           <div className="boot-mark"><LeafMark /></div>
-          KrishiRakshak AI
+          Krishi Darpan
         </div>
       </div>
     )

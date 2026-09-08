@@ -960,11 +960,11 @@ img { max-width: 100%; }
 .list-row { display: flex; gap: 8px; margin-top: 10px; font-size: 14px; }
 
 /* Chat */
-.chat { display: flex; flex-direction: column; min-height: calc(100dvh - 72px); max-width: 840px; margin: 0 auto; }
+.chat { display: flex; flex-direction: column; min-height: calc(100dvh - 72px); width: 100%; max-width: 100%; margin: 0; }
 .chat-head { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; }
-.bubbles { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-.bubble { max-width: 78%; padding: 12px 14px; border-radius: 16px 16px 16px 4px; background: var(--card); border: 1px solid var(--line); white-space: pre-wrap; }
-.bubble.user { margin-left: auto; background: var(--forest); color: #f6f1e4; border-radius: 16px 16px 4px 16px; }
+.bubbles { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 380px; }
+.bubble { max-width: 85%; padding: 14px 16px; border-radius: 18px 18px 18px 4px; background: var(--card); border: 1px solid var(--line); white-space: pre-wrap; }
+.bubble.user { margin-left: auto; background: var(--forest); color: #f6f1e4; border-radius: 18px 18px 4px 18px; }
 .bubble small { display: block; opacity: .65; font-size: 10px; margin-top: 6px; }
 .prompts { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 .prompts button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 12px; font-size: 12px; color: var(--forest); }

@@ -78,7 +78,7 @@ export default function SplashPage() {
           type="button"
           id="splash-start-btn"
         >
-          <span>Start KrishiRakshak AI</span>
+          <span>{t('startApp')}</span>
           <ArrowRight size={18} className="splash-cta-icon" />
         </button>
 

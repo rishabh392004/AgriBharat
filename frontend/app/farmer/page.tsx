@@ -17,6 +17,7 @@ import { CountUp } from '@/components/count-up'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 import { alerts, scans, weatherFull } from '@/data/mock'
+import { WhatsAppBanner } from '@/components/whatsapp/WhatsAppBanner'
 
 export default function FarmerDashboard() {
   const { t } = useI18n()
@@ -38,7 +39,7 @@ export default function FarmerDashboard() {
   const isConnected = backendStatus?.nodeBackend?.status === 'connected'
 
   return (
-    <div className="animate-fadeIn space-y-2">
+    <div className="animate-fadeIn space-y-4">
       <header className="hero">
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
           <p className="kicker" style={{ margin: 0 }}>{farmer.farmName}</p>
@@ -92,6 +93,9 @@ export default function FarmerDashboard() {
           <span>{t('chatSub')}</span>
         </Link>
       </div>
+
+      {/* WhatsApp Fallback Entry Banner */}
+      <WhatsAppBanner />
 
       {/* Stats Cards with Staggered Animations */}
       <div className="stats">
