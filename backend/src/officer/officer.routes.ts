@@ -20,27 +20,11 @@ router.use(authMiddleware);
 router.post("/profile", createOfficerProfileController);
 
 /**
- * @route   GET /api/v1/officer/profile/me (and /me alias)
+ * @route   GET /api/officer/profile/me
  * @desc    Get the authenticated officer's own profile
  * @access  Private
  */
 router.get("/profile/me", getMyProfileController);
-router.get("/me", getMyProfileController);
-
-/**
- * @route   GET /api/v1/officer/metrics
- * @desc    Get summary metrics for officer dashboard
- * @access  Private
- */
-router.get("/metrics", async (_req, res) => {
-  res.status(200).json({
-    activeFarms: 1420,
-    scansThisWeek: 384,
-    criticalOutbreaks: 7,
-    accuracyRate: 98.4,
-    district: "Nashik",
-  });
-});
 
 /**
  * @route   GET /api/officer/profile/:userId

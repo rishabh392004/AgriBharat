@@ -5,11 +5,20 @@ export type Severity = "none" | "mild" | "moderate" | "severe";
 export interface DiagnosisRequest {
   scanId: number;
   imageUrl: string;
-  cropName?: string | undefined;
-  latitude?: number | undefined;
-  longitude?: number | undefined;
+  cropName?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
+/** Structured weather context returned by ML service */
+export interface WeatherContext {
+  temperature_celsius: number;
+  humidity_percent: number;
+  pest_outbreak_risk: string;
+  climate_pest_forecast: string;
+}
+
+/** Full diagnosis result — maps both mock and real ML provider output */
 export interface DiagnosisResult {
   scanId: number;
   imageUrl: string;
@@ -18,15 +27,21 @@ export interface DiagnosisResult {
   severity: Severity;
   recommendation: RecommendationResult;
   provider: string;
-  foliarDamagePercent?: number | undefined;
-  economicThresholdStatus?: string | undefined;
-  etlBadgeColor?: string | undefined;
-  explainability?: {
-    method?: string | undefined;
-    target_layer?: string | undefined;
-    heatmap_base64?: string | undefined;
-  } | undefined;
-  pestOutbreakRisk?: string | undefined;
+
+  // Extended ML fields (populated by the real provider; defaults for mock)
+  flagOfficerReview: boolean;
+  foliarDamagePercent: number;
+  urgency: string;
+  etlStatus: string;
+  top3Predictions: { class: string; confidence: number }[];
+  weatherContext: WeatherContext;
+
+  /**
+   * Grad-CAM heatmap as a base64-encoded data URI.
+   * Transient — returned to the client but NOT stored in PostgreSQL
+   * (too large for a DB column; use object storage for persistence).
+   */
+  gradCamBase64?: string;
 }
 
 export interface DiagnosisProvider {

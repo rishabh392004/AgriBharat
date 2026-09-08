@@ -44,7 +44,10 @@ export async function diagnoseScan(
   }
 
   if (scan.status === "FAILED") {
-    throw new AppError("Previous diagnosis failed. Create a new scan to try again.", 409);
+    throw new AppError(
+      "Previous diagnosis failed. Create a new scan to try again.",
+      409
+    );
   }
 
   await setScanStatus(scanId, "PROCESSING");
@@ -55,9 +58,12 @@ export async function diagnoseScan(
     const result = await provider.diagnose({
       scanId: scan.id,
       imageUrl: scan.imageUrl,
+      cropName: scan.cropName ?? "Auto",
+      ...(scan.latitude != null && { latitude: scan.latitude }),
+      ...(scan.longitude != null && { longitude: scan.longitude }),
     });
 
-    // Persist the result to DB
+    // Persist the result to DB — includes all ML-specific fields
     await db.orm.public.DiseaseResult.create({
       scanId: result.scanId,
       disease: result.disease,
@@ -66,16 +72,24 @@ export async function diagnoseScan(
       actions: JSON.stringify(result.recommendation.actions),
       precautions: JSON.stringify(result.recommendation.precautions),
       provider: result.provider,
+      // Extended ML fields
+      flagOfficerReview: result.flagOfficerReview,
+      foliarDamagePercent: result.foliarDamagePercent,
+      urgency: result.urgency,
+      etlStatus: result.etlStatus,
+      top3Predictions: JSON.stringify(result.top3Predictions),
+      weatherContext: JSON.stringify(result.weatherContext),
+      // gradCamBase64 is NOT persisted — too large for DB column
     });
 
     await setScanStatus(scanId, "COMPLETED");
 
+    // Return the full result including transient Grad-CAM (not from DB)
     return result;
   } catch (error) {
     // BUG FIX 2: Only set FAILED if the error came from the provider/DB.
     // AppErrors thrown BEFORE setScanStatus(PROCESSING) should NOT set FAILED
     // (but those are thrown before the try block, so this is actually safe).
-    // Re-throw AppError as-is so the real message reaches the client.
     await setScanStatus(scanId, "FAILED");
 
     if (error instanceof AppError) {
@@ -113,7 +127,31 @@ export async function getDiagnosis(
     .first();
 
   if (!stored) {
-    throw new AppError("No diagnosis result found for this scan. Run POST /:id/diagnosis first.", 404);
+    throw new AppError(
+      "No diagnosis result found for this scan. Run POST /:id/diagnosis first.",
+      404
+    );
+  }
+
+  // Parse JSON fields safely
+  let top3Predictions: { class: string; confidence: number }[] = [];
+  let weatherContext = {
+    temperature_celsius: 29,
+    humidity_percent: 78,
+    pest_outbreak_risk: "LOW_MONITORING_RISK",
+    climate_pest_forecast: "",
+  };
+
+  try {
+    top3Predictions = JSON.parse(stored.top3Predictions ?? "[]");
+  } catch {
+    top3Predictions = [];
+  }
+
+  try {
+    weatherContext = JSON.parse(stored.weatherContext ?? "{}");
+  } catch {
+    // use default
   }
 
   return {
@@ -127,5 +165,12 @@ export async function getDiagnosis(
       precautions: JSON.parse(stored.precautions),
     },
     provider: stored.provider,
+    flagOfficerReview: stored.flagOfficerReview ?? false,
+    foliarDamagePercent: stored.foliarDamagePercent ?? 0,
+    urgency: stored.urgency ?? "LOW",
+    etlStatus: stored.etlStatus ?? "",
+    top3Predictions,
+    weatherContext,
+    // gradCamBase64 is not stored in DB — not included in GET response
   };
 }

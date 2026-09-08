@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'a32f5ca4db68577ae0b01601fe2966019b5bd2f8ee2d2564f8d662a2786fca1d'>;
+  StorageHashBase<'0b661f95651561bbeee3c1647d21d3e6b614a872a9e8d68bc876a4f59b29dd36'>;
 export type ExecutionHash =
   ExecutionHashBase<'e65564e2737d3bc9d0f32013101b20b462d493b9f38c8e303f876ee649227df2'>;
 export type ProfileHash =
@@ -250,6 +250,12 @@ export type FieldOutputTypes = {
       readonly actions: CodecTypes['pg/text@1']['output'];
       readonly precautions: CodecTypes['pg/text@1']['output'];
       readonly provider: CodecTypes['pg/text@1']['output'];
+      readonly flagOfficerReview: CodecTypes['pg/bool@1']['output'];
+      readonly foliarDamagePercent: CodecTypes['pg/float8@1']['output'];
+      readonly urgency: CodecTypes['pg/text@1']['output'];
+      readonly etlStatus: CodecTypes['pg/text@1']['output'];
+      readonly top3Predictions: CodecTypes['pg/text@1']['output'];
+      readonly weatherContext: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
     readonly Farm: {
@@ -290,6 +296,9 @@ export type FieldOutputTypes = {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly farmId: CodecTypes['pg/int4@1']['output'];
       readonly imageUrl: CodecTypes['pg/text@1']['output'];
+      readonly cropName: CodecTypes['pg/text@1']['output'];
+      readonly latitude: CodecTypes['pg/float8@1']['output'] | null;
+      readonly longitude: CodecTypes['pg/float8@1']['output'] | null;
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -316,6 +325,12 @@ export type FieldInputTypes = {
       readonly actions: CodecTypes['pg/text@1']['input'];
       readonly precautions: CodecTypes['pg/text@1']['input'];
       readonly provider: CodecTypes['pg/text@1']['input'];
+      readonly flagOfficerReview: CodecTypes['pg/bool@1']['input'];
+      readonly foliarDamagePercent: CodecTypes['pg/float8@1']['input'];
+      readonly urgency: CodecTypes['pg/text@1']['input'];
+      readonly etlStatus: CodecTypes['pg/text@1']['input'];
+      readonly top3Predictions: CodecTypes['pg/text@1']['input'];
+      readonly weatherContext: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
     readonly Farm: {
@@ -356,6 +371,9 @@ export type FieldInputTypes = {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly farmId: CodecTypes['pg/int4@1']['input'];
       readonly imageUrl: CodecTypes['pg/text@1']['input'];
+      readonly cropName: CodecTypes['pg/text@1']['input'];
+      readonly latitude: CodecTypes['pg/float8@1']['input'] | null;
+      readonly longitude: CodecTypes['pg/float8@1']['input'] | null;
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
@@ -378,11 +396,17 @@ export type StorageColumnTypes = {
       readonly confidence: CodecTypes['pg/float8@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly disease: CodecTypes['pg/text@1']['output'];
+      readonly etlStatus: CodecTypes['pg/text@1']['output'];
+      readonly flagOfficerReview: CodecTypes['pg/bool@1']['output'];
+      readonly foliarDamagePercent: CodecTypes['pg/float8@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly precautions: CodecTypes['pg/text@1']['output'];
       readonly provider: CodecTypes['pg/text@1']['output'];
       readonly scanId: CodecTypes['pg/int4@1']['output'];
       readonly severity: CodecTypes['pg/text@1']['output'];
+      readonly top3Predictions: CodecTypes['pg/text@1']['output'];
+      readonly urgency: CodecTypes['pg/text@1']['output'];
+      readonly weatherContext: CodecTypes['pg/text@1']['output'];
     };
     readonly farm: {
       readonly area: CodecTypes['pg/float8@1']['output'];
@@ -420,9 +444,12 @@ export type StorageColumnTypes = {
     };
     readonly scan: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly cropName: CodecTypes['pg/text@1']['output'];
       readonly farmId: CodecTypes['pg/int4@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly imageUrl: CodecTypes['pg/text@1']['output'];
+      readonly latitude: CodecTypes['pg/float8@1']['output'] | null;
+      readonly longitude: CodecTypes['pg/float8@1']['output'] | null;
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
@@ -444,11 +471,17 @@ export type StorageColumnInputTypes = {
       readonly confidence: CodecTypes['pg/float8@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly disease: CodecTypes['pg/text@1']['input'];
+      readonly etlStatus: CodecTypes['pg/text@1']['input'];
+      readonly flagOfficerReview: CodecTypes['pg/bool@1']['input'];
+      readonly foliarDamagePercent: CodecTypes['pg/float8@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly precautions: CodecTypes['pg/text@1']['input'];
       readonly provider: CodecTypes['pg/text@1']['input'];
       readonly scanId: CodecTypes['pg/int4@1']['input'];
       readonly severity: CodecTypes['pg/text@1']['input'];
+      readonly top3Predictions: CodecTypes['pg/text@1']['input'];
+      readonly urgency: CodecTypes['pg/text@1']['input'];
+      readonly weatherContext: CodecTypes['pg/text@1']['input'];
     };
     readonly farm: {
       readonly area: CodecTypes['pg/float8@1']['input'];
@@ -486,9 +519,12 @@ export type StorageColumnInputTypes = {
     };
     readonly scan: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly cropName: CodecTypes['pg/text@1']['input'];
       readonly farmId: CodecTypes['pg/int4@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly imageUrl: CodecTypes['pg/text@1']['input'];
+      readonly latitude: CodecTypes['pg/float8@1']['input'] | null;
+      readonly longitude: CodecTypes['pg/float8@1']['input'] | null;
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
@@ -566,6 +602,60 @@ type ContractBase = Omit<
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                };
+                readonly flagOfficerReview: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                };
+                readonly foliarDamagePercent: {
+                  readonly nativeType: 'float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/float8@1', 0>;
+                  };
+                };
+                readonly urgency: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                };
+                readonly etlStatus: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', ''>;
+                  };
+                };
+                readonly top3Predictions: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', '[]'>;
+                  };
+                };
+                readonly weatherContext: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', '{}'>;
+                  };
                 };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
@@ -878,6 +968,25 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                 };
+                readonly cropName: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'Auto'>;
+                  };
+                };
+                readonly latitude: {
+                  readonly nativeType: 'float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                };
+                readonly longitude: {
+                  readonly nativeType: 'float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                };
                 readonly status: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
@@ -1038,6 +1147,30 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly flagOfficerReview: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly foliarDamagePercent: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly urgency: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly etlStatus: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly top3Predictions: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly weatherContext: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -1068,6 +1201,12 @@ type ContractBase = Omit<
                 readonly actions: { readonly column: 'actions' };
                 readonly precautions: { readonly column: 'precautions' };
                 readonly provider: { readonly column: 'provider' };
+                readonly flagOfficerReview: { readonly column: 'flagOfficerReview' };
+                readonly foliarDamagePercent: { readonly column: 'foliarDamagePercent' };
+                readonly urgency: { readonly column: 'urgency' };
+                readonly etlStatus: { readonly column: 'etlStatus' };
+                readonly top3Predictions: { readonly column: 'top3Predictions' };
+                readonly weatherContext: { readonly column: 'weatherContext' };
                 readonly createdAt: { readonly column: 'createdAt' };
               };
             };
@@ -1317,6 +1456,18 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly cropName: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly latitude: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly longitude: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -1364,6 +1515,9 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly farmId: { readonly column: 'farmId' };
                 readonly imageUrl: { readonly column: 'imageUrl' };
+                readonly cropName: { readonly column: 'cropName' };
+                readonly latitude: { readonly column: 'latitude' };
+                readonly longitude: { readonly column: 'longitude' };
                 readonly status: { readonly column: 'status' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };

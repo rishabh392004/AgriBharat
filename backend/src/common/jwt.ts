@@ -6,12 +6,13 @@ import { env } from "../config/env.js";
 import {
   USER_ROLE,
   ADMIN_ROLE,
+  OFFICER_ROLE,
   type UserRole,
 } from "../auth/auth.types.js";
 
 const jwtPayloadSchema = z.object({
   userId: z.number().int().positive(),
-  role: z.enum([USER_ROLE, ADMIN_ROLE]),
+  role: z.enum([USER_ROLE, ADMIN_ROLE, OFFICER_ROLE]),
 });
 
 export interface JwtPayload {

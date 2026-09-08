@@ -9,8 +9,7 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "contract:emit": "prisma contract emit",
-    "postinstall": "prisma skills sync || true"
+    "contract:emit": "prisma contract emit"
   },
   "keywords": [],
   "author": "",

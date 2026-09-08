@@ -63,6 +63,27 @@
                   "kind": "scalar"
                 }
               },
+              "etlStatus": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "flagOfficerReview": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "foliarDamagePercent": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -92,6 +113,27 @@
                 }
               },
               "severity": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "top3Predictions": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "urgency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "weatherContext": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -130,6 +172,15 @@
                 "disease": {
                   "column": "disease"
                 },
+                "etlStatus": {
+                  "column": "etlStatus"
+                },
+                "flagOfficerReview": {
+                  "column": "flagOfficerReview"
+                },
+                "foliarDamagePercent": {
+                  "column": "foliarDamagePercent"
+                },
                 "id": {
                   "column": "id"
                 },
@@ -144,6 +195,15 @@
                 },
                 "severity": {
                   "column": "severity"
+                },
+                "top3Predictions": {
+                  "column": "top3Predictions"
+                },
+                "urgency": {
+                  "column": "urgency"
+                },
+                "weatherContext": {
+                  "column": "weatherContext"
                 }
               },
               "namespaceId": "public",
@@ -550,6 +610,13 @@
                   "kind": "scalar"
                 }
               },
+              "cropName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "farmId": {
                 "nullable": false,
                 "type": {
@@ -568,6 +635,20 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "latitude": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "longitude": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
                   "kind": "scalar"
                 }
               },
@@ -623,6 +704,9 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "cropName": {
+                  "column": "cropName"
+                },
                 "farmId": {
                   "column": "farmId"
                 },
@@ -631,6 +715,12 @@
                 },
                 "imageUrl": {
                   "column": "imageUrl"
+                },
+                "latitude": {
+                  "column": "latitude"
+                },
+                "longitude": {
+                  "column": "longitude"
                 },
                 "status": {
                   "column": "status"
@@ -820,6 +910,33 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "etlStatus": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": ""
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "flagOfficerReview": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "foliarDamagePercent": {
+                  "codecId": "pg/float8@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "float8",
+                  "nullable": false
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "default": {
@@ -846,6 +963,33 @@
                 },
                 "severity": {
                   "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "top3Predictions": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "[]"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "urgency": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "weatherContext": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "{}"
+                  },
                   "nativeType": "text",
                   "nullable": false
                 }
@@ -1209,6 +1353,15 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
+                "cropName": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "Auto"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "farmId": {
                   "codecId": "pg/int4@1",
                   "nativeType": "int4",
@@ -1227,6 +1380,16 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "latitude": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
+                },
+                "longitude": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
                 },
                 "status": {
                   "codecId": "pg/text@1",
@@ -1349,7 +1512,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "a32f5ca4db68577ae0b01601fe2966019b5bd2f8ee2d2564f8d662a2786fca1d"
+    "storageHash": "0b661f95651561bbeee3c1647d21d3e6b614a872a9e8d68bc876a4f59b29dd36"
   },
   "execution": {
     "executionHash": "e65564e2737d3bc9d0f32013101b20b462d493b9f38c8e303f876ee649227df2",

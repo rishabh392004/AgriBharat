@@ -2,7 +2,6 @@ import type { Response } from "express";
 
 import {
   createScanSchema,
-  analyzeScanSchema,
   scanIdSchema
 } from "./scan.schema.js";
 
@@ -11,7 +10,6 @@ import { AppError } from "../common/AppError.js";
 
 import {
   createScan,
-  analyzeScanService,
   getScanById,
   getScansByUser
 } from "./scan.service.js";
@@ -34,49 +32,20 @@ export async function createScanController(
     return;
   }
 
-  const { farmId, imageUrl, cropName } = result.data;
+  const { farmId, imageUrl, cropName, latitude, longitude } = result.data;
 
   const scan = await createScan(
     req.user.userId,
     farmId,
     imageUrl,
-    cropName
+    cropName,
+    latitude,
+    longitude
   );
 
   res.status(201).json({
     message: "Scan created successfully",
     scan,
-  });
-}
-
-export async function analyzeScanController(
-  req: AuthenticatedRequest,
-  res: Response
-) {
-  const result = analyzeScanSchema.safeParse(req.body);
-
-  if (!result.success) {
-    res.status(400).json({
-      message: "Validation failed",
-      errors: result.error.flatten().fieldErrors,
-    });
-    return;
-  }
-
-  const { imageUrl, cropName, latitude, longitude, farmId } = result.data;
-
-  const diagnosis = await analyzeScanService({
-    imageUrl,
-    cropName,
-    latitude,
-    longitude,
-    userId: req.user?.userId,
-    farmId,
-  });
-
-  res.status(200).json({
-    status: "success",
-    diagnosis,
   });
 }
 
@@ -96,9 +65,10 @@ export async function getScanController(
     });
     return;
   }
+
   const scan = await getScanById(
-  result.data.id,
-  req.user.userId
+    result.data.id,
+    req.user.userId
   );
 
   res.status(200).json({
@@ -114,7 +84,7 @@ export async function getScansController(
     throw new AppError("Authentication required", 401);
   }
 
-  const scans = await getScansByUser(req.user.userId, req.user.role);
+  const scans = await getScansByUser(req.user.userId);
 
   res.status(200).json({
     scans,

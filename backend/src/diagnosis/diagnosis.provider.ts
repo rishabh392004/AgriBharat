@@ -1,11 +1,18 @@
+import { z } from "zod";
+import { FormData, Blob } from "formdata-node";
+
 import { AppError } from "../common/AppError.js";
+import { env } from "../config/env.js";
 import { getRecommendation } from "../recommendation/recommendation.service.js";
 import type {
   DiagnosisProvider,
   DiagnosisRequest,
   DiagnosisResult,
   Severity,
+  WeatherContext,
 } from "./diagnosis.types.js";
+
+// ── Mock Provider (kept for unit tests) ──────────────────────────────────────
 
 const MOCK_PROVIDER_NAME = "mock";
 
@@ -29,12 +36,10 @@ function deterministicHash(imageUrl: string): number {
   return hash;
 }
 
-/** Pick a disease deterministically from the image URL — same URL always gives same disease. */
 function deterministicDisease(imageUrl: string): string {
   return MOCK_DISEASES[deterministicHash(imageUrl) % MOCK_DISEASES.length] ?? "Healthy";
 }
 
-/** Range: 0.70 – 0.95 (realistic confidence band). */
 function deterministicConfidence(imageUrl: string): number {
   return Number((0.70 + (deterministicHash(imageUrl) % 26) / 100).toFixed(2));
 }
@@ -68,181 +73,294 @@ export const mockDiagnosisProvider: DiagnosisProvider = {
       severity,
       recommendation,
       provider: MOCK_PROVIDER_NAME,
+      flagOfficerReview: false,
+      foliarDamagePercent: 0,
+      urgency: "LOW",
+      etlStatus: "",
+      top3Predictions: [{ class: disease, confidence }],
+      weatherContext: {
+        temperature_celsius: 29,
+        humidity_percent: 78,
+        pest_outbreak_risk: "LOW_MONITORING_RISK",
+        climate_pest_forecast: "Mock data — no real weather context.",
+      },
     };
   },
 };
 
+// ── Real ML Provider ──────────────────────────────────────────────────────────
+
 /**
- * Real ML Diagnosis Provider that calls the Python FastAPI ResNet-34 service
- * at ML_SERVICE_URL (or ML_API_URL) /predict with multipart image data.
- * Gracefully falls back to mockDiagnosisProvider if the Python service is offline.
+ * Zod schema for the actual FastAPI /predict response.
+ * All fields validated so we never trust arbitrary ML output blindly.
  */
-export const realMlDiagnosisProvider: DiagnosisProvider = {
+const mlSeverityAnalysisSchema = z.object({
+  foliar_damage_percent: z.number().default(0),
+  affected_leaf_area_percent: z.number().default(0),
+  economic_threshold_status: z.string().default(""),
+  etl_badge_color: z.string().default("Green"),
+  recommended_urgency: z.string().default("LOW"),
+  action_plan: z.string().default(""),
+});
+
+const mlWeatherContextSchema = z.object({
+  temperature_celsius: z.number().default(29),
+  humidity_percent: z.number().default(78),
+  pest_outbreak_risk: z.string().default("LOW_MONITORING_RISK"),
+  climate_pest_forecast: z.string().default(""),
+});
+
+const mlPredictionEntrySchema = z.object({
+  class: z.string(),
+  confidence: z.number(),
+});
+
+const mlRecommendedSolutionSchema = z
+  .object({
+    vernacular_name: z.string().optional(),
+    pest_vector: z.string().optional(),
+    biological_control: z.string().optional(),
+    chemical_control: z.string().optional(),
+    mechanical_control: z.string().optional(),
+  })
+  .passthrough()
+  .optional();
+
+const mlResponseSchema = z.object({
+  status: z.string(),
+  predicted_disease: z.string(),
+  confidence: z.number().min(0).max(1),
+  foliar_damage_percent: z.number().default(0),
+  economic_threshold_status: z.string().default(""),
+  etl_badge_color: z.string().default("Green"),
+  pest_outbreak_risk: z.string().default("LOW_MONITORING_RISK"),
+  severity_analysis: mlSeverityAnalysisSchema,
+  weather_context: mlWeatherContextSchema,
+  top_predictions: z.array(mlPredictionEntrySchema).default([]),
+  explainability: z
+    .object({
+      method: z.string().optional(),
+      target_layer: z.string().optional(),
+      heatmap_base64: z.string().optional(),
+    })
+    .optional(),
+  recommended_solution: mlRecommendedSolutionSchema,
+  pest_vector_profile: mlRecommendedSolutionSchema,
+});
+
+type MlResponse = z.infer<typeof mlResponseSchema>;
+
+/**
+ * Maps ML recommended_urgency/etl to our Severity type.
+ * "CRITICAL" → "severe", "MEDIUM" → "moderate", "LOW" → "mild"
+ */
+function urgencyToSeverity(urgency: string): Severity {
+  const u = urgency.toUpperCase();
+  if (u === "CRITICAL") return "severe";
+  if (u === "MEDIUM") return "moderate";
+  if (u === "LOW") return "mild";
+  return "none";
+}
+
+/**
+ * Determines officer-review flag from ML response.
+ * Flag is set when confidence < 0.78 OR urgency is CRITICAL OR
+ * etl_badge_color is Red — because these conditions warrant human oversight.
+ */
+function shouldFlagOfficerReview(ml: MlResponse): boolean {
+  if (ml.confidence < 0.78) return true;
+  if (ml.severity_analysis.recommended_urgency === "CRITICAL") return true;
+  if (ml.severity_analysis.etl_badge_color === "Red") return true;
+  return false;
+}
+
+/**
+ * Builds structured Recommendation from ML advisory output.
+ * Falls back to knowledge-base recommendation if ML advisory is missing.
+ */
+function buildRecommendation(
+  predictedDisease: string,
+  mlRecommendation?: MlResponse["recommended_solution"]
+) {
+  if (mlRecommendation) {
+    const actions: string[] = [];
+    const precautions: string[] = [];
+
+    if (mlRecommendation.biological_control) {
+      actions.push(`Biological control: ${mlRecommendation.biological_control}`);
+    }
+    if (mlRecommendation.chemical_control) {
+      actions.push(`Chemical control: ${mlRecommendation.chemical_control}`);
+    }
+    if (mlRecommendation.mechanical_control) {
+      precautions.push(`Mechanical/cultural: ${mlRecommendation.mechanical_control}`);
+    }
+    if (mlRecommendation.pest_vector) {
+      precautions.push(`Primary pest vector: ${mlRecommendation.pest_vector}`);
+    }
+
+    if (actions.length > 0 || precautions.length > 0) {
+      return { actions, precautions };
+    }
+  }
+
+  // Fallback to static knowledge base
+  return getRecommendation(predictedDisease);
+}
+
+export const realMlProvider: DiagnosisProvider = {
   async diagnose(input: DiagnosisRequest): Promise<DiagnosisResult> {
-    if (input.imageUrl.includes(MOCK_DIAGNOSIS_FAILURE_TOKEN)) {
-      throw new AppError("Diagnosis provider failed", 502);
-    }
+    const mlUrl = env.ML_SERVICE_URL;
+    const timeoutMs = env.ML_TIMEOUT_MS;
 
-    const mlBaseUrl =
-      process.env.ML_SERVICE_URL ||
-      process.env.ML_API_URL ||
-      "http://localhost:8000";
-
+    // --- Step 1: Download the image from its URL ---
+    let imageBuffer: ArrayBuffer;
     try {
-      // 1. Obtain image blob / buffer
-      let imageBlob: Blob;
+      const controller = new AbortController();
+      const downloadTimer = setTimeout(() => controller.abort(), timeoutMs);
 
-      if (input.imageUrl.startsWith("data:")) {
-        // Base64 Data URL
-        const commaIdx = input.imageUrl.indexOf(",");
-        const base64Data = input.imageUrl.slice(commaIdx + 1);
-        const mimeMatch = input.imageUrl.match(/data:([^;]+);/);
-        const mime: string = (mimeMatch && mimeMatch[1]) ? mimeMatch[1] : "image/jpeg";
-        const buffer = Buffer.from(base64Data, "base64");
-        imageBlob = new Blob([buffer], { type: mime });
-      } else if (
-        input.imageUrl.startsWith("http://") ||
-        input.imageUrl.startsWith("https://")
-      ) {
-        // Remote image URL
-        const imgRes = await fetch(input.imageUrl, {
-          signal: AbortSignal.timeout(6000),
-        });
-        if (!imgRes.ok) {
-          throw new Error(`Failed to fetch scan image from ${input.imageUrl}: status ${imgRes.status}`);
-        }
-        const arrayBuffer = await imgRes.arrayBuffer();
-        imageBlob = new Blob([arrayBuffer], {
-          type: imgRes.headers.get("content-type") || "image/jpeg",
-        });
-      } else {
-        // Mock token or relative path — create a tiny valid 1x1 JPEG blob
-        const dummyJpeg = Buffer.from(
-          "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=",
-          "base64"
-        );
-        imageBlob = new Blob([dummyJpeg], { type: "image/jpeg" });
-      }
-
-      // 2. Build multipart form data
-      const formData = new FormData();
-      formData.append("image", imageBlob, "scan.jpg");
-      formData.append("crop_name", input.cropName || "Auto");
-      formData.append("latitude", String(input.latitude ?? 19.9975));
-      formData.append("longitude", String(input.longitude ?? 73.7898));
-
-      // 3. Post to ML inference service
-      const res = await fetch(`${mlBaseUrl}/predict`, {
-        method: "POST",
-        body: formData,
-        signal: AbortSignal.timeout(12000),
+      const imageRes = await fetch(input.imageUrl, {
+        signal: controller.signal,
       });
+      clearTimeout(downloadTimer);
 
-      if (!res.ok) {
-        const errorText = await res.text().catch(() => "");
-        throw new Error(
-          `ML inference service returned HTTP ${res.status}: ${errorText}`
+      if (!imageRes.ok) {
+        throw new AppError(
+          `Image download failed (HTTP ${imageRes.status}): ${input.imageUrl}`,
+          502
+        );
+      }
+      imageBuffer = await imageRes.arrayBuffer();
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[ML Provider] Image download error:", msg);
+      throw new AppError("Could not download image for ML analysis", 502);
+    }
+
+    // --- Step 2: Build multipart form and POST to ML service ---
+    const form = new FormData();
+    form.set(
+      "image",
+      new Blob([imageBuffer], { type: "image/jpeg" }),
+      "scan.jpg"
+    );
+    form.set("crop_name", input.cropName ?? "Auto");
+    form.set("latitude", String(input.latitude ?? 19.9975));
+    form.set("longitude", String(input.longitude ?? 73.7898));
+
+    const controller = new AbortController();
+    const mlTimer = setTimeout(() => controller.abort(), timeoutMs);
+
+    let rawJson: unknown;
+    try {
+      const mlRes = await fetch(`${mlUrl}/predict`, {
+        method: "POST",
+        body: form as unknown as BodyInit,
+        signal: controller.signal,
+      });
+      clearTimeout(mlTimer);
+
+      if (!mlRes.ok) {
+        let detail = "";
+        try {
+          const body = (await mlRes.json()) as { detail?: string };
+          detail = body.detail ?? "";
+        } catch {
+          // ignore parse error on error body
+        }
+        console.error(`[ML Provider] FastAPI returned HTTP ${mlRes.status}: ${detail}`);
+        throw new AppError(
+          `ML service returned an error (HTTP ${mlRes.status})`,
+          502
         );
       }
 
-      const data = (await res.json()) as {
-        status?: string;
-        predicted_disease?: string;
-        confidence?: number;
-        economic_threshold_status?: string;
-        etl_badge_color?: string;
-        foliar_damage_percent?: number;
-        pest_outbreak_risk?: string;
-        explainability?: {
-          method?: string;
-          target_layer?: string;
-          heatmap_base64?: string;
-        };
-        recommended_solution?: {
-          chemical_control?: string;
-          biological_control?: string;
-          mechanical_control?: string;
-          pest_vector?: string;
-        };
-      };
+      rawJson = await mlRes.json();
+    } catch (err) {
+      clearTimeout(mlTimer);
+      if (err instanceof AppError) throw err;
 
-      const rawDisease = data.predicted_disease || "Healthy";
-      const cleanDisease = rawDisease.replace(/___/g, " - ").replace(/_/g, " ");
-      const confidence =
-        typeof data.confidence === "number" ? data.confidence : 0.85;
-
-      let severity: Severity = "moderate";
-      if (
-        confidence >= 0.9 ||
-        data.economic_threshold_status?.includes("Breached")
-      ) {
-        severity = "severe";
-      } else if (
-        confidence >= 0.8 ||
-        data.economic_threshold_status?.includes("Approaching")
-      ) {
-        severity = "moderate";
-      } else if (confidence >= 0.6) {
-        severity = "mild";
-      } else {
-        severity = "none";
+      const isAbort =
+        err instanceof Error && err.name === "AbortError";
+      if (isAbort) {
+        console.error("[ML Provider] Request timed out after", timeoutMs, "ms");
+        throw new AppError("ML service timed out", 504);
       }
 
-      const sol = data.recommended_solution || {};
-      const actions = [
-        sol.chemical_control,
-        sol.biological_control,
-        sol.mechanical_control,
-      ].filter(Boolean) as string[];
-
-      const rec =
-        actions.length > 0
-          ? {
-              actions,
-              precautions: [
-                sol.pest_vector || "Inspect leaf undersides every 4 days.",
-                "Maintain optimal field drainage and sanitize pruning shears.",
-              ],
-            }
-          : getRecommendation(cleanDisease);
-
-      return {
-        scanId: input.scanId,
-        imageUrl: input.imageUrl,
-        disease: cleanDisease,
-        confidence,
-        severity,
-        recommendation: rec,
-        provider: "resnet34-fastapi",
-        foliarDamagePercent: data.foliar_damage_percent,
-        economicThresholdStatus: data.economic_threshold_status,
-        etlBadgeColor: data.etl_badge_color,
-        explainability: data.explainability,
-        pestOutbreakRisk: data.pest_outbreak_risk,
-      };
-    } catch (err: any) {
-      console.warn(
-        `[DiagnosisProvider] Real ML service call to ${mlBaseUrl}/predict failed (${err?.message}). Falling back to mock provider.`
-      );
-      return mockDiagnosisProvider.diagnose(input);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[ML Provider] ML service call failed:", msg);
+      throw new AppError("ML service is unavailable", 502);
     }
+
+    // --- Step 3: Validate ML response with Zod ---
+    const parseResult = mlResponseSchema.safeParse(rawJson);
+    if (!parseResult.success) {
+      console.error(
+        "[ML Provider] Unexpected ML response structure:",
+        parseResult.error.flatten()
+      );
+      throw new AppError("ML service returned an unexpected response format", 502);
+    }
+
+    const ml = parseResult.data;
+
+    // Reject responses where ML itself flagged an error
+    if (ml.status !== "success") {
+      console.error("[ML Provider] ML response status is not 'success':", ml.status);
+      throw new AppError("ML inference did not complete successfully", 502);
+    }
+
+    // --- Step 4: Map ML response to DiagnosisResult ---
+    const severity = urgencyToSeverity(ml.severity_analysis.recommended_urgency);
+    const flagOfficerReview = shouldFlagOfficerReview(ml);
+    const recommendation = buildRecommendation(
+      ml.predicted_disease,
+      ml.recommended_solution ?? ml.pest_vector_profile
+    );
+
+    const weatherContext: WeatherContext = {
+      temperature_celsius: ml.weather_context.temperature_celsius,
+      humidity_percent: ml.weather_context.humidity_percent,
+      pest_outbreak_risk: ml.weather_context.pest_outbreak_risk,
+      climate_pest_forecast: ml.weather_context.climate_pest_forecast,
+    };
+
+    const gradCamBase64 = ml.explainability?.heatmap_base64;
+
+    console.info(
+      `[ML Provider] Scan ${input.scanId}: disease="${ml.predicted_disease}" ` +
+        `confidence=${ml.confidence.toFixed(3)} urgency=${ml.severity_analysis.recommended_urgency} ` +
+        `flag_officer=${flagOfficerReview}`
+    );
+
+    return {
+      scanId: input.scanId,
+      imageUrl: input.imageUrl,
+      disease: ml.predicted_disease,
+      confidence: ml.confidence,
+      severity,
+      recommendation,
+      provider: "ResNet34-FastAPI",
+      flagOfficerReview,
+      foliarDamagePercent: ml.severity_analysis.foliar_damage_percent,
+      urgency: ml.severity_analysis.recommended_urgency,
+      etlStatus: ml.severity_analysis.economic_threshold_status,
+      top3Predictions: ml.top_predictions,
+      weatherContext,
+      // exactOptionalPropertyTypes: only spread when defined
+      ...(gradCamBase64 !== undefined && { gradCamBase64 }),
+    };
   },
 };
 
+// ── Provider Selection ────────────────────────────────────────────────────────
+
+/**
+ * Returns the appropriate diagnosis provider based on environment.
+ * The real provider is always used when ML_SERVICE_URL is configured.
+ * Tests override this via vi.mock("./diagnosis.provider.js").
+ */
 export function getDiagnosisProvider(): DiagnosisProvider {
-  // Always use mock provider in unit tests for deterministic testing
-  if (process.env.NODE_ENV === "test") {
-    return mockDiagnosisProvider;
-  }
-
-  // Support both ML_SERVICE_URL (current standard) and legacy ML_API_URL
-  const mlServiceUrl =
-    process.env.ML_SERVICE_URL || process.env.ML_API_URL;
-
-  if (mlServiceUrl) {
-    return realMlDiagnosisProvider;
-  }
-
-  return mockDiagnosisProvider;
+  return realMlProvider;
 }
-

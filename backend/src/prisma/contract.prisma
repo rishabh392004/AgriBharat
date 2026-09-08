@@ -19,6 +19,9 @@ model Scan {
   id          Int               @id @default(autoincrement())
   farmId      Int
   imageUrl    String
+  cropName    String            @default("Auto")
+  latitude    Float?
+  longitude   Float?
   status      String            @default("PENDING")
   createdAt   TimestamptzString @default(now())
   updatedAt   temporal.updatedAtString()
@@ -28,17 +31,24 @@ model Scan {
 }
 
 model DiseaseResult {
-  id             Int               @id @default(autoincrement())
-  scanId         Int               @unique
-  disease        String
-  confidence     Float
-  severity       String
-  actions        String
-  precautions    String
-  provider       String
-  createdAt      TimestamptzString @default(now())
+  id                  Int               @id @default(autoincrement())
+  scanId              Int               @unique
+  disease             String
+  confidence          Float
+  severity            String
+  actions             String
+  precautions         String
+  provider            String
+  // Extended ML fields — persisted from real ResNet-34 inference
+  flagOfficerReview   Boolean           @default(false)
+  foliarDamagePercent Float             @default(0)
+  urgency             String            @default("LOW")
+  etlStatus           String            @default("")
+  top3Predictions     String            @default("[]")
+  weatherContext      String            @default("{}")
+  createdAt           TimestamptzString @default(now())
 
-  scan           Scan              @relation(fields: [scanId], references: [id])
+  scan                Scan              @relation(fields: [scanId], references: [id])
 }
 
 model Farm {
@@ -85,4 +95,3 @@ model OfficerProfile {
 
   user             User              @relation(fields: [userId], references: [id])
 }
-

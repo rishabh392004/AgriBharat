@@ -5,14 +5,13 @@ import {
   register,
   login,
   getMe,
-  updateMe,
 } from "./auth.controller.js";
 
 import { authMiddleware } from "./auth.middleware.js";
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: process.env.NODE_ENV === "production" ? 10 : 100,
+  limit: 5,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
@@ -26,7 +25,5 @@ router.post("/register", authRateLimit, register);
 router.post("/login", authRateLimit, login);
 
 router.get("/me", authMiddleware, getMe);
-router.patch("/me", authMiddleware, updateMe);
-router.put("/me", authMiddleware, updateMe);
 
 export default router;
