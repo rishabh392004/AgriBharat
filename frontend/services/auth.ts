@@ -1,2 +1,3 @@
-export type DemoUser = { name: string; role: 'farmer' | 'officer'; phone: string }
-export const auth = { login: async (phone: string, _password: string): Promise<DemoUser> => ({ name: phone.endsWith('99') ? 'Dr. Meera Joshi' : 'Vijay Patil', role: phone.endsWith('99') ? 'officer' : 'farmer', phone }), register: async (name: string, phone: string): Promise<DemoUser> => ({ name, role: 'farmer', phone }), demoFarmer: async (): Promise<DemoUser> => ({ name: 'Vijay Patil', role: 'farmer', phone: '+91 98765 43210' }), demoOfficer: async (): Promise<DemoUser> => ({ name: 'Dr. Meera Joshi', role: 'officer', phone: '+91 99999 00000' }) }
+import { authService } from '@/services/authService'
+export const auth = authService
+export type { SessionUser as DemoUser } from '@/types'

@@ -1,49 +1,42 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import { Noto_Sans, Noto_Sans_Devanagari } from 'next/font/google'
 import './globals.css'
-import { I18nProvider } from '@/lib/i18n'
+import { Providers } from '@/components/providers'
+
+const noto = Noto_Sans({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-noto',
+  display: 'swap',
+})
+
+const deva = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  variable: '--font-deva',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'KrishiRakshak AI | Detect Early. Protect Your Crop.',
-  description: 'AI-powered early crop disease detection, risk prediction and farmer advisory for India.',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
+  description: 'AI-powered crop care for Indian farmers — scan, understand, prevent and find help.',
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
-  ],
+  themeColor: '#1b3d2a',
+  width: 'device-width',
+  initialScale: 1,
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="bg-background">
-      <body className="antialiased">
-        <I18nProvider>{children}</I18nProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+    <html lang="en" className={`${noto.variable} ${deva.variable}`}>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Gujarati:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Sans+Gurmukhi:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&family=Noto+Sans+Malayalam:wght@400;600;700&display=swap"
+        />
+      </head>
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
