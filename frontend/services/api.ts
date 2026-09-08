@@ -6,6 +6,9 @@ import { getScanHistory } from '@/services/historyService'
 import { getNearbyLocations } from '@/services/locationService'
 import { sendChatMessage } from '@/services/chatbotService'
 
+import { farmService } from '@/services/farmService'
+import { messageService } from '@/services/messageService'
+
 export const api = {
   login: authService.login,
   register: authService.register,
@@ -15,12 +18,23 @@ export const api = {
   getScanHistory,
   getWeather: async () => weather,
   getAlerts: async () => alerts,
-  getOfficerMetrics: async () => officerMetrics,
+  getOfficerMetrics: async () => {
+    const token = getStoredToken()
+    if (token) {
+      try {
+        const res = await apiHttp.get('/officer/metrics')
+        if (res) return { ...officerMetrics, ...res }
+      } catch (err) {
+        console.warn('Could not fetch backend officer metrics, using fallback:', err)
+      }
+    }
+    return officerMetrics
+  },
   getOfficerProfile: async () => {
     const token = getStoredToken()
     if (token) {
       try {
-        const res = await apiHttp.get('/officer/me')
+        const res = await apiHttp.get('/officer/profile/me')
         if (res && res.profile) return res.profile
       } catch (err) {
         console.warn('Could not fetch officer profile, using default:', err)
@@ -30,5 +44,7 @@ export const api = {
   },
   getReports: async () => reports,
   getRegionalTrends: async () => regionalTrends,
-  getScans: async () => scans,
+  getScans: async () => getScanHistory(),
+  farms: farmService,
+  messages: messageService,
 }

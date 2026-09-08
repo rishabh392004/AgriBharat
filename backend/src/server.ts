@@ -42,6 +42,8 @@ app.use(errorMiddleware);
 
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`AgriBharat backend running on port ${PORT}`);
 });
+
+export { app, server };

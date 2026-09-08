@@ -23,10 +23,20 @@ from ultralytics import YOLO
 # --- ENVIRONMENT & API SETUP ---
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Verify your key is picked up safely
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 print("Loaded Key Prefix:", GEMINI_API_KEY[:8] if GEMINI_API_KEY else "KEY NOT FOUND")
 
-ai_client = genai.Client(api_key=GEMINI_API_KEY)
+ai_client = None
+if GEMINI_API_KEY and len(GEMINI_API_KEY) > 10:
+    try:
+        ai_client = genai.Client(api_key=GEMINI_API_KEY)
+        print("Gemini client successfully initialized for AgriScan.")
+    except Exception as e:
+        print(f"Warning: Failed to initialize Gemini client in main.py: {e}. Running in local advisory mode.")
+        ai_client = None
+else:
+    print("Notice: GEMINI_API_KEY not set or invalid in main.py. Running with built-in advisory fallback.")
 
 # --- YOLO UPSTREAM DETECTOR ---
 print("Initializing YOLO upstream validator...")
@@ -337,6 +347,18 @@ def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_ris
       "mechanical_control": "Field cultural practices (e.g. sticky cards, pruning infected branches)"
     }}
     """
+    fallback_advisory = {
+        "vernacular_name": pred_disease.replace("_", " "),
+        "pest_vector": "Insect puncture vector / Foliar feeding pests",
+        "biological_control": "Neem seed extract 5% or Neem oil 10,000 PPM @ 3ml/L.",
+        "chemical_control": "Consult local KVK for verified active pesticide formulation.",
+        "mechanical_control": "Deploy yellow sticky traps (15 traps/acre) and rogue infected leaves.",
+    }
+
+    if not ai_client:
+        fallback_advisory["fallback_notice"] = "Running in advisory fallback mode (set GEMINI_API_KEY to activate live Gemini AI)"
+        return fallback_advisory
+
     try:
         response = ai_client.models.generate_content(
             model="gemini-2.5-flash",
@@ -348,19 +370,16 @@ def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_ris
         )
         return json.loads(response.text)
     except Exception as e:
-        return {
-            "vernacular_name": pred_disease.replace("_", " "),
-            "pest_vector": "Foliar feeding vector / Fungal spores",
-            "biological_control": "Neem oil 10,000 PPM @ 3ml/L water spray.",
-            "chemical_control": "Consult local KVK for recommended active ingredient.",
-            "mechanical_control": "Deploy yellow sticky traps and rogue heavily infected leaves.",
-            "fallback_notice": str(e)
-        }
+        fallback_advisory["fallback_notice"] = str(e)
+        return fallback_advisory
 
 
 # --- ZERO-SHOT FALLBACK FOR LOW CONFIDENCE & OOD CROPS (ONION, SUGARCANE) ---
 def fallback_gemini_vision(pil_img: Image.Image) -> dict:
     """Invoked when ResNet confidence is low (< 0.78) to handle regional Indian cash crops."""
+    if not ai_client:
+        return None
+
     buffered = io.BytesIO()
     pil_img.save(buffered, format="JPEG", quality=85)
     img_bytes = buffered.getvalue()
@@ -389,8 +408,6 @@ def fallback_gemini_vision(pil_img: Image.Image) -> dict:
         return json.loads(response.text)
     except Exception:
         return None
-
-
 # --- APPLICATION INITIALIZATION ---
 app = FastAPI(title="AgriScan ML Inference Engine with Robust Rejection", version="2.5.0")
 

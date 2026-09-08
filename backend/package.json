@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "contract:emit": "prisma contract emit",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma skills sync || true"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +36,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.4.1",
+    "prisma": "^6.4.1",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"

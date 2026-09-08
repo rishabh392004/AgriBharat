@@ -45,4 +45,29 @@ export function authMiddleware(
   } catch {
     next(new AppError("Invalid or expired token", 401));
   }
+}
+
+export function optionalAuthMiddleware(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+) {
+  const authorization = req.headers.authorization;
+  if (!authorization || !authorization.startsWith("Bearer ")) {
+    return next();
+  }
+
+  const token = authorization.substring(7);
+  if (!token) return next();
+
+  try {
+    const payload = verifyToken(token);
+    req.user = {
+      userId: payload.userId,
+      role: payload.role,
+    };
+  } catch {
+    // Ignore invalid token in optional auth
+  }
+  next();
 }

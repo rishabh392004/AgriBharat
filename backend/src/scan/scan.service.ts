@@ -44,14 +44,34 @@ async function callMlModel(imageUrl: string): Promise<{
 }
 
 
+import { getDiagnosisProvider } from "../diagnosis/diagnosis.provider.js";
+
 export async function createScan(
   userId: number,
-  farmId: number,
-  imageUrl: string
+  farmId: number | undefined,
+  imageUrl: string,
+  cropName?: string
 ) {
+  let targetFarmId = farmId;
+  if (!targetFarmId) {
+    const existing = await db.orm.public.Farm.where({ userId }).first();
+    if (existing) {
+      targetFarmId = existing.id;
+    } else {
+      const newFarm = await db.orm.public.Farm.create({
+        userId,
+        name: "Main Farm",
+        location: "Nashik, Maharashtra",
+        cropType: cropName || "Wheat",
+        area: 2.5,
+      });
+      targetFarmId = newFarm.id;
+    }
+  }
+
   const farm = await db.orm.public.Farm
     .where({
-      id: farmId,
+      id: targetFarmId,
       userId,
     })
     .first();
@@ -62,7 +82,7 @@ export async function createScan(
 
   // 1. Save the scan record first
   const scan = await db.orm.public.Scan.create({
-    farmId,
+    farmId: targetFarmId,
     imageUrl,
   });
 
@@ -90,6 +110,81 @@ export async function createScan(
     createdAt: scan.createdAt,
     mlStatus: "processing", // frontend can poll for diagnosis
   };
+}
+
+export async function analyzeScanService(params: {
+  imageUrl: string;
+  cropName?: string | undefined;
+  latitude?: number | undefined;
+  longitude?: number | undefined;
+  userId?: number | undefined;
+  farmId?: number | undefined;
+}) {
+  let scanRecordId = Math.floor(10000 + Math.random() * 90000);
+  let persisted = false;
+
+  if (params.userId) {
+    try {
+      let targetFarmId = params.farmId;
+      if (!targetFarmId) {
+        const existingFarm = await db.orm.public.Farm.where({ userId: params.userId }).first();
+        if (existingFarm) {
+          targetFarmId = existingFarm.id;
+        } else {
+          const newFarm = await db.orm.public.Farm.create({
+            userId: params.userId,
+            name: "Main Farm",
+            location: "Nashik, Maharashtra",
+            cropType: params.cropName || "Wheat",
+            area: 2.0,
+          });
+          targetFarmId = newFarm.id;
+        }
+      }
+
+      if (targetFarmId) {
+        const scan = await db.orm.public.Scan.create({
+          farmId: targetFarmId,
+          imageUrl: params.imageUrl.length > 300 ? params.imageUrl.slice(0, 300) : params.imageUrl,
+          status: "PROCESSING",
+        });
+        scanRecordId = scan.id;
+        persisted = true;
+      }
+    } catch (dbErr) {
+      console.warn("[ScanService] Could not persist scan record in PostgreSQL:", dbErr);
+    }
+  }
+
+  const provider = getDiagnosisProvider();
+  const diagnosis = await provider.diagnose({
+    scanId: scanRecordId,
+    imageUrl: params.imageUrl,
+    cropName: params.cropName,
+    latitude: params.latitude,
+    longitude: params.longitude,
+  });
+
+  if (persisted) {
+    try {
+      await db.orm.public.Scan.where({ id: scanRecordId }).update({
+        status: "COMPLETED",
+      });
+      await db.orm.public.DiseaseResult.create({
+        scanId: scanRecordId,
+        disease: diagnosis.disease,
+        confidence: diagnosis.confidence,
+        severity: diagnosis.severity,
+        actions: JSON.stringify(diagnosis.recommendation?.actions || []),
+        precautions: JSON.stringify(diagnosis.recommendation?.precautions || []),
+        provider: diagnosis.provider,
+      });
+    } catch (saveErr) {
+      console.warn("[ScanService] Could not save disease result in DB:", saveErr);
+    }
+  }
+
+  return diagnosis;
 }
 
 export async function getScanById(
@@ -124,7 +219,18 @@ const farm = await db.orm.public.Farm
   };
 }
 
-export async function getScansByUser(userId: number) {
+export async function getScansByUser(userId: number, role?: string) {
+  if (role?.toUpperCase() === "OFFICER") {
+    const allScans = await db.orm.public.Scan.all();
+    return allScans.map((scan) => ({
+      id: scan.id,
+      farmId: scan.farmId,
+      imageUrl: scan.imageUrl,
+      status: scan.status,
+      createdAt: scan.createdAt,
+    }));
+  }
+
   const farms = await db.orm.public.Farm
     .where({ userId })
     .all();

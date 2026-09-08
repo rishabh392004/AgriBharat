@@ -101,6 +101,13 @@ export const apiHttp = {
       body: body ? JSON.stringify(body) : undefined,
     }),
 
+  patch: <T = any>(url: string, body?: any, options?: RequestOptions) =>
+    apiClient<T>(url, {
+      ...options,
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+
   delete: <T = any>(url: string, options?: RequestOptions) =>
     apiClient<T>(url, { ...options, method: 'DELETE' }),
 }

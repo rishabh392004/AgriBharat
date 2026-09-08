@@ -976,7 +976,7 @@ function ChatInner() {
         </button>
       </form>
 
-      <p className="note" style={{ marginTop: 10 }}>
+      <p className="note" style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
         <Sparkles size={12} /> Kisan Salahkar Multilingual Voice Agent • Active Voice Language:{' '}
         <strong>{localeLabels[locale]} ({BCP47_LANG_MAP[locale]})</strong> • Powered by Krishi Darpan Agronomy Engine
       </p>

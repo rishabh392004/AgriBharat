@@ -162,18 +162,118 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
   },
 }
 
-export async function predictCrop(image: File | Blob | string | null, crop = 'Wheat'): Promise<Prediction> {
-  await new Promise((resolve) => setTimeout(resolve, 1200))
-  
+import { apiHttp } from '@/lib/api-client'
+
+async function fileToDataUrl(fileOrBlob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(fileOrBlob)
+  })
+}
+
+export async function predictCrop(
+  image: File | Blob | string | null,
+  crop = 'Wheat',
+  options: { latitude?: number; longitude?: number } = {}
+): Promise<Prediction> {
   let customImageUrl: string | undefined
+  let payloadImageUrl: string | undefined
+
   if (typeof image === 'string') {
     customImageUrl = image
+    payloadImageUrl = image
   } else if (image instanceof Blob && typeof window !== 'undefined') {
     customImageUrl = URL.createObjectURL(image)
+    try {
+      payloadImageUrl = await fileToDataUrl(image)
+    } catch {
+      payloadImageUrl = customImageUrl
+    }
   }
 
   const base = predictionsByCrop[crop] ?? predictionsByCrop.Wheat
   const randomSuffix = Math.floor(1000 + Math.random() * 9000)
+
+  // 1. Attempt live backend analysis via /api/v1/scans/analyze
+  if (payloadImageUrl) {
+    try {
+      const res = await apiHttp.post<{
+        status: string
+        diagnosis: {
+          scanId: number
+          disease: string
+          confidence: number
+          severity: string
+          foliarDamagePercent?: number
+          economicThresholdStatus?: string
+          etlBadgeColor?: string
+          explainability?: {
+            method?: string
+            heatmap_base64?: string
+          }
+          recommendation?: {
+            actions?: string[]
+            precautions?: string[]
+          }
+          pestOutbreakRisk?: string
+          provider?: string
+        }
+      }>('/scans/analyze', {
+        imageUrl: payloadImageUrl,
+        cropName: crop,
+        latitude: options.latitude ?? 19.9975,
+        longitude: options.longitude ?? 73.7898,
+      })
+
+      if (res && res.diagnosis) {
+        const d = res.diagnosis
+        const rawConfidence = d.confidence > 1 ? d.confidence : Math.round(d.confidence * 100)
+        const sevStr = (d.severity || 'moderate').toLowerCase()
+        const mappedSeverity = sevStr === 'severe' ? 'Severe' : sevStr === 'mild' ? 'Mild' : sevStr === 'none' ? 'None' : 'Moderate'
+        const mappedRisk = sevStr === 'severe' ? 'Critical' : sevStr === 'moderate' ? 'High' : 'Medium'
+
+        const actions = d.recommendation?.actions && d.recommendation.actions.length > 0
+          ? d.recommendation.actions
+          : base.actions
+        const precautions = d.recommendation?.precautions && d.recommendation.precautions.length > 0
+          ? d.recommendation.precautions
+          : base.precautions
+
+        const gradCamB64 = d.explainability?.heatmap_base64
+        const gradCamImage = gradCamB64
+          ? (gradCamB64.startsWith('data:') ? gradCamB64 : `data:image/jpeg;base64,${gradCamB64}`)
+          : undefined
+
+        const etlNotice = d.economicThresholdStatus ? ` [ETL: ${d.economicThresholdStatus}]` : ''
+        const outbreakNotice = d.pestOutbreakRisk ? ` [Climate Risk: ${d.pestOutbreakRisk}]` : ''
+
+        return {
+          scanId: `SCAN-${d.scanId || randomSuffix}`,
+          crop,
+          disease: d.disease || base.disease,
+          confidence: rawConfidence,
+          severity: mappedSeverity,
+          riskLevel: mappedRisk,
+          imageUrl: customImageUrl || base.imageUrl,
+          gradCamImage: gradCamImage || base.gradCamImage,
+          heatmapUrl: gradCamImage || base.heatmapUrl,
+          explanation: `AI detected ${d.disease} with ${rawConfidence}% confidence.${etlNotice}${outbreakNotice}`,
+          symptoms: base.symptoms,
+          precautions,
+          actions,
+          expertHelp: base.expertHelp,
+          attentionPoints: base.attentionPoints,
+        }
+      }
+    } catch (err) {
+      console.warn('[CropService] Backend /scans/analyze unavailable, using resilient fallback:', err)
+    }
+  }
+
+  // 2. Resilient local fallback
+  await new Promise((resolve) => setTimeout(resolve, 800))
   
   return {
     ...base,

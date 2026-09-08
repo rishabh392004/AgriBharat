@@ -11,7 +11,7 @@ import { authMiddleware } from "./auth.middleware.js";
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 5,
+  limit: process.env.NODE_ENV === "production" ? 10 : 100,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {

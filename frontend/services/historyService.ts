@@ -61,6 +61,18 @@ export async function saveScan(record: ScanRecord) {
   }
   const cleanRecord = { ...record, id: uniqueId }
   extra.unshift(cleanRecord)
+
+  // Sync to backend if authenticated
+  const token = getStoredToken()
+  if (token) {
+    apiHttp.post('/scans', {
+      imageUrl: record.thumb || `https://agribharat.local/crops/${record.crop.toLowerCase()}.jpg`,
+      cropName: record.crop,
+    }).catch((err) => {
+      console.warn('Could not sync scan to backend database:', err)
+    })
+  }
+
   return cleanRecord
 }
 
