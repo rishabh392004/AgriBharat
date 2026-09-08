@@ -294,7 +294,7 @@ export const scans: ScanRecord[] = [
     confidence: 89,
     severity: 'Moderate',
     risk: 'Medium',
-    status: 'Bacterial Blight',
+    status: 'Needs attention',
     thumb: 'cotton',
     symptoms: ['Angular water-soaked spots on leaves', 'Dark brown lesions on bracts'],
     precautions: ['Avoid sprinkler irrigation', 'Treat seed with bio-fungicide'],
@@ -310,7 +310,7 @@ export const scans: ScanRecord[] = [
     confidence: 92,
     severity: 'Severe',
     risk: 'High',
-    status: 'Purple Blotch',
+    status: 'Needs attention',
     thumb: 'tomato',
     symptoms: ['Small water-soaked lesions that turn purple-brown', 'Yellow halo surrounding spots'],
     precautions: ['Ensure proper bulb bed drainage', 'Maintain crop rotation with non-allium crops'],
@@ -520,3 +520,32 @@ export const reviewQueue: ReviewRecord[] = [
     weatherContext: 'Recent rain favours bacterial spread — avoid overhead irrigation.',
   },
 ]
+
+export const prediction = {
+  ...predictionsByCrop.Wheat,
+  recommendations: predictionsByCrop.Wheat.actions,
+}
+
+export const farms = [
+  {
+    id: 'farm-1',
+    name: 'Patil Farm North',
+    location: 'Nashik, Maharashtra',
+    crop: 'Wheat',
+    area: '4.5 acres',
+    lastScan: 'Today',
+    health: 'Good Condition',
+    risk: 'High' as const,
+  },
+  {
+    id: 'farm-2',
+    name: 'Patil Farm South',
+    location: 'Dindori, Maharashtra',
+    crop: 'Onion',
+    area: '2.0 acres',
+    lastScan: '2 days ago',
+    health: 'Under Care',
+    risk: 'Medium' as const,
+  },
+]
+

@@ -13,6 +13,7 @@ import {
   MapPin,
   CheckCircle2,
   Volume2,
+  VolumeX,
   Copy,
   Check,
   Bot,
@@ -21,25 +22,41 @@ import {
   Sprout,
   Droplets,
   HelpCircle,
+  Globe,
+  Radio,
 } from 'lucide-react'
-import { replyToChat } from '@/services/chatbotService'
-import { useI18n, Locale } from '@/lib/i18n'
+import { replyToChat, sendChatMessage } from '@/services/chatbotService'
+import { useI18n, Locale, localeLabels } from '@/lib/i18n'
 import type { ChatMessage } from '@/types'
 
 function now() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+const BCP47_LANG_MAP: Record<Locale, string> = {
+  en: 'en-IN',
+  hi: 'hi-IN',
+  mr: 'mr-IN',
+  gu: 'gu-IN',
+  bn: 'bn-IN',
+  ta: 'ta-IN',
+  te: 'te-IN',
+  pa: 'pa-IN',
+  kn: 'kn-IN',
+  ml: 'ml-IN',
+  as: 'as-IN',
+}
+
 const TOPICS = [
-  { id: 'disease', icon: '🐛', labelEn: 'Disease Diagnosis', labelHi: 'रोग पहचान व दवा', query: 'What disease could affect my crop?' },
-  { id: 'fertilizer', icon: '🧪', labelEn: 'NPK & Fertilizer Dosage', labelHi: 'खाद व पोषण मात्रा', query: 'What fertilizer and NPK dosage should I use?' },
-  { id: 'water', icon: '💧', labelEn: 'Irrigation & Spray Timing', labelHi: 'सिंचाई व छिड़काव समय', query: 'When should I water and spray my crop?' },
-  { id: 'organic', icon: '🌿', labelEn: 'Organic Pest Control', labelHi: 'जैविक कीटनाशक', query: 'How can I prevent crop disease with organic neem spray?' },
-  { id: 'schemes', icon: '🏛️', labelEn: 'Kisan Schemes & Mandi', labelHi: 'सरकारी योजना व मंडी', query: 'Tell me about PM Kisan and nearby Krishi Kendra support.' },
+  { id: 'disease', icon: '🐛', labelEn: 'Disease Diagnosis', labelHi: 'रोग पहचान व दवा', labelMr: 'रोग ओळख व औषध', query: 'What disease could affect my crop?' },
+  { id: 'fertilizer', icon: '🧪', labelEn: 'NPK & Fertilizer Dosage', labelHi: 'खाद व पोषण मात्रा', labelMr: 'खत व NPK प्रमाण', query: 'What fertilizer and NPK dosage should I use?' },
+  { id: 'water', icon: '💧', labelEn: 'Irrigation & Spray Timing', labelHi: 'सिंचाई व छिड़काव समय', labelMr: 'पाणी व फवारणी वेळ', query: 'When should I water and spray my crop?' },
+  { id: 'organic', icon: '🌿', labelEn: 'Organic Pest Control', labelHi: 'जैविक कीटनाशक', labelMr: 'सेंद्रिय कीड नियंत्रण', query: 'How can I prevent crop disease with organic neem spray?' },
+  { id: 'schemes', icon: '🏛️', labelEn: 'Kisan Schemes & Mandi', labelHi: 'सरकारी योजना व मंडी', labelMr: 'शासकीय योजना व बाजारभाव', query: 'Tell me about PM Kisan and nearby Krishi Kendra support.' },
 ]
 
 function ChatInner() {
-  const { t, locale } = useI18n()
+  const { t, locale, setLocale } = useI18n()
   const params = useSearchParams()
   const disease = params.get('disease') || undefined
   const confidence = params.get('confidence')
@@ -52,19 +69,48 @@ function ChatInner() {
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [speakingId, setSpeakingId] = useState<string | null>(null)
+  const [isBackendConnected, setIsBackendConnected] = useState(true)
+  const [voiceAgentActive, setVoiceAgentActive] = useState(false)
 
-  // Opening message dynamically adapting to disease and locale
+  useEffect(() => {
+    fetch('/api/backend-status')
+      .then((res) => res.json())
+      .then((data) => {
+        setIsBackendConnected(data?.nodeBackend?.status === 'connected' || data?.chatbotAi?.status === 'connected')
+      })
+      .catch(() => setIsBackendConnected(false))
+  }, [])
+
+  // Opening message dynamically adapting to disease and selected native locale
   const getOpeningText = () => {
     if (disease && confidence) {
-      if (locale === 'hi') {
-        return `🌾 **हालिया फसल स्कैन रिपोर्ट:** आपके खेत में **${disease}** (${confidence}% सटीकता) के संकेत मिले हैं।\n\nमैं आपको रोग के लक्षण, सही दवा की खुराक, जैविक उपाय और नजदीकी कृषि केंद्र ढूंढने में मदद कर सकता हूँ। नीचे दिए गए विकल्पों में से चुनें या अपना प्रश्न पूछें।`
-      }
       if (locale === 'mr') {
-        return `🌾 **पीक स्कॅन निदान:** तुमच्या शेतात **${disease}** (${confidence}% खात्री) चे संकेत आढळले आहेत.\n\nमी तुम्हाला त्वरित करावयाची फवारणी, जैविक उपचार आणि आवश्यक खबरदारीबद्दल मार्गदर्शन करू शकतो.`
+        return `🌾 **पीक स्कॅन निदान:** तुमच्या शेतात **${disease}** (${confidence}% खात्री) चे संकेत आढळले आहेत.\n\nमी तुम्हाला त्वरित करावयाची फवारणी, सेंद्रिय उपाय आणि आवश्यक खबरदारीबद्दल मराठीत मार्गदर्शन करू शकतो.`
+      }
+      if (locale === 'hi') {
+        return `🌾 **हालिया फसल स्कैन रिपोर्ट:** आपके खेत में **${disease}** (${confidence}% सटीकता) के संकेत मिले हैं।\n\nमैं आपको रोग के लक्षण, सही दवा की खुराक, जैविक उपाय और नजदीकी कृषि केंद्र ढूंढने में मदद कर सकता हूँ।`
+      }
+      if (locale === 'gu') {
+        return `🌾 **પાક સ્કેન અહેવાલ:** તમારા ખેતરમાં **${disease}** (${confidence}% ચોકસાઈ) ના સંકેત મળ્યા છે.\n\nહું તમને દવાના છંટકાવ અને જૈવિક ઉપાય વિશે ગુજરાતીમાં માર્ગદર્શન આપી શકું છું.`
       }
       return `🌾 **Recent Crop Diagnostic Alert:** Possible **${disease}** detected with ${confidence}% confidence.\n\nI can guide you with exact chemical spray dosages, organic neem remedies, weather-safe spraying windows, and nearby assistance.`
     }
-    return t('chatHello')
+
+    const welcomeGreetings: Record<Locale, string> = {
+      mr: '🌾 **नमस्कार शेतकरी मित्र!** मी तुमचा **AI व्हॉइस कृषी सल्लागार (Kisan Salahkar)** आहे. पिकावरील रोग, औषध फवारणीचे प्रमाण, खते किंवा पाणी नियोजनाबद्दल मराठीत विचारा किंवा बोला.',
+      hi: '🌾 **नमस्ते किसान भाई!** मैं आपका **डिजिटल वॉइस कृषि सलाहकार (Kisan Salahkar)** हूँ। फसल रोग, दवा छिड़काव, खाद और मौसम से जुड़े सवाल पूछें या बोलकर बताएं।',
+      en: '🌾 **Welcome to Kisan Salahkar Voice & AI Assistant!** Ask questions about crop diseases, spray dosages, organic treatments, or fertilizers. You can speak or type in any language.',
+      gu: '🌾 **નમસ્તે ખેડૂત મિત્ર!** હું તમારો **કૃષિ સહાયક** છું. પાકના રોગ, દવાનો છંટકાવ અને ખાતર વ્યવસ્થાપન વિશે ગુજરાતીમાં પૂછો અથવા બોલો.',
+      bn: '🌾 **নমস্কার কৃষক বন্ধু!** আমি আপনার **ডিজিটাল কৃষি উপদেষ্টা**। ফসলের রোগ, সার প্রয়োগ ও সেচ সম্পর্কে যে কোনো প্রশ্ন বাংলায় জিজ্ঞাসা করুন।',
+      ta: '🌾 **வணக்கம் விவசாய தோழரே!** நான் உங்கள் **வேளாண் AI உதவியாளர்**. பயிர் நோய்கள், மருந்தளவு மற்றும் உரங்கள் பற்றி தமிழில் கேளுங்கள்.',
+      te: '🌾 **రైతు సోదరులకు నమస్కారం!** నేను మీ **డిజిటల్ వ్యవసాయ సలహాదారుని**. పంట తెగుళ్లు, ఎరువులు మరియు మందుల గురించి తెలుగులో అడగండి.',
+      pa: '🌾 **ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਿਸਾਨ ਵੀਰੋ!** ਮੈਂ ਤੁਹਾਡਾ **ਖੇਤੀਬਾੜੀ ਸਲਾਹਕਾਰ** ਹਾਂ। ਫ਼ਸਲ ਦੀਆਂ ਬਿਮਾਰੀਆਂ ਅਤੇ ਦਵਾਈਆਂ ਦੀ ਖੁਰਾਕ ਬਾਰੇ ਪੰਜਾਬੀ ਵਿੱਚ ਪੁੱਛੋ।',
+      kn: '🌾 **ರೈತ ಮಿತ್ರರಿಗೆ ನಮಸ್ಕಾರ!** ಬೆಳೆ ರೋಗಗಳು ಮತ್ತು ಕೃಷಿ ಸಲಹೆಗಳಿಗಾಗಿ ಕನ್ನಡದಲ್ಲಿ ಕೇಳಿ.',
+      ml: '🌾 **കർഷക സുഹൃത്തിന് സ്വാഗതം!** വിള രോഗങ്ങളെക്കുറിച്ചും മരുന്നുകളെക്കുറിച്ചും ചോദിക്കുക.',
+      as: '🌾 **নমস্কাৰ কৃষক বন্ধু!** শস্যৰ ৰোগ আৰু কৃষি পৰামৰ্শৰ বাবে অসমীয়াত সোধক।',
+    }
+
+    return welcomeGreetings[locale] || welcomeGreetings.en
   }
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -87,40 +133,7 @@ function ChatInner() {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, typing])
 
-  // Animated reply effect
-  const streamAiResponse = (fullText: string, suggestions?: string[]) => {
-    setTyping(true)
-    setTimeout(() => {
-      setTyping(false)
-      const msgId = crypto.randomUUID()
-      setMessages((m) => [...m, { id: msgId, from: 'ai', text: fullText, time: now() }])
-      if (suggestions && suggestions.length > 0) {
-        setActiveSuggestions(suggestions)
-      } else {
-        setActiveSuggestions([
-          locale === 'hi' ? 'दवा की सही मात्रा क्या है?' : 'What is the dosage?',
-          locale === 'hi' ? 'जैविक उपाय बताएं' : 'Organic remedy',
-          locale === 'hi' ? 'नजदीकी दुकान ढूंढें' : 'Find nearby center',
-        ])
-      }
-    }, 450)
-  }
-
-  const send = (text: string, image?: string) => {
-    if (!text.trim() && !image) return
-    const userMsgText = text || '📷 Crop Image Attached'
-    setMessages((m) => [
-      ...m,
-      { id: crypto.randomUUID(), from: 'user', text: userMsgText, time: now(), image },
-    ])
-    setInput('')
-    setActiveSuggestions([])
-
-    const reply = replyToChat(userMsgText, disease, locale)
-    streamAiResponse(reply.text, reply.suggestions)
-  }
-
-  // Text-To-Speech Reader
+  // Text-To-Speech Reader (Voice Output in Native Accent)
   const speakMessage = (id: string, text: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
 
@@ -131,29 +144,75 @@ function ChatInner() {
     }
 
     window.speechSynthesis.cancel()
-    const cleanText = text.replace(/[*#•]/g, '')
+    const cleanText = text
+      .replace(/[*#•_`~\[\]]/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .trim()
+
     const utterance = new SpeechSynthesisUtterance(cleanText)
-    const langMap: Record<Locale, string> = {
-      en: 'en-IN',
-      hi: 'hi-IN',
-      mr: 'mr-IN',
-      bn: 'bn-IN',
-      gu: 'gu-IN',
-      ta: 'ta-IN',
-      te: 'te-IN',
-      pa: 'pa-IN',
-      kn: 'kn-IN',
-      ml: 'ml-IN',
-      as: 'as-IN',
-    }
-    utterance.lang = langMap[locale] || 'hi-IN'
+    const targetLang = BCP47_LANG_MAP[locale] || 'hi-IN'
+    utterance.lang = targetLang
     utterance.rate = 0.95
+    utterance.pitch = 1.0
+
+    try {
+      const voices = window.speechSynthesis.getVoices()
+      const langPrefix = targetLang.split('-')[0]
+      const matchedVoice =
+        voices.find((v) => v.lang.toLowerCase() === targetLang.toLowerCase()) ||
+        voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix))
+
+      if (matchedVoice) {
+        utterance.voice = matchedVoice
+      }
+    } catch {
+      // Browser fallback
+    }
 
     utterance.onend = () => setSpeakingId(null)
     utterance.onerror = () => setSpeakingId(null)
 
     setSpeakingId(id)
     window.speechSynthesis.speak(utterance)
+  }
+
+  const send = async (text: string, image?: string) => {
+    if (!text.trim() && !image) return
+    const userMsgText = text || '📷 Crop Image Attached'
+    setMessages((m) => [
+      ...m,
+      { id: crypto.randomUUID(), from: 'user', text: userMsgText, time: now(), image },
+    ])
+    setInput('')
+    setActiveSuggestions([])
+    setTyping(true)
+
+    const history = messages.map((m) => ({
+      role: (m.from === 'user' ? 'user' : 'model') as 'user' | 'model',
+      content: m.text,
+    }))
+
+    try {
+      const reply = await sendChatMessage(userMsgText, disease, locale, history)
+      setTyping(false)
+      const msgId = crypto.randomUUID()
+      setMessages((m) => [...m, { id: msgId, from: 'ai', text: reply.text, time: now() }])
+      if (reply.suggestions && reply.suggestions.length > 0) {
+        setActiveSuggestions(reply.suggestions)
+      }
+      // Auto Voice Agent playback
+      if (voiceAgentActive) {
+        speakMessage(msgId, reply.text)
+      }
+    } catch {
+      setTyping(false)
+      const fallback = replyToChat(userMsgText, disease, locale)
+      const msgId = crypto.randomUUID()
+      setMessages((m) => [...m, { id: msgId, from: 'ai', text: fallback.text, time: now() }])
+      if (voiceAgentActive) {
+        speakMessage(msgId, fallback.text)
+      }
+    }
   }
 
   // Copy Message to Clipboard
@@ -163,34 +222,29 @@ function ChatInner() {
     setTimeout(() => setCopiedId(null), 1800)
   }
 
-  // Multilingual Voice Input
+  // Native Multilingual Voice Input (Speech-To-Text)
   const voice = () => {
     const win = window as any
     const SpeechRec = win.SpeechRecognition || win.webkitSpeechRecognition
     if (!SpeechRec) {
-      setInput(t('voiceStop'))
+      alert('Voice recognition is not supported in this browser. Please use Google Chrome or Edge.')
+      return
+    }
+
+    if (isListening) {
+      if (win.__activeRecognition) {
+        win.__activeRecognition.stop()
+      }
+      setIsListening(false)
       return
     }
 
     try {
       const rec = new SpeechRec()
+      win.__activeRecognition = rec
       rec.continuous = false
       rec.interimResults = false
-
-      const langMap: Record<Locale, string> = {
-        en: 'en-IN',
-        hi: 'hi-IN',
-        mr: 'mr-IN',
-        bn: 'bn-IN',
-        gu: 'gu-IN',
-        ta: 'ta-IN',
-        te: 'te-IN',
-        pa: 'pa-IN',
-        kn: 'kn-IN',
-        ml: 'ml-IN',
-        as: 'as-IN',
-      }
-      rec.lang = langMap[locale] || 'hi-IN'
+      rec.lang = BCP47_LANG_MAP[locale] || 'hi-IN'
 
       setIsListening(true)
       rec.onstart = () => setIsListening(true)
@@ -220,7 +274,7 @@ function ChatInner() {
           border: '1px solid var(--line)',
           borderRadius: 20,
           padding: '12px 18px',
-          marginBottom: 12,
+          marginBottom: 10,
           boxShadow: '0 4px 16px rgba(43, 122, 77, 0.05)',
         }}
       >
@@ -246,18 +300,74 @@ function ChatInner() {
               <h1 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--forest)' }}>
                 {t('chatTitle')}
               </h1>
-              <span className="chip low" style={{ fontSize: 9, padding: '1px 6px' }}>
-                <span className="pulse-beacon" style={{ background: '#347044', marginRight: 4 }} />
-                Online
+              <span
+                className="chip low"
+                style={{
+                  fontSize: 9,
+                  padding: '2px 8px',
+                  background: isBackendConnected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                  color: isBackendConnected ? '#065f46' : '#92400e',
+                  border: isBackendConnected ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
+                }}
+              >
+                <span
+                  className="pulse-beacon"
+                  style={{ background: isBackendConnected ? '#10b981' : '#f59e0b', marginRight: 4 }}
+                />
+                {isBackendConnected ? 'Kisan Salahkar AI Online' : 'Local Mode'}
               </span>
             </div>
             <p className="muted" style={{ margin: 0, fontSize: 11 }}>
-              {t('chatSub')} • <strong>{locale.toUpperCase()}</strong>
+              {localeLabels[locale]} Voice & Agronomy Advisor • <strong>{BCP47_LANG_MAP[locale]}</strong>
             </p>
           </div>
         </div>
 
-        <div className="chips" style={{ marginLeft: 'auto' }}>
+        <div className="chips" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* Voice Agent Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !voiceAgentActive
+              setVoiceAgentActive(next)
+              if (!next && typeof window !== 'undefined' && window.speechSynthesis) {
+                window.speechSynthesis.cancel()
+                setSpeakingId(null)
+              }
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              borderRadius: 999,
+              padding: '6px 12px',
+              fontSize: 11.5,
+              fontWeight: 750,
+              border: voiceAgentActive ? '1.5px solid #10b981' : '1px solid var(--line)',
+              background: voiceAgentActive ? 'rgba(16, 185, 129, 0.15)' : 'var(--card)',
+              color: voiceAgentActive ? '#065f46' : 'var(--muted)',
+              cursor: 'pointer',
+              transition: 'all 200ms ease',
+            }}
+            title="When active, AI speaks answers aloud in your chosen language"
+          >
+            {voiceAgentActive ? (
+              <>
+                <span style={{ display: 'inline-flex', gap: 2, alignItems: 'center' }}>
+                  <span style={{ width: 3, height: 10, background: '#10b981', borderRadius: 2 }} />
+                  <span style={{ width: 3, height: 14, background: '#10b981', borderRadius: 2 }} />
+                  <span style={{ width: 3, height: 8, background: '#10b981', borderRadius: 2 }} />
+                </span>
+                🎙️ Voice Agent ON
+              </>
+            ) : (
+              <>
+                <Volume2 size={13} />
+                🎙️ Voice Agent OFF
+              </>
+            )}
+          </button>
+
           <button
             className="ghost"
             style={{ fontSize: 11, padding: '6px 10px' }}
@@ -268,18 +378,134 @@ function ChatInner() {
           >
             {t('clear')}
           </button>
-          <button
-            className="ghost"
-            style={{ fontSize: 11, padding: '6px 10px' }}
-            onClick={() => {
-              setMessages([{ id: crypto.randomUUID(), from: 'ai', time: now(), text: getOpeningText() }])
-              setActiveSuggestions([])
-            }}
-          >
-            {t('newChat')}
-          </button>
         </div>
       </div>
+
+      {/* Multilingual Selector Strip */}
+      <div
+        style={{
+          background: 'var(--card)',
+          border: '1px solid var(--line)',
+          borderRadius: 16,
+          padding: '8px 12px',
+          marginBottom: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          overflowX: 'auto',
+          boxShadow: '0 2px 8px rgba(43, 122, 77, 0.03)',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 750,
+            color: 'var(--forest)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            whiteSpace: 'nowrap',
+            paddingRight: 4,
+            borderRight: '1px solid var(--line)',
+          }}
+        >
+          <Globe size={13} /> {locale === 'mr' ? 'भाषा निवडा:' : locale === 'hi' ? 'भाषा चुनें:' : 'Language:'}
+        </span>
+        {(Object.keys(localeLabels) as Locale[]).map((loc) => {
+          const isActive = loc === locale
+          return (
+            <button
+              key={loc}
+              type="button"
+              onClick={() => setLocale(loc)}
+              style={{
+                border: isActive ? '1.5px solid var(--forest)' : '1px solid var(--line)',
+                background: isActive ? 'var(--forest)' : '#ffffff',
+                color: isActive ? '#ffffff' : 'var(--ink)',
+                borderRadius: 999,
+                padding: '4px 10px',
+                fontSize: 11.5,
+                fontWeight: isActive ? 750 : 550,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: isActive ? '0 2px 8px rgba(43, 122, 77, 0.25)' : 'none',
+              }}
+            >
+              {localeLabels[loc]}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Active Voice Listening Banner */}
+      {isListening && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+            border: '1.5px solid #f59e0b',
+            borderRadius: 16,
+            padding: '10px 16px',
+            marginBottom: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.15)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: '#dc2626',
+                color: 'white',
+                display: 'grid',
+                placeItems: 'center',
+              }}
+            >
+              <Mic size={18} className="animate-pulse" />
+            </div>
+            <div>
+              <strong style={{ fontSize: 13, color: '#92400e', display: 'block' }}>
+                {locale === 'mr'
+                  ? 'मराठीत बोला... आवाज रेकॉर्ड होत आहे'
+                  : locale === 'hi'
+                  ? 'बोलिए... आपकी आवाज सुनी जा रही है'
+                  : `Listening in ${localeLabels[locale]} (${BCP47_LANG_MAP[locale]})...`}
+              </strong>
+              <span style={{ fontSize: 11, color: '#b45309' }}>
+                {locale === 'mr'
+                  ? 'बोलणे संपल्यावर उत्तर आपोआप मराठीत मिळेल'
+                  : 'Speak your farming question naturally'}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const win = window as any
+              if (win.__activeRecognition) {
+                win.__activeRecognition.stop()
+              }
+              setIsListening(false)
+            }}
+            style={{
+              background: '#ffffff',
+              border: '1px solid #f59e0b',
+              borderRadius: 8,
+              padding: '4px 10px',
+              fontSize: 11,
+              fontWeight: 700,
+              color: '#b45309',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
 
       {/* Preset Category Topic Pills */}
       <div
@@ -310,7 +536,9 @@ function ChatInner() {
             onClick={() => send(topic.query)}
           >
             <span>{topic.icon}</span>
-            <span>{locale === 'hi' ? topic.labelHi : topic.labelEn}</span>
+            <span>
+              {locale === 'mr' ? topic.labelMr : locale === 'hi' ? topic.labelHi : topic.labelEn}
+            </span>
           </button>
         ))}
       </div>
@@ -337,6 +565,8 @@ function ChatInner() {
       <div className="bubbles" style={{ padding: '4px 2px' }}>
         {messages.map((msg) => {
           const isAi = msg.from === 'ai'
+          const isCurrentlySpeaking = speakingId === msg.id
+
           return (
             <div
               className={`bubble ${msg.from}`}
@@ -346,37 +576,92 @@ function ChatInner() {
                 animation: 'rise 300ms cubic-bezier(0.16, 1, 0.3, 1) both',
                 background: isAi ? '#ffffff' : 'linear-gradient(135deg, #2b7a4d, #35925d)',
                 color: isAi ? 'var(--ink)' : '#ffffff',
-                border: isAi ? '1px solid var(--line)' : 'none',
+                border: isAi ? (isCurrentlySpeaking ? '1.5px solid #10b981' : '1px solid var(--line)') : 'none',
                 boxShadow: isAi ? '0 4px 14px rgba(43, 122, 77, 0.04)' : '0 6px 18px rgba(43, 122, 77, 0.18)',
                 borderRadius: isAi ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
                 padding: '14px 16px',
               }}
             >
               {isAi && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, borderBottom: '1px solid #f0e8d8', paddingBottom: 6 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 6,
+                    borderBottom: '1px solid #f0e8d8',
+                    paddingBottom: 6,
+                  }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#e9f7ee', color: 'var(--forest)', display: 'grid', placeItems: 'center', fontSize: 11 }}>
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        background: '#e9f7ee',
+                        color: 'var(--forest)',
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontSize: 11,
+                      }}
+                    >
                       🤖
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 750, color: 'var(--forest)' }}>Krishi AI</span>
+                    <span style={{ fontSize: 11, fontWeight: 750, color: 'var(--forest)' }}>
+                      Kisan Salahkar ({localeLabels[locale]})
+                    </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <button
                       type="button"
-                      style={{ background: 'none', border: 0, color: 'var(--muted)', cursor: 'pointer', padding: 2 }}
-                      title="Read aloud in your language"
+                      style={{
+                        background: isCurrentlySpeaking ? 'rgba(16, 185, 129, 0.15)' : 'none',
+                        border: isCurrentlySpeaking ? '1px solid #10b981' : 0,
+                        borderRadius: 6,
+                        color: isCurrentlySpeaking ? '#065f46' : 'var(--muted)',
+                        cursor: 'pointer',
+                        padding: '3px 6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        fontSize: 11,
+                        fontWeight: 650,
+                      }}
+                      title="Read aloud in native language voice"
                       onClick={() => speakMessage(msg.id, msg.text)}
                     >
-                      <Volume2 size={14} style={{ color: speakingId === msg.id ? 'var(--forest)' : undefined }} />
+                      {isCurrentlySpeaking ? (
+                        <>
+                          <VolumeX size={13} style={{ color: '#065f46' }} />
+                          <span>Stop</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 size={13} />
+                          <span>Listen</span>
+                        </>
+                      )}
                     </button>
+
                     <button
                       type="button"
-                      style={{ background: 'none', border: 0, color: 'var(--muted)', cursor: 'pointer', padding: 2 }}
+                      style={{
+                        background: 'none',
+                        border: 0,
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                        padding: 2,
+                      }}
                       title="Copy response"
                       onClick={() => copyText(msg.id, msg.text)}
                     >
-                      {copiedId === msg.id ? <Check size={14} style={{ color: 'var(--leaf)' }} /> : <Copy size={14} />}
+                      {copiedId === msg.id ? (
+                        <Check size={14} style={{ color: 'var(--leaf)' }} />
+                      ) : (
+                        <Copy size={14} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -386,7 +671,13 @@ function ChatInner() {
                 <img
                   src={msg.image}
                   alt="Crop upload"
-                  style={{ borderRadius: 12, marginBottom: 8, maxHeight: 220, objectFit: 'cover', width: '100%' }}
+                  style={{
+                    borderRadius: 12,
+                    marginBottom: 8,
+                    maxHeight: 220,
+                    objectFit: 'cover',
+                    width: '100%',
+                  }}
                 />
               )}
 
@@ -394,7 +685,15 @@ function ChatInner() {
                 {msg.text}
               </p>
 
-              <small style={{ display: 'block', textAlign: 'right', marginTop: 6, opacity: 0.7, fontSize: 10 }}>
+              <small
+                style={{
+                  display: 'block',
+                  textAlign: 'right',
+                  marginTop: 6,
+                  opacity: 0.7,
+                  fontSize: 10,
+                }}
+              >
                 {msg.time}
               </small>
             </div>
@@ -403,7 +702,17 @@ function ChatInner() {
 
         {/* Animated Typing Indicator */}
         {typing && (
-          <div className="typing" aria-label="AI typing response" style={{ background: 'white', border: '1px solid var(--line)', borderRadius: 16, padding: '10px 14px', width: 'fit-content' }}>
+          <div
+            className="typing"
+            aria-label="AI typing response"
+            style={{
+              background: 'white',
+              border: '1px solid var(--line)',
+              borderRadius: 16,
+              padding: '10px 14px',
+              width: 'fit-content',
+            }}
+          >
             <i />
             <i />
             <i />
@@ -478,7 +787,13 @@ function ChatInner() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={t('askPlaceholder')}
+          placeholder={
+            locale === 'mr'
+              ? 'मराठीत प्रश्न विचारा किंवा माइक दाबून बोला...'
+              : locale === 'hi'
+              ? 'हिन्दी में सवाल पूछें या माइक दबाकर बोलें...'
+              : `Ask or speak in ${localeLabels[locale]}...`
+          }
           style={{ fontSize: 14 }}
         />
 
@@ -488,10 +803,11 @@ function ChatInner() {
           aria-label={t('voice')}
           onClick={voice}
           style={{
-            background: isListening ? '#f7dfd4' : undefined,
-            color: isListening ? '#a4462f' : undefined,
+            background: isListening ? '#fef2f2' : undefined,
+            color: isListening ? '#dc2626' : undefined,
+            border: isListening ? '1.5px solid #dc2626' : undefined,
           }}
-          title={isListening ? 'Listening...' : 'Speak in your language'}
+          title={isListening ? 'Stop listening' : `Speak in ${localeLabels[locale]}`}
         >
           {isListening ? <MicOff size={18} className="animate-pulse" /> : <Mic size={18} />}
         </button>
@@ -510,7 +826,8 @@ function ChatInner() {
       </form>
 
       <p className="note" style={{ marginTop: 10 }}>
-        <Sparkles size={12} /> Krishi AI Assistant • Active Language: <strong>{locale.toUpperCase()}</strong> • Powered by KrishiRakshak Agronomy Engine
+        <Sparkles size={12} /> Kisan Salahkar Multilingual Voice Agent • Active Voice Language:{' '}
+        <strong>{localeLabels[locale]} ({BCP47_LANG_MAP[locale]})</strong>
       </p>
     </div>
   )

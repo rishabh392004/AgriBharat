@@ -11,7 +11,7 @@ type UpdateInput = z.infer<typeof updateOfficerProfileSchema>;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function formatProfile(profile: Awaited<ReturnType<typeof db.orm.public.OfficerProfile.where>>["0"]) {
+function formatProfile(profile: NonNullable<Awaited<ReturnType<typeof db.orm.public.OfficerProfile.first>>>) {
   return {
     id:               profile.id,
     userId:           profile.userId,
@@ -98,6 +98,7 @@ export async function updateOfficerProfile(userId: number, input: UpdateInput) {
       ...(input.officeAddress !== undefined && { officeAddress: input.officeAddress ?? null }),
     });
 
+  if (!updated) throw new AppError("Failed to update officer profile", 500);
   return formatProfile(updated);
 }
 
@@ -112,5 +113,6 @@ export async function incrementFlaggedCount(userId: number) {
     .where({ userId })
     .update({ flaggedScansCount: profile.flaggedScansCount + 1 });
 
+  if (!updated) throw new AppError("Failed to update officer profile", 500);
   return formatProfile(updated);
 }

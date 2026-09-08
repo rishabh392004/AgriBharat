@@ -31,7 +31,7 @@ function deterministicHash(imageUrl: string): number {
 
 /** Pick a disease deterministically from the image URL — same URL always gives same disease. */
 function deterministicDisease(imageUrl: string): string {
-  return MOCK_DISEASES[deterministicHash(imageUrl) % MOCK_DISEASES.length];
+  return MOCK_DISEASES[deterministicHash(imageUrl) % MOCK_DISEASES.length] ?? "Healthy";
 }
 
 /** Range: 0.70 – 0.95 (realistic confidence band). */

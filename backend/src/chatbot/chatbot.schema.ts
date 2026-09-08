@@ -8,4 +8,5 @@ export const chatMessageSchema = z.object({
 export const chatRequestSchema = z.object({
   question:     z.string().min(1, "Question cannot be empty").max(1000),
   chat_history: z.array(chatMessageSchema).optional().default([]),
+  language:     z.string().optional().default("en"),
 });

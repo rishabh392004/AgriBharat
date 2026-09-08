@@ -18,7 +18,8 @@ export interface ChatbotResponse {
  */
 export async function askChatbot(
   question: string,
-  chatHistory: ChatMessage[] = []
+  chatHistory: ChatMessage[] = [],
+  language: string = "en"
 ): Promise<ChatbotResponse> {
   try {
     const res = await fetch(`${CHATBOT_SERVICE_URL}/ask`, {
@@ -27,6 +28,7 @@ export async function askChatbot(
       body: JSON.stringify({
         question,
         chat_history: chatHistory,
+        language,
       }),
     });
 

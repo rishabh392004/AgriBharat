@@ -50,7 +50,8 @@ export async function getOfficerProfileController(
 ) {
   if (!req.user) throw new AppError("Authentication required", 401);
 
-  const targetUserId = parseInt(req.params.userId, 10);
+  const rawUserId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+  const targetUserId = parseInt(rawUserId ?? "", 10);
   if (isNaN(targetUserId)) {
     res.status(400).json({ message: "Invalid user ID" });
     return;

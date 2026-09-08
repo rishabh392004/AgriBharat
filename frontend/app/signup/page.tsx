@@ -46,7 +46,7 @@ export default function SignupPage() {
           className="btn btn-primary"
           style={{ marginTop: 16 }}
           onClick={async () => {
-            const user = await authService.register(name, phone)
+            const user = await authService.register(name, phone, password)
             signIn(user)
             router.replace('/farmer')
           }}

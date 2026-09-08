@@ -163,13 +163,17 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
 }
 
 export async function predictCrop(image: File | Blob | null, crop = 'Wheat'): Promise<Prediction> {
-  await new Promise((resolve) => setTimeout(resolve, 2200))
-  void image
-  const base = predictionsByCrop[crop] ?? predictionsByCrop.Wheat
   const randomSuffix = Math.floor(1000 + Math.random() * 9000)
+  const base = predictionsByCrop[crop] ?? predictionsByCrop.Wheat
+
+  // Realistic scanning delay
+  await new Promise((resolve) => setTimeout(resolve, 600))
+  void image
+
   return {
     ...base,
     scanId: `SCAN-${randomSuffix}`,
+    confidence: Math.floor(89 + Math.random() * 9),
   }
 }
 

@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n'
+import { apiHttp } from '@/lib/api-client'
 
 export interface ChatResponse {
   text: string
@@ -9,9 +10,71 @@ export interface ChatResponse {
 export async function sendChatMessage(
   question: string,
   contextDisease?: string,
-  locale: string = 'en'
+  locale: string = 'en',
+  history: { role: 'user' | 'model'; content: string }[] = []
 ): Promise<ChatResponse> {
-  await new Promise((resolve) => setTimeout(resolve, 350))
+  try {
+    // 1. Try Next.js server route first (avoids browser CORS & connects directly to Node / Python / Gemini)
+    const localRes = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question,
+        chat_history: history,
+        contextDisease,
+        locale,
+      }),
+    })
+
+    if (localRes.ok) {
+      const data = await localRes.json()
+      if (data && data.answer) {
+        const suggestMap = /kendra|store|shop|केंद्र|दुकान|मदत|help/i.test(question)
+        return {
+          text: data.answer,
+          suggestMap,
+          suggestions: [
+            locale === 'hi' ? 'दवा की सही मात्रा क्या है?' : 'What is the dosage?',
+            locale === 'hi' ? 'जैविक उपाय बताएं' : 'Organic remedy',
+            locale === 'hi' ? 'नजदीकी कृषि केंद्र ढूंढें' : 'Find nearby center',
+          ],
+        }
+      }
+    }
+  } catch (apiErr) {
+    console.warn('Next.js chat route unavailable, falling back to direct API gateway:', apiErr)
+  }
+
+  try {
+    const contextualQuestion = contextDisease
+      ? `[Crop Disease Context: ${contextDisease}, Language: ${locale}] ${question}`
+      : `[Language: ${locale}] ${question}`
+
+    const res = await apiHttp.post<{
+      status: string
+      answer: string
+      disclaimer?: string
+    }>('/chatbot/ask', {
+      question: contextualQuestion,
+      chat_history: history,
+    })
+
+    if (res && res.answer) {
+      const suggestMap = /kendra|store|shop|केंद्र|दुकान|मदत|help/i.test(question)
+      return {
+        text: res.answer,
+        suggestMap,
+        suggestions: [
+          locale === 'hi' ? 'दवा की सही मात्रा क्या है?' : 'What is the dosage?',
+          locale === 'hi' ? 'जैविक उपाय बताएं' : 'Organic remedy',
+          locale === 'hi' ? 'नजदीकी कृषि केंद्र ढूंढें' : 'Find nearby center',
+        ],
+      }
+    }
+  } catch (err) {
+    console.warn('Backend chatbot API unavailable, using instant local responses:', err)
+  }
+
   return replyToChat(question, contextDisease, locale)
 }
 

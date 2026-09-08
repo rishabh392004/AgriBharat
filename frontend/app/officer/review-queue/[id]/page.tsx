@@ -54,6 +54,7 @@ export default function ReviewDetailPage() {
       aiConfidence: r.confidence,
       severity: r.severity,
       riskLevel: r.riskLevel,
+      verificationStatus: 'Officer Verified',
       locationName: `Patil Farm (${r.location})`,
       latitude: 19.9975,
       longitude: 73.7898,

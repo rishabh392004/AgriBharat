@@ -276,9 +276,7 @@ const en: Copy = {
   cropInsuranceSupportTitle: 'Crop Insurance & PMFBY Support',
   cropInsuranceSupportSub: 'Keep your verified crop-health records ready for future agricultural and crop-insurance workflows.',
   farmLocation: 'Farm Location',
-  farmArea: 'Farm Area',
   currentSeason: 'Current Season',
-  primaryCrop: 'Primary Crop',
   issuedDate: 'Issued Date',
 }
 

@@ -16,7 +16,8 @@ const Map = dynamic(() => import('@/components/nearby-map').then((m) => m.Nearby
   ),
 })
 
-export function NearbyHelp({ disease }: { disease?: string }) {
+export function NearbyHelp({ disease, compact }: { disease?: string; compact?: boolean }) {
+  void compact
   const { t } = useI18n()
   const [places, setPlaces] = useState<NearbyPlace[]>([])
   const [focus, setFocus] = useState<NearbyPlace | null>(null)

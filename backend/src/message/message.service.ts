@@ -117,13 +117,13 @@ export async function getConversationList(userId: number) {
     if (!partner) continue;
 
     const allMessages = [
-      ...sent.filter((m) => m.toUserId === partnerId),
-      ...received.filter((m) => m.fromUserId === partnerId),
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      ...sent.filter((m: any) => m.toUserId === partnerId),
+      ...received.filter((m: any) => m.fromUserId === partnerId),
+    ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const latest = allMessages[0];
     const unreadCount = received.filter(
-      (m) => m.fromUserId === partnerId && !m.isRead
+      (m: any) => m.fromUserId === partnerId && !m.isRead
     ).length;
 
     conversations.push({

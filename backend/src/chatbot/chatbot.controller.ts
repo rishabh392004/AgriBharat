@@ -18,9 +18,9 @@ export async function askController(req: Request, res: Response) {
     return;
   }
 
-  const { question, chat_history } = result.data;
+  const { question, chat_history, language } = result.data;
 
-  const response = await askChatbot(question, chat_history);
+  const response = await askChatbot(question, chat_history, language);
 
   res.status(200).json({
     answer:       response.answer,

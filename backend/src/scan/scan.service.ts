@@ -71,16 +71,14 @@ export async function createScan(
     if (!prediction) return;
 
     // 3. Store the ML diagnosis result linked to this scan
-    await db.orm.public.Diagnosis.create({
+    await db.orm.public.DiseaseResult.create({
       scanId: scan.id,
       disease: prediction.predicted_disease,
       confidence: prediction.confidence,
-      severityPercent: prediction.severity_analysis.affected_leaf_area_percent,
-      infectionStage: prediction.severity_analysis.infection_stage,
-      urgency: prediction.severity_analysis.recommended_urgency,
-      actionPlan: prediction.severity_analysis.action_plan,
-      top3Predictions: JSON.stringify(prediction.top_3_predictions),
-      flagReview: prediction.flag_officer_review,
+      severity: prediction.severity_analysis.infection_stage || "moderate",
+      actions: JSON.stringify([prediction.severity_analysis.action_plan]),
+      precautions: JSON.stringify([]),
+      provider: "ML-Local-ResNet34",
     });
   }).catch(() => { /* silently ignore ML errors */ });
 
@@ -131,8 +129,7 @@ export async function getScansByUser(userId: number) {
     .where({ userId })
     .all();
 
-  // BUG FIX: explicit type to avoid `never[]` inference
-  const scans: Awaited<ReturnType<typeof db.orm.public.Scan.where>>["0"][] = [];
+  const scans: NonNullable<Awaited<ReturnType<typeof db.orm.public.Scan.first>>>[] = [];
 
   for (const farm of farms) {
     const farmScans = await db.orm.public.Scan

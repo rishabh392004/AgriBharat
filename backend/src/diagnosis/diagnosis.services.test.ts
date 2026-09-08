@@ -20,6 +20,9 @@ vi.mock("../prisma/db.js", () => ({
             first: farmFirstMock,
           })),
         },
+        DiseaseResult: {
+          create: vi.fn().mockResolvedValue({ id: 1 }),
+        },
       },
     },
   },
@@ -92,7 +95,8 @@ describe("diagnoseScan", () => {
       imageUrl: "https://example.com/plant.jpg",
       disease: "Healthy",
       confidence: 0.85,
-      recommendation: "No treatment required.",
+      severity: "none",
+      recommendation: { actions: ["No treatment required."], precautions: [] },
       provider: "mock",
     });
 
@@ -101,7 +105,8 @@ describe("diagnoseScan", () => {
       imageUrl: "https://example.com/plant.jpg",
       disease: "Healthy",
       confidence: 0.85,
-      recommendation: "No treatment required.",
+      severity: "none",
+      recommendation: { actions: ["No treatment required."], precautions: [] },
       provider: "mock",
     });
 

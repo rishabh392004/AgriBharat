@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Bot,
@@ -22,6 +23,20 @@ export default function FarmerDashboard() {
   const { farmer } = useAuth()
   const latest = scans[0]
 
+  const [backendStatus, setBackendStatus] = useState<{
+    nodeBackend: { status: string; latencyMs: number }
+    chatbotAi: { status: string; latencyMs: number }
+  } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/backend-status')
+      .then((res) => res.json())
+      .then((data) => setBackendStatus(data))
+      .catch(() => setBackendStatus(null))
+  }, [])
+
+  const isConnected = backendStatus?.nodeBackend?.status === 'connected'
+
   return (
     <div className="animate-fadeIn space-y-2">
       <header className="hero">
@@ -30,6 +45,24 @@ export default function FarmerDashboard() {
           <span className="chip low" style={{ fontSize: 10, padding: '2px 8px' }}>
             <span className="pulse-beacon" style={{ background: '#347044', marginRight: 5 }} />
             {t('liveFieldMonitoring')}
+          </span>
+          <span
+            className="chip"
+            style={{
+              fontSize: 10,
+              padding: '2px 8px',
+              background: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+              color: isConnected ? '#065f46' : '#92400e',
+              border: isConnected ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+            }}
+          >
+            <span
+              className="pulse-beacon"
+              style={{ background: isConnected ? '#10b981' : '#f59e0b', marginRight: 5 }}
+            />
+            {isConnected
+              ? `🟢 Backend & AI Online (${backendStatus?.nodeBackend?.latencyMs || 50}ms)`
+              : '🟡 Standalone Mode'}
           </span>
         </div>
         <h1>
@@ -196,11 +229,11 @@ export default function FarmerDashboard() {
             </div>
             <div className="weather-metric-box">
               <small>{t('rainChance')}</small>
-              <strong>{weatherFull.rainfallProb}%</strong>
+              <strong>{weatherFull.rainProbability}%</strong>
             </div>
             <div className="weather-metric-box">
               <small>{t('windSpeed')}</small>
-              <strong>{weatherFull.windKmh} km/h</strong>
+              <strong>{weatherFull.wind}</strong>
             </div>
             <div className="weather-metric-box">
               <small>{t('uvIndex')}</small>
@@ -238,7 +271,7 @@ export default function FarmerDashboard() {
           {weatherFull.insights.map((insight) => (
             <div
               key={insight.headline}
-              className={`crop-insight-card ${insight.urgency === 'Urgent' ? 'urgent' : insight.urgency === 'Caution' ? 'caution' : 'info'}`}
+              className={`crop-insight-card ${insight.urgency === 'warning' ? 'urgent' : insight.urgency === 'caution' ? 'caution' : 'info'}`}
             >
               <div className="crop-insight-head">
                 <span style={{ fontSize: 20 }}>{insight.icon}</span>
@@ -248,9 +281,9 @@ export default function FarmerDashboard() {
                     fontSize: 10,
                     padding: '2px 7px',
                     background:
-                      insight.urgency === 'Urgent' ? '#f7dfd4' : insight.urgency === 'Caution' ? '#fdf5e1' : '#dcebd8',
+                      insight.urgency === 'warning' ? '#f7dfd4' : insight.urgency === 'caution' ? '#fdf5e1' : '#dcebd8',
                     color:
-                      insight.urgency === 'Urgent' ? '#a4462f' : insight.urgency === 'Caution' ? '#8a6410' : '#347044',
+                      insight.urgency === 'warning' ? '#a4462f' : insight.urgency === 'caution' ? '#8a6410' : '#347044',
                   }}
                 >
                   {insight.urgency}
