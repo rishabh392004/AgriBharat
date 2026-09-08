@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { getStoredPassport, saveStoredPassport } from '@/services/passportService'
 import { QRCodeSVG } from '@/components/qr-code'
+import { SeasonReportModal } from '@/components/season-report-modal'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 import type { CropHealthPassport, PassportRecord } from '@/types'
@@ -34,6 +35,7 @@ export default function CropHealthPassportPage() {
   const { farmer } = useAuth()
   const [passport, setPassport] = useState<CropHealthPassport>(() => getStoredPassport())
   const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [seasonModalOpen, setSeasonModalOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [selectedCropFilter, setSelectedCropFilter] = useState<string>('All')
 
@@ -119,6 +121,16 @@ export default function CropHealthPassportPage() {
           >
             <QrCode size={16} />
             <span>{t('generateQrVerification')}</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setSeasonModalOpen(true)}
+            style={{ width: 'auto', gap: 8, padding: '10px 18px', fontSize: 13 }}
+          >
+            <Award size={16} />
+            <span>PMFBY Seasonal Report</span>
           </button>
 
           <button
@@ -449,6 +461,13 @@ export default function CropHealthPassportPage() {
           </div>
         </div>
       )}
+
+      {/* PMFBY Seasonal Health Passport & Insurance Report Modal */}
+      <SeasonReportModal
+        isOpen={seasonModalOpen}
+        onClose={() => setSeasonModalOpen(false)}
+        passport={passport}
+      />
     </div>
   )
 }

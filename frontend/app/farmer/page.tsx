@@ -18,6 +18,8 @@ import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 import { alerts, scans, weatherFull } from '@/data/mock'
 import { WhatsAppBanner } from '@/components/whatsapp/WhatsAppBanner'
+import { WeatherRiskWidget } from '@/components/weather-risk-widget'
+import { OutbreakMap } from '@/components/outbreak-map'
 
 export default function FarmerDashboard() {
   const { t } = useI18n()
@@ -301,6 +303,12 @@ export default function FarmerDashboard() {
           ))}
         </div>
       </section>
+
+      {/* Weather & Outbreak Risk Fusion Telemetry */}
+      <WeatherRiskWidget />
+
+      {/* Geospatial Outbreak Clusters & Hotspots Map */}
+      <OutbreakMap />
 
       {/* Interactive Story Pills */}
       <div className="story" style={{ marginTop: 24 }}>

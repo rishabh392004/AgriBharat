@@ -230,3 +230,21 @@ export interface CropHealthPassport {
   records: PassportRecord[]
 }
 
+export type SeasonType = 'Kharif 2024' | 'Rabi 2024-25' | 'Zaid 2025' | 'Kharif 2025' | 'Rabi 2025-26' | 'Kharif 2026'
+
+export interface HotspotCluster {
+  id: string
+  lat: number
+  lng: number
+  district: string
+  state: string
+  crop: string
+  disease: string
+  severity: Severity | RiskLevel | string
+  reportedCasesCount: number
+  radiusMeters: number
+  lastReportedTime: string
+  riskFactor: string
+  officerValidatedCount: number
+}
+

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ClipboardCheck, ArrowRight, ShieldAlert } from 'lucide-react'
 import { CountUp } from '@/components/count-up'
 import { NearbyHelp } from '@/components/nearby-help'
+import { OutbreakMap } from '@/components/outbreak-map'
 import { officerMetrics, regionalTrends, reports, reviewQueue } from '@/data/mock'
 import { useI18n } from '@/lib/i18n'
 
@@ -129,9 +130,8 @@ export default function OfficerHome() {
           </Link>
         </section>
       </div>
-      <section style={{ marginTop: 14 }}>
-        <h2>{t('diseaseMap')}</h2>
-        <NearbyHelp disease="Leaf Rust" />
+      <section style={{ marginTop: 16 }}>
+        <OutbreakMap />
       </section>
     </>
   )

@@ -71,6 +71,77 @@ export default function SplashPage() {
           </div>
         </div>
 
+        {/* Dual Portal Selection Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, width: '100%', maxWidth: 620, margin: '20px 0 14px' }}>
+          {/* Farmer Portal Card */}
+          <div
+            onClick={() => router.push('/farmer')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              color: '#133a23',
+              borderRadius: 18,
+              padding: '18px 20px',
+              textAlign: 'left',
+              cursor: 'pointer',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              border: '2px solid #a7f3d0',
+              transition: 'all 200ms ease',
+            }}
+            className="hover:scale-105"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 24 }}>🌱</span>
+              <span className="chip low" style={{ fontSize: 10, padding: '2px 8px' }}>
+                Farmer Access
+              </span>
+            </div>
+            <strong style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
+              Farmer Portal
+            </strong>
+            <p style={{ margin: 0, fontSize: 11, color: '#475569', lineHeight: 1.4 }}>
+              AI Leaf Diagnosis, Grad-CAM Heatmaps & PMFBY Digital Passport
+            </p>
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 800, color: '#2b7a4d' }}>
+              <span>Enter Portal</span>
+              <ArrowRight size={14} />
+            </div>
+          </div>
+
+          {/* Officer Portal Card */}
+          <div
+            onClick={() => router.push('/officer')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              color: '#133a23',
+              borderRadius: 18,
+              padding: '18px 20px',
+              textAlign: 'left',
+              cursor: 'pointer',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              border: '2px solid #fde68a',
+              transition: 'all 200ms ease',
+            }}
+            className="hover:scale-105"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 24 }}>🛡️</span>
+              <span className="chip high" style={{ fontSize: 10, padding: '2px 8px' }}>
+                Officer Desk
+              </span>
+            </div>
+            <strong style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
+              Officer & Insurer Desk
+            </strong>
+            <p style={{ margin: 0, fontSize: 11, color: '#475569', lineHeight: 1.4 }}>
+              Outbreak Hotspots, Verification Queue & PMFBY Digital Signing
+            </p>
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 800, color: '#8a6410' }}>
+              <span>Officer Sign In</span>
+              <ArrowRight size={14} />
+            </div>
+          </div>
+        </div>
+
         {/* Start Button - Manual trigger only */}
         <button
           className={`splash-cta ${starting ? 'splash-cta-active' : ''}`}
@@ -84,7 +155,7 @@ export default function SplashPage() {
 
         {/* Hints and Locale info */}
         <div className="splash-footer-info">
-          <p className="splash-hint">Click Start to enter Demo Portals (Farmer & Officer)</p>
+          <p className="splash-hint">Select a portal above or click Start to explore demo accounts</p>
           <div className="splash-dots" aria-hidden>
             <span /><span /><span />
           </div>
