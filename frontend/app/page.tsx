@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { LanguageSelector } from '@/components/language-selector'
 import { LeafMark } from '@/components/leaf-mark'
+import { Plant3DBackground } from '@/components/plant-3d-background'
 import { useI18n } from '@/lib/i18n'
 import { ArrowRight, ShieldCheck, Sparkles, CloudSun, CheckCircle2 } from 'lucide-react'
 
@@ -21,19 +22,17 @@ export default function SplashPage() {
 
   return (
     <main className="splash">
+      {/* 3D Animated Organic Crop Plant & Atmosphere */}
+      <Plant3DBackground />
+
       {/* Top Bar for Language Switcher on Splash */}
       <div style={{ position: 'absolute', top: 20, right: 24, zIndex: 50 }}>
         <LanguageSelector />
       </div>
 
-      {/* Background Animated Glows and Ambient Lights */}
+      {/* Background Ambient Depth Glows */}
       <div className="splash-bg-glow" />
       <div className="splash-glow-secondary" />
-
-      {/* Floating Particle Accents */}
-      <div className="splash-particle p1" aria-hidden />
-      <div className="splash-particle p2" aria-hidden />
-      <div className="splash-particle p3" aria-hidden />
 
       <div className="splash-inner splash-visible">
         {/* Verification Pill */}
@@ -72,38 +71,40 @@ export default function SplashPage() {
         </div>
 
         {/* Dual Portal Selection Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, width: '100%', maxWidth: 620, margin: '20px 0 14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 16, width: '100%', maxWidth: 640, margin: '22px 0 16px' }}>
           {/* Farmer Portal Card */}
           <div
             onClick={() => router.push('/farmer')}
             style={{
-              background: 'rgba(255, 255, 255, 0.95)',
+              background: 'rgba(255, 255, 255, 0.94)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               color: '#133a23',
-              borderRadius: 18,
-              padding: '18px 20px',
+              borderRadius: 20,
+              padding: '20px 22px',
               textAlign: 'left',
               cursor: 'pointer',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-              border: '2px solid #a7f3d0',
-              transition: 'all 200ms ease',
+              boxShadow: '0 12px 32px rgba(10, 35, 20, 0.22)',
+              border: '1.5px solid rgba(167, 243, 208, 0.7)',
+              transition: 'all 240ms cubic-bezier(0.16, 1, 0.3, 1)',
             }}
             className="hover:scale-105"
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 24 }}>🌱</span>
-              <span className="chip low" style={{ fontSize: 10, padding: '2px 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 26 }}>🌱</span>
+              <span className="chip low" style={{ fontSize: 10, padding: '2px 8px', background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}>
                 Farmer Access
               </span>
             </div>
-            <strong style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
+            <strong style={{ fontSize: 17, display: 'block', marginBottom: 4, color: '#143823' }}>
               Farmer Portal
             </strong>
-            <p style={{ margin: 0, fontSize: 11, color: '#475569', lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.45 }}>
               AI Leaf Diagnosis, Grad-CAM Heatmaps & PMFBY Digital Passport
             </p>
-            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 800, color: '#2b7a4d' }}>
+            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#2b7a4d' }}>
               <span>Enter Portal</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={15} />
             </div>
           </div>
 
@@ -111,33 +112,35 @@ export default function SplashPage() {
           <div
             onClick={() => router.push('/officer')}
             style={{
-              background: 'rgba(255, 255, 255, 0.95)',
+              background: 'rgba(255, 255, 255, 0.94)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               color: '#133a23',
-              borderRadius: 18,
-              padding: '18px 20px',
+              borderRadius: 20,
+              padding: '20px 22px',
               textAlign: 'left',
               cursor: 'pointer',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-              border: '2px solid #fde68a',
-              transition: 'all 200ms ease',
+              boxShadow: '0 12px 32px rgba(10, 35, 20, 0.22)',
+              border: '1.5px solid rgba(253, 230, 138, 0.7)',
+              transition: 'all 240ms cubic-bezier(0.16, 1, 0.3, 1)',
             }}
             className="hover:scale-105"
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 24 }}>🛡️</span>
-              <span className="chip high" style={{ fontSize: 10, padding: '2px 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 26 }}>🛡️</span>
+              <span className="chip high" style={{ fontSize: 10, padding: '2px 8px', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}>
                 Officer Desk
               </span>
             </div>
-            <strong style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
+            <strong style={{ fontSize: 17, display: 'block', marginBottom: 4, color: '#143823' }}>
               Officer & Insurer Desk
             </strong>
-            <p style={{ margin: 0, fontSize: 11, color: '#475569', lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.45 }}>
               Outbreak Hotspots, Verification Queue & PMFBY Digital Signing
             </p>
-            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 800, color: '#8a6410' }}>
+            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#8a6410' }}>
               <span>Officer Sign In</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={15} />
             </div>
           </div>
         </div>
