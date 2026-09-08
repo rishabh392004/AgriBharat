@@ -3,13 +3,14 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { DEMO_FARMER } from '@/data/farmer'
 import { authService } from '@/services/authService'
+import { detectLiveLocation } from '@/lib/location'
 import type { DemoFarmer, SessionUser } from '@/types'
 
 type AuthContextValue = {
   user: SessionUser | null
   ready: boolean
   farmer: DemoFarmer
-  setFarmer: (next: DemoFarmer) => void
+  setFarmer: (next: DemoFarmer | ((prev: DemoFarmer) => DemoFarmer)) => void
   signIn: (user: SessionUser) => void
   signOut: () => void
 }
@@ -25,25 +26,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadedUser = authService.load()
     setUser(loadedUser)
     const savedFarm = window.localStorage.getItem('kr-farmer')
+    const isCustomUser = Boolean(loadedUser?.name && loadedUser.name !== 'Vijay Patil')
+
     if (savedFarm) {
       try {
         const parsed = JSON.parse(savedFarm)
-        setFarmerState({ ...DEMO_FARMER, ...parsed })
+        const isDefaultPatil = parsed.farmName === 'Patil Farm'
+        const isDefaultNashik = parsed.location === 'Nashik, Maharashtra'
+        const firstName = loadedUser?.name?.trim().split(/\s+/)[0] || 'My'
+
+        const sanitizedFarmName = isCustomUser && isDefaultPatil
+          ? `${firstName}'s Farm`
+          : (parsed.farmName || `${DEMO_FARMER.farmName}`)
+
+        const sanitizedLocation = isCustomUser && isDefaultNashik
+          ? 'Detecting Live GPS...'
+          : (parsed.location || DEMO_FARMER.location)
+
+        setFarmerState({
+          ...DEMO_FARMER,
+          ...parsed,
+          farmName: sanitizedFarmName,
+          location: sanitizedLocation,
+        })
       } catch {
         setFarmerState(DEMO_FARMER)
       }
     } else if (loadedUser?.name) {
       const parts = loadedUser.name.trim().split(/\s+/)
       const initials = parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'KB'
+      const firstName = parts[0] || loadedUser.name
+
       setFarmerState({
         ...DEMO_FARMER,
         name: loadedUser.name,
-        firstName: parts[0] || loadedUser.name,
+        firstName,
         initials,
-        mobile: loadedUser.phone || DEMO_FARMER.mobile,
+        mobile: loadedUser.phone || '',
+        farmName: isCustomUser ? `${firstName}'s Farm` : DEMO_FARMER.farmName,
+        location: isCustomUser ? 'Detecting Live GPS...' : DEMO_FARMER.location,
+        farmArea: isCustomUser ? 0 : DEMO_FARMER.farmArea,
+        primaryCrop: isCustomUser ? 'Not set' : DEMO_FARMER.primaryCrop,
+        otherCrops: isCustomUser ? [] : DEMO_FARMER.otherCrops,
+        experience: isCustomUser ? 0 : DEMO_FARMER.experience,
       })
     }
     setReady(true)
+
+    // Automatically detect real live GPS location if not explicitly locked to a custom city
+    detectLiveLocation()
+      .then((loc) => {
+        setFarmerState((prev) => {
+          const shouldUpdate =
+            !prev.location ||
+            prev.location === 'Detecting Live GPS...' ||
+            prev.location === 'Nashik, Maharashtra' ||
+            prev.location === 'Click to detect Live GPS'
+
+          if (shouldUpdate || isCustomUser) {
+            const updated: DemoFarmer = {
+              ...prev,
+              location: loc.locationName,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+            }
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem('kr-farmer', JSON.stringify(updated))
+            }
+            return updated
+          }
+          return prev
+        })
+      })
+      .catch(() => {
+        // Location permission not yet granted or device offline
+      })
   }, [])
 
   const setFarmer = (next: DemoFarmer | ((prev: DemoFarmer) => DemoFarmer)) => {
