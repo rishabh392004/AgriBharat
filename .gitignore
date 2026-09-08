@@ -16,4 +16,5 @@ node_modules
 __pycache__/
 *.pyc
 *.log
-*.tsbuildinfo
+*.tsbuildinfo
+*.zip
