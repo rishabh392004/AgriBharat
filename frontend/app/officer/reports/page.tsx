@@ -104,24 +104,24 @@ export default function OfficerReportsPage() {
       {/* Stats Summary Bar */}
       <div className="metrics" style={{ marginTop: 12 }}>
         <section className="metric">
-          <p className="kicker">Total Field Reports</p>
+          <p className="kicker">{t('totalFieldReports')}</p>
           <b>{stats.total}</b>
-          <span className="muted">Current Season</span>
+          <span className="muted">{t('currentSeason')}</span>
         </section>
         <section className="metric">
-          <p className="kicker">High Risk Outbreaks</p>
+          <p className="kicker">{t('highRiskOutbreaks')}</p>
           <b style={{ color: '#a4462f' }}>{stats.highRisk}</b>
-          <span className="muted">Priority Inspection</span>
+          <span className="muted">{t('priorityInspection')}</span>
         </section>
         <section className="metric">
-          <p className="kicker">Pending Officer Review</p>
+          <p className="kicker">{t('pendingOfficerReview')}</p>
           <b style={{ color: '#8a6410' }}>{stats.pending}</b>
-          <span className="muted">Awaiting Action</span>
+          <span className="muted">{t('awaitingAction')}</span>
         </section>
         <section className="metric">
-          <p className="kicker">Verified & Signed</p>
+          <p className="kicker">{t('verifiedAndSigned')}</p>
           <b style={{ color: '#347044' }}>{stats.verified}</b>
-          <span className="muted">Synced to Passport</span>
+          <span className="muted">{t('syncedToPassport')}</span>
         </section>
       </div>
 
@@ -190,7 +190,7 @@ export default function OfficerReportsPage() {
         {filteredReports.length === 0 ? (
           <div className="card text-center" style={{ padding: '32px 16px' }}>
             <FileText size={36} className="text-muted" style={{ margin: '0 auto 8px' }} />
-            <p className="muted" style={{ margin: 0 }}>No reports matching your selected filter.</p>
+            <p className="muted" style={{ margin: 0 }}>{t('noReportsMatchingFilter')}</p>
           </div>
         ) : (
           filteredReports.map((r) => (
@@ -228,7 +228,7 @@ export default function OfficerReportsPage() {
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)' }}>{r.id}</span>
                     <span style={{ fontSize: 11, color: 'var(--muted)' }}>• {r.date}</span>
                     <span className={getRiskChipClass(r.risk)} style={{ fontSize: 10, padding: '1px 7px' }}>
-                      {r.risk} Risk
+                      {r.risk} {t('risk')}
                     </span>
                   </div>
 
@@ -238,7 +238,7 @@ export default function OfficerReportsPage() {
 
                   <p className="muted" style={{ margin: 0, fontSize: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                     <span>📍 {r.farm}</span>
-                    <span>🐛 Symptom: {r.issue}</span>
+                    <span>🐛 {t('symptoms')}: {r.issue}</span>
                   </p>
                 </div>
               </div>
@@ -259,7 +259,7 @@ export default function OfficerReportsPage() {
                   }}
                 >
                   <Eye size={14} />
-                  <span>Inspect</span>
+                  <span>{t('inspectReport')}</span>
                 </Link>
               </div>
             </div>

@@ -277,7 +277,7 @@ export default function ProfilePage() {
             {t('editProfile')}
           </button>
         )}
-        <button className="btn btn-ghost" onClick={() => toast('Soil testing report downloaded')}>
+        <button className="btn btn-ghost" onClick={() => toast(t('soilReportDownloaded'))}>
           {t('downloadSoilCard')}
         </button>
         <button className="btn btn-ghost" onClick={() => toast(t('notifications'))}>

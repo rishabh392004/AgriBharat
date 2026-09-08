@@ -58,15 +58,15 @@ export default function SplashPage() {
         <div className="splash-features">
           <div className="splash-feat-item">
             <ShieldCheck size={14} className="text-[#e8c868]" />
-            <span>Early Disease Scan</span>
+            <span>{t('scanCrop')}</span>
           </div>
           <div className="splash-feat-item">
             <CloudSun size={14} className="text-[#e8c868]" />
-            <span>10-Day Weather Advisory</span>
+            <span>{t('forecastTitle')}</span>
           </div>
           <div className="splash-feat-item">
             <CheckCircle2 size={14} className="text-[#e8c868]" />
-            <span>Officer Verification</span>
+            <span>{t('passportVerifiedBadge')}</span>
           </div>
         </div>
 
@@ -93,17 +93,17 @@ export default function SplashPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 26 }}>🌱</span>
               <span className="chip low" style={{ fontSize: 10, padding: '2px 8px', background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}>
-                Farmer Access
+                {t('farmer')}
               </span>
             </div>
             <strong style={{ fontSize: 17, display: 'block', marginBottom: 4, color: '#143823' }}>
-              Farmer Portal
+              {t('farmerPortal')}
             </strong>
             <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.45 }}>
-              AI Leaf Diagnosis, Grad-CAM Heatmaps & PMFBY Digital Passport
+              {t('subtitle')}
             </p>
             <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#2b7a4d' }}>
-              <span>Enter Portal</span>
+              <span>{t('continue')}</span>
               <ArrowRight size={15} />
             </div>
           </div>
@@ -129,17 +129,17 @@ export default function SplashPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 26 }}>🛡️</span>
               <span className="chip high" style={{ fontSize: 10, padding: '2px 8px', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}>
-                Officer Desk
+                {t('officer')}
               </span>
             </div>
             <strong style={{ fontSize: 17, display: 'block', marginBottom: 4, color: '#143823' }}>
-              Officer & Insurer Desk
+              {t('officerDesk')}
             </strong>
             <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.45 }}>
-              Outbreak Hotspots, Verification Queue & PMFBY Digital Signing
+              {t('reviewQueueSub')}
             </p>
             <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#8a6410' }}>
-              <span>Officer Sign In</span>
+              <span>{t('login')}</span>
               <ArrowRight size={15} />
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function SplashPage() {
 
         {/* Hints and Locale info */}
         <div className="splash-footer-info">
-          <p className="splash-hint">Select a portal above or click Start to explore demo accounts</p>
+          <p className="splash-hint">{t('portalInstruction')}</p>
           <div className="splash-dots" aria-hidden>
             <span /><span /><span />
           </div>

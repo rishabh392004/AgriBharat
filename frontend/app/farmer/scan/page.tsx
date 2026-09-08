@@ -406,7 +406,7 @@ export default function ScanPage() {
       <div className="scan-action-grid">
         {/* Card 1: Live Leaf Camera */}
         <button className="scan-action-tile" type="button" onClick={openCamera}>
-          <span className="scan-action-badge">RECOMMENDED</span>
+          <span className="scan-action-badge">{t('recommendedLabel')}</span>
           <div className="scan-action-icon-circle">
             <Camera size={28} />
           </div>
@@ -694,7 +694,7 @@ export default function ScanPage() {
         <div className="scan-tip-card">
           <SunMedium size={22} className="text-[#d4a017]" style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
-            <strong style={{ fontSize: 13, color: 'var(--ink)' }}>Daylight Photography</strong>
+            <strong style={{ fontSize: 13, color: 'var(--ink)' }}>{t('daylightPhoto')}</strong>
             <p className="muted" style={{ margin: '2px 0 0', fontSize: 12 }}>
               Capture photos in bright, natural light without heavy shadows or artificial glare.
             </p>
@@ -704,7 +704,7 @@ export default function ScanPage() {
         <div className="scan-tip-card">
           <Focus size={22} className="text-[#2b7a4d]" style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
-            <strong style={{ fontSize: 13, color: 'var(--ink)' }}>Close-Up Leaf Focus</strong>
+            <strong style={{ fontSize: 13, color: 'var(--ink)' }}>{t('closeUpFocus')}</strong>
             <p className="muted" style={{ margin: '2px 0 0', fontSize: 12 }}>
               Keep camera 10–15 cm from the leaf so disease spots and veins are clearly defined.
             </p>
@@ -714,7 +714,7 @@ export default function ScanPage() {
         <div className="scan-tip-card">
           <Zap size={22} className="text-[#35925d]" style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
-            <strong style={{ fontSize: 13, color: 'var(--ink)' }}>Single Diseased Area</strong>
+            <strong style={{ fontSize: 13, color: 'var(--ink)' }}>{t('singleDiseaseArea')}</strong>
             <p className="muted" style={{ margin: '2px 0 0', fontSize: 12 }}>
               Isolate one leaf or fruit lesion per scan to ensure maximum AI model confidence.
             </p>

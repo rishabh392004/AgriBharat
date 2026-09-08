@@ -108,7 +108,7 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
               <item.icon size={20} />
               {active(item.href) && <span className="dock-active-ring" aria-hidden />}
             </span>
-            <span>{item.dockLabel}</span>
+            <span>{t(item.key)}</span>
           </Link>
         ))}
       </nav>

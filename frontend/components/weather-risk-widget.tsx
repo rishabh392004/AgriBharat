@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState } from 'react'
 import {
@@ -13,12 +13,14 @@ import {
   Clock,
   MapPin,
 } from 'lucide-react'
+import { useI18n } from '@/lib/i18n'
 
 interface WeatherRiskWidgetProps {
   className?: string
 }
 
 export const WeatherRiskWidget: React.FC<WeatherRiskWidgetProps> = ({ className = '' }) => {
+  const { t } = useI18n()
   const [activeStation, setActiveStation] = useState<'Baramati' | 'Nashik' | 'Ludhiana'>('Baramati')
 
   const stationData = {
@@ -197,7 +199,7 @@ export const WeatherRiskWidget: React.FC<WeatherRiskWidgetProps> = ({ className 
               {current.tempC}°C
             </span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-              Feels like {current.feelsLike}°C • Focus: {current.cropFocus}
+              {t('feelsLike')} {current.feelsLike}°C • Focus: {current.cropFocus}
             </span>
           </div>
         </div>
@@ -217,7 +219,7 @@ export const WeatherRiskWidget: React.FC<WeatherRiskWidgetProps> = ({ className 
           }}
         >
           <AlertTriangle size={18} />
-          <span>Disease Risk: {current.riskLevel}</span>
+          <span>{t('diseaseRisk')}: {current.riskLevel}</span>
         </div>
       </div>
 
@@ -226,45 +228,45 @@ export const WeatherRiskWidget: React.FC<WeatherRiskWidgetProps> = ({ className 
         <div style={{ background: '#ffffff', border: '1px solid #e2ebd0', borderRadius: 12, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
             <Droplets size={14} style={{ color: '#2563eb' }} />
-            <span>Relative Humidity</span>
+            <span>{t('relativeHumidity')}</span>
           </div>
           <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
             {current.humidity}%
           </p>
-          <span style={{ fontSize: 10, color: '#64748b' }}>&gt;75% triggers foliar spore germination</span>
+          <span style={{ fontSize: 10, color: '#64748b' }}>{t('humidityDesc')}</span>
         </div>
 
         <div style={{ background: '#ffffff', border: '1px solid #e2ebd0', borderRadius: 12, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
             <CloudSun size={14} style={{ color: '#d97706' }} />
-            <span>Precipitation Chance</span>
+            <span>{t('precipitationChance')}</span>
           </div>
           <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
             {current.rainChance}%
           </p>
-          <span style={{ fontSize: 10, color: '#64748b' }}>Rainfall facilitates fungal leaf splash</span>
+          <span style={{ fontSize: 10, color: '#64748b' }}>{t('precipitationDesc')}</span>
         </div>
 
         <div style={{ background: '#ffffff', border: '1px solid #e2ebd0', borderRadius: 12, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
             <Wind size={14} style={{ color: '#059669' }} />
-            <span>Wind Velocity</span>
+            <span>{t('windVelocity')}</span>
           </div>
           <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
             {current.windKmh} km/h
           </p>
-          <span style={{ fontSize: 10, color: '#64748b' }}>Dry winds disperse airborne powdery spores</span>
+          <span style={{ fontSize: 10, color: '#64748b' }}>{t('windDesc')}</span>
         </div>
 
         <div style={{ background: '#ffffff', border: '1px solid #e2ebd0', borderRadius: 12, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
             <Clock size={14} style={{ color: '#7c3aed' }} />
-            <span>Foliar Wetness</span>
+            <span>{t('foliarWetness')}</span>
           </div>
           <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
             {current.humidity > 75 ? '5.5 hrs' : '2.1 hrs'}
           </p>
-          <span style={{ fontSize: 10, color: '#64748b' }}>Critical factor for blight incubation</span>
+          <span style={{ fontSize: 10, color: '#64748b' }}>{t('foliarWetnessDesc')}</span>
         </div>
       </div>
 

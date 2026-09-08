@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useRef } from 'react'
 import {
@@ -20,6 +20,7 @@ import {
   FileCheck,
 } from 'lucide-react'
 import type { CropHealthPassport, SeasonType, PassportRecord } from '@/types'
+import { useI18n } from '@/lib/i18n'
 
 interface SeasonReportModalProps {
   isOpen: boolean
@@ -34,6 +35,7 @@ export const SeasonReportModal: React.FC<SeasonReportModalProps> = ({
   passport,
   initialSeason = 'Kharif 2025',
 }) => {
+  const { t } = useI18n()
   const [selectedSeason, setSelectedSeason] = useState<SeasonType>(initialSeason)
   const [copiedLink, setCopiedLink] = useState(false)
   const reportRef = useRef<HTMLDivElement>(null)
@@ -148,7 +150,7 @@ export const SeasonReportModal: React.FC<SeasonReportModalProps> = ({
               }}
             >
               <Printer size={14} />
-              <span>Print</span>
+              <span>{t('printReport')}</span>
             </button>
             <button
               onClick={onClose}
@@ -171,7 +173,7 @@ export const SeasonReportModal: React.FC<SeasonReportModalProps> = ({
           {/* Season Selector */}
           <div style={{ marginBottom: 20 }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', display: 'block', marginBottom: 8 }}>
-              Select Cropping Season:
+              {t('currentSeason')}:
             </span>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {seasons.map((season) => (
@@ -210,21 +212,21 @@ export const SeasonReportModal: React.FC<SeasonReportModalProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, borderBottom: '1px solid #dbe8d8', paddingBottom: 14, marginBottom: 14 }}>
               <div>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#2b7a4d', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  MINISTRY OF AGRICULTURE & FARMERS WELFARE
+                  {t('digitalAgriRecord')}
                 </span>
                 <h2 style={{ margin: '4px 0 2px', fontSize: 20, fontWeight: 900, color: '#133a23' }}>
-                  Pradhan Mantri Fasal Bima Yojana (PMFBY)
+                  {t('pmfbySeasonalReport')}
                 </h2>
                 <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
-                  Certified Seasonal Crop Protection & Cryptographic Claim Audit Ledger
+                  {t('digitalRecordCertified')}
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <span className="chip high" style={{ fontSize: 11, padding: '3px 10px' }}>
-                  OFFICIAL RECORD
+                  {t('verifiedRecords')}
                 </span>
                 <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>
-                  Issued: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {t('issuedDate')}: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </p>
               </div>
             </div>
@@ -232,19 +234,19 @@ export const SeasonReportModal: React.FC<SeasonReportModalProps> = ({
             {/* Farmer & Farm Particulars */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, fontSize: 12 }}>
               <div>
-                <span style={{ color: 'var(--muted)', display: 'block' }}>Farmer Name:</span>
+                <span style={{ color: 'var(--muted)', display: 'block' }}>{t('fullName')}:</span>
                 <strong style={{ fontSize: 14, color: '#1e293b' }}>{passport.farmerName}</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--muted)', display: 'block' }}>Farm / Plot Location:</span>
+                <span style={{ color: 'var(--muted)', display: 'block' }}>{t('farmPlotLocation')}:</span>
                 <strong style={{ fontSize: 14, color: '#1e293b' }}>{passport.farmName} ({passport.location})</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--muted)', display: 'block' }}>Cultivated Area:</span>
+                <span style={{ color: 'var(--muted)', display: 'block' }}>{t('cultivatedArea')}:</span>
                 <strong style={{ fontSize: 14, color: '#1e293b' }}>{passport.farmArea}</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--muted)', display: 'block' }}>Crop & Cycle:</span>
+                <span style={{ color: 'var(--muted)', display: 'block' }}>{t('cropAndCycle')}:</span>
                 <strong style={{ fontSize: 14, color: '#1e293b' }}>{passport.activeCrop} • {selectedSeason}</strong>
               </div>
             </div>
@@ -252,17 +254,17 @@ export const SeasonReportModal: React.FC<SeasonReportModalProps> = ({
 
           {/* Diagnostic Log Table */}
           <h4 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 800, color: '#1e293b' }}>
-            Certified Diagnosis & Inspection Audit Trail ({records.length} Records)
+            {t('fieldDiagnosticsArchive')} ({records.length})
           </h4>
           <div style={{ border: '1px solid #e2ebd0', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: '#f3f7f0', borderBottom: '1px solid #e2ebd0', color: '#334155' }}>
-                  <th style={{ padding: '10px 14px' }}>Date</th>
-                  <th style={{ padding: '10px 14px' }}>Crop / Condition</th>
-                  <th style={{ padding: '10px 14px' }}>AI Confidence</th>
-                  <th style={{ padding: '10px 14px' }}>Severity</th>
-                  <th style={{ padding: '10px 14px' }}>Officer Seal</th>
+                  <th style={{ padding: '10px 14px' }}>{t('registryDate')}</th>
+                  <th style={{ padding: '10px 14px' }}>{t('cropCondition')}</th>
+                  <th style={{ padding: '10px 14px' }}>{t('diagnosticConfidence')}</th>
+                  <th style={{ padding: '10px 14px' }}>{t('severity')}</th>
+                  <th style={{ padding: '10px 14px' }}>{t('officerSeal')}</th>
                 </tr>
               </thead>
               <tbody>

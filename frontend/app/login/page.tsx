@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -203,7 +203,7 @@ export default function LoginPage() {
             }}
           >
             <Sprout size={15} />
-            <span>Farmer Portal</span>
+            <span>{t('farmerPortal')}</span>
           </button>
 
           <button
@@ -227,7 +227,7 @@ export default function LoginPage() {
             }}
           >
             <ShieldCheck size={15} />
-            <span>Officer Desk</span>
+            <span>{t('officerDesk')}</span>
           </button>
         </div>
 
@@ -417,11 +417,11 @@ export default function LoginPage() {
             {busy ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                <span>Authenticating...</span>
+                <span>{t('authenticating')}</span>
               </>
             ) : (
               <>
-                <span>Sign In to {activeRole === 'farmer' ? 'Farmer Portal' : 'Officer Desk'}</span>
+                <span>{t('login')} ({activeRole === 'farmer' ? t('farmerPortal') : t('officerDesk')})</span>
                 <ArrowRight size={16} />
               </>
             )}
@@ -470,7 +470,7 @@ export default function LoginPage() {
                 <strong style={{ fontSize: 12, color: '#1b4d2e' }}>Rameshwar Patil</strong>
               </div>
               <p style={{ margin: 0, fontSize: 10, color: '#4b6352' }}>
-                Farmer • Nashik (4.5 Ac)
+                {t('farmer')} • Nashik (4.5 {t('acres')})
               </p>
             </button>
 
@@ -498,7 +498,7 @@ export default function LoginPage() {
                 <strong style={{ fontSize: 12, color: '#78540c' }}>Sanjay Deshmukh</strong>
               </div>
               <p style={{ margin: 0, fontSize: 10, color: '#685732' }}>
-                Officer • District Hub
+                {t('officer')} • District Hub
               </p>
             </button>
           </div>
@@ -518,7 +518,7 @@ export default function LoginPage() {
           }}
         >
           <Lock size={12} />
-          <span>256-Bit Encrypted Agricultural Session · PMFBY Compliant</span>
+          <span>{t('encryptedSession')}</span>
         </p>
       </section>
     </main>

@@ -239,7 +239,7 @@ export default function WhatsAppPage() {
             }}
           >
             <MessageSquare size={16} />
-            <span>Launch Live WhatsApp</span>
+            <span>{t('launchWhatsAppLive')}</span>
             <ExternalLink size={13} />
           </a>
         </div>
@@ -317,32 +317,32 @@ export default function WhatsAppPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
                 <span style={{ fontSize: 18 }}>📷</span>
                 <div>
-                  <strong>Farmer sends leaf photo</strong>
-                  <div className="muted" style={{ fontSize: 11 }}>Via WhatsApp Business (+91 800-KRISHI-01)</div>
+                  <strong>{t('farmerSendsPhoto')}</strong>
+                  <div className="muted" style={{ fontSize: 11 }}>{t('viaWhatsAppHelpline')}</div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
                 <span style={{ fontSize: 18 }}>🤖</span>
                 <div>
-                  <strong>Krishi Darpan Vision AI analyzes</strong>
-                  <div className="muted" style={{ fontSize: 11 }}>Grad-CAM pattern & pathogen recognition</div>
+                  <strong>{t('visionAiAnalyzes')}</strong>
+                  <div className="muted" style={{ fontSize: 11 }}>{t('gradCamRecognition')}</div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
                 <span style={{ fontSize: 18 }}>🌱</span>
                 <div>
-                  <strong>ICAR dosage & remedies calculated</strong>
-                  <div className="muted" style={{ fontSize: 11 }}>Knapsack pump mixing ratios in local language</div>
+                  <strong>{t('icarDosageCalculated')}</strong>
+                  <div className="muted" style={{ fontSize: 11 }}>{t('knapsackMixingRatios')}</div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
                 <span style={{ fontSize: 18 }}>🔊</span>
                 <div>
-                  <strong>Voice advisory note dispatched</strong>
-                  <div className="muted" style={{ fontSize: 11 }}>Spoken audio in farmer&apos;s mother tongue</div>
+                  <strong>{t('voiceAdvisoryDispatched')}</strong>
+                  <div className="muted" style={{ fontSize: 11 }}>{t('spokenAudioMotherTongue')}</div>
                 </div>
               </div>
             </div>

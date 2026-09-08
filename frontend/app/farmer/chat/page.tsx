@@ -786,12 +786,12 @@ function ChatInner() {
                       {isCurrentlySpeaking ? (
                         <>
                           <VolumeX size={13} style={{ color: '#065f46' }} />
-                          <span>Stop</span>
+                          <span>{t('stopAudio')}</span>
                         </>
                       ) : (
                         <>
                           <Volume2 size={13} />
-                          <span>Listen</span>
+                          <span>{t('listenAudio')}</span>
                         </>
                       )}
                     </button>

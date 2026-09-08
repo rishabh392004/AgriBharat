@@ -103,12 +103,12 @@ export function OfficerShell({ children }: { children: React.ReactNode }) {
               <item.icon size={20} />
               {active(item.href) && <span className="dock-active-ring" aria-hidden />}
             </span>
-            <span>{item.dockLabel}</span>
+            <span>{t(item.key)}</span>
           </Link>
         ))}
         <button type="button" onClick={() => { signOut(); router.push('/login') }}>
           <span className="dock-icon"><LogOut size={20} /></span>
-          <span>Logout</span>
+          <span>{t('logout')}</span>
         </button>
       </nav>
     </div>

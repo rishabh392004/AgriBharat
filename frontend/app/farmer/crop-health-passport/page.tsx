@@ -130,7 +130,7 @@ export default function CropHealthPassportPage() {
             style={{ width: 'auto', gap: 8, padding: '10px 18px', fontSize: 13 }}
           >
             <Award size={16} />
-            <span>PMFBY Seasonal Report</span>
+            <span>{t('pmfbySeasonalReport')}</span>
           </button>
 
           <button
@@ -153,12 +153,12 @@ export default function CropHealthPassportPage() {
               <Award size={24} />
             </div>
             <div>
-              <span className="kicker" style={{ color: '#d4a017', fontSize: 10 }}>DIGITAL AGRICULTURAL RECORD</span>
+              <span className="kicker" style={{ color: '#d4a017', fontSize: 10 }}>{t('digitalAgriRecord')}</span>
               <h2 style={{ margin: '2px 0 0', fontSize: 18, color: 'white' }}>{passport.farmName}</h2>
             </div>
           </div>
           <div className="passport-number-badge">
-            <span style={{ opacity: 0.75, fontSize: 10, display: 'block' }}>PASSPORT REF ID</span>
+            <span style={{ opacity: 0.75, fontSize: 10, display: 'block' }}>{t('passportRefId')}</span>
             <strong>{passport.passportId}</strong>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function CropHealthPassportPage() {
                   </div>
 
                   <div className="passport-conf-box">
-                    <small>AI VISION CONFIDENCE</small>
+                    <small>{t('aiVisionConfidence')}</small>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
                       <div className="passport-mini-bar">
                         <div style={{ width: `${record.aiConfidence}%` }} />
@@ -287,7 +287,7 @@ export default function CropHealthPassportPage() {
                       <b style={{ color: '#2b7a4d', fontSize: 16 }}>{record.aiConfidence}%</b>
                     </div>
                     <div style={{ display: 'flex', gap: 4, marginTop: 4, justifyContent: 'flex-end' }}>
-                      <span className="chip" style={{ fontSize: 10, padding: '2px 8px' }}>Severity: {record.severity}</span>
+                      <span className="chip" style={{ fontSize: 10, padding: '2px 8px' }}>{t('severity')}: {record.severity}</span>
                       <span
                         className="chip"
                         style={{
@@ -297,7 +297,7 @@ export default function CropHealthPassportPage() {
                           color: record.riskLevel === 'High' ? '#a4462f' : '#2b7a4d',
                         }}
                       >
-                        {record.riskLevel} Risk
+                        {record.riskLevel} {t('risk')}
                       </span>
                     </div>
                   </div>
@@ -307,7 +307,7 @@ export default function CropHealthPassportPage() {
                 {record.symptoms && record.symptoms.length > 0 && (
                   <div style={{ marginTop: 12 }}>
                     <strong style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '0.04em' }}>
-                      Observed Symptoms
+                      {t('symptoms')}
                     </strong>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                       {record.symptoms.map((sym, i) => (
@@ -328,16 +328,16 @@ export default function CropHealthPassportPage() {
                         {record.officerName}
                       </strong>
                       <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)' }}>
-                        {record.officerDesignation} • Verified on {record.verifiedAt}
+                        {record.officerDesignation} • {t('verified')} {record.verifiedAt}
                       </span>
                     </div>
                   </div>
                   <div className="passport-notes-content">
                     <p style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--ink)' }}>
-                      <strong>Officer Note:</strong> {record.officerNotes}
+                      <strong>{t('officerNote')}:</strong> {record.officerNotes}
                     </p>
                     <p style={{ margin: 0, fontSize: 13, color: '#1b3d2a' }}>
-                      <strong>Prescribed Treatment:</strong> {record.recommendedAction}
+                      <strong>{t('prescribedTreatment')}:</strong> {record.recommendedAction}
                     </p>
                   </div>
                 </div>
@@ -353,10 +353,10 @@ export default function CropHealthPassportPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span className="chip" style={{ background: '#fdf5e1', color: '#8a6410', fontSize: 11, fontWeight: 800 }}>
-                Future Integration
+                {t('verified')}
               </span>
               <span style={{ fontSize: 12, color: '#2b7a4d', fontWeight: 700 }}>
-                PMFBY / Agricultural Insurance Workflow Support
+                {t('cropInsuranceSupportTitle')}
               </span>
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 22, color: '#1b3d2a' }}>
@@ -371,27 +371,27 @@ export default function CropHealthPassportPage() {
         <div className="passport-pillars-grid">
           <div className="passport-pillar-item">
             <CheckCircle2 size={16} className="text-[#2b7a4d]" style={{ flexShrink: 0 }} />
-            <span>Timestamped crop-health records</span>
+            <span>{t('timestampedRecords')}</span>
           </div>
           <div className="passport-pillar-item">
             <CheckCircle2 size={16} className="text-[#2b7a4d]" style={{ flexShrink: 0 }} />
-            <span>Geotagged field observations</span>
+            <span>{t('geotaggedFieldObservations')}</span>
           </div>
           <div className="passport-pillar-item">
             <CheckCircle2 size={16} className="text-[#2b7a4d]" style={{ flexShrink: 0 }} />
-            <span>Officer-verified diagnoses</span>
+            <span>{t('officerVerifiedDiagnoses')}</span>
           </div>
           <div className="passport-pillar-item">
             <CheckCircle2 size={16} className="text-[#2b7a4d]" style={{ flexShrink: 0 }} />
-            <span>Seasonal crop-health history</span>
+            <span>{t('seasonalHealthHistory')}</span>
           </div>
           <div className="passport-pillar-item">
             <CheckCircle2 size={16} className="text-[#2b7a4d]" style={{ flexShrink: 0 }} />
-            <span>Downloadable PDF report</span>
+            <span>{t('downloadPassportPdf')}</span>
           </div>
           <div className="passport-pillar-item">
             <CheckCircle2 size={16} className="text-[#2b7a4d]" style={{ flexShrink: 0 }} />
-            <span>QR-based verification</span>
+            <span>{t('generateQrVerification')}</span>
           </div>
         </div>
 

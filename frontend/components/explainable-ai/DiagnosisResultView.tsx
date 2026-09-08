@@ -147,7 +147,7 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
             style={{ fontSize: 12, padding: '6px 12px', gap: 6 }}
           >
             <Printer size={14} />
-            <span>Print Report</span>
+            <span>{t('printReport')}</span>
           </button>
         </div>
       </div>
@@ -377,7 +377,7 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         <section className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <p className="kicker" style={{ margin: 0 }}>{t('actions')}</p>
-            <span style={{ fontSize: 11, color: '#2b7a4d', fontWeight: 700 }}>ICAR Protocol</span>
+            <span style={{ fontSize: 11, color: '#2b7a4d', fontWeight: 700 }}>{t('icarProtocol')}</span>
           </div>
 
           {prediction.actions.map((item, i) => (

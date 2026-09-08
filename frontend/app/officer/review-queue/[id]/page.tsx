@@ -103,21 +103,21 @@ export default function ReviewDetailPage() {
 
       <div className="grid-2">
         <section className="card">
-          <p className="kicker">Farmer Details</p>
+          <p className="kicker">{t('farmerDetails')}</p>
           <h3 style={{ margin: '4px 0 12px' }}>{r.farmer}</h3>
-          <p style={{ margin: '0 0 6px' }}><span className="muted">Location</span><br /><strong>📍 {r.location}</strong></p>
-          <p style={{ margin: '0 0 6px' }}><span className="muted">Crop</span><br /><strong>{r.crop}</strong></p>
-          <p style={{ margin: 0 }}><span className="muted">Submitted</span><br /><strong>{r.submittedDate}</strong></p>
+          <p style={{ margin: '0 0 6px' }}><span className="muted">{t('location')}</span><br /><strong>📍 {r.location}</strong></p>
+          <p style={{ margin: '0 0 6px' }}><span className="muted">{t('primaryCrop')}</span><br /><strong>{r.crop}</strong></p>
+          <p style={{ margin: 0 }}><span className="muted">{t('submittedDate')}</span><br /><strong>{r.submittedDate}</strong></p>
         </section>
 
         <section className="card">
-          <p className="kicker">AI Prediction</p>
+          <p className="kicker">{t('aiPrediction')}</p>
           <div className="ring" style={{ width: 72, height: 72, margin: '8px 0 12px', borderColor: '#e8c868', borderWidth: 4 }}>
-            <div><b style={{ fontSize: 18 }}>{r.confidence}%</b><small style={{ fontSize: 9 }}>confidence</small></div>
+            <div><b style={{ fontSize: 18 }}>{r.confidence}%</b><small style={{ fontSize: 9 }}>{t('confidence')}</small></div>
           </div>
-          <p style={{ margin: '0 0 6px' }}><span className="muted">Disease</span><br /><strong>{r.disease}</strong></p>
-          <p style={{ margin: '0 0 6px' }}><span className="muted">Severity</span><br /><strong>{r.severity}</strong></p>
-          <p style={{ margin: 0 }}><span className="muted">Risk Level</span><br /><strong>{r.riskLevel}</strong></p>
+          <p style={{ margin: '0 0 6px' }}><span className="muted">{t('diseaseLabel')}</span><br /><strong>{r.disease}</strong></p>
+          <p style={{ margin: '0 0 6px' }}><span className="muted">{t('severity')}</span><br /><strong>{r.severity}</strong></p>
+          <p style={{ margin: 0 }}><span className="muted">{t('riskLevel')}</span><br /><strong>{r.riskLevel}</strong></p>
         </section>
 
         <section className="card">
@@ -184,7 +184,7 @@ export default function ReviewDetailPage() {
         {status === 'Pending' ? (
           <>
             <button className="btn btn-primary" style={{ width: 'auto', background: '#2b7a45', gap: 6 }} onClick={handleSelect}>
-              <CheckCircle2 size={16} /> Confirm & Endorse to Passport
+              <CheckCircle2 size={16} /> {t('approveAndSign')}
             </button>
             <button className="btn" style={{ width: 'auto', background: '#f7dfd4', color: '#a4462f', border: '1px solid #f2c4b4', gap: 6 }} onClick={() => setShowRejectModal(true)}>
               <XCircle size={16} /> {t('rejectReport')}
@@ -193,16 +193,16 @@ export default function ReviewDetailPage() {
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <p style={{ margin: 0, fontWeight: 700, color: status === 'Selected' ? '#347044' : '#a4462f' }}>
-              {status === 'Selected' ? '✓ Report Approved & Added to Crop Health Passport (KRA-2026-NK-00124)' : '✕ Report Rejected'}
+              {status === 'Selected' ? '✓ ' + t('reportApproved') : '✕ ' + t('reportRejected')}
             </p>
             {status === 'Selected' && (
               <Link href="/verify/passport/KRA-2026-NK-00124" target="_blank" className="ghost" style={{ fontSize: 12, gap: 4, display: 'inline-flex', alignItems: 'center' }}>
-                <ExternalLink size={13} /> View Public Passport Record
+                <ExternalLink size={13} /> {t('viewCertificate')}
               </Link>
             )}
           </div>
         )}
-        <Link href="/officer/review-queue" className="btn btn-ghost" style={{ width: 'auto' }}>Back to Queue</Link>
+        <Link href="/officer/review-queue" className="btn btn-ghost" style={{ width: 'auto' }}>{t('back')}</Link>
       </div>
 
       {showRejectModal && (

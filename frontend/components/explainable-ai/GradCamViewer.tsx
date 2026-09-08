@@ -595,7 +595,7 @@ export const GradCamViewer: React.FC<GradCamViewerProps> = ({
 
             {/* Gradient Bar Visual */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 10, color: '#2563eb', fontWeight: 700 }}>Low Focus</span>
+              <span style={{ fontSize: 10, color: '#2563eb', fontWeight: 700 }}>{t('lowFocus')}</span>
               <div
                 style={{
                   width: 90,
@@ -605,7 +605,7 @@ export const GradCamViewer: React.FC<GradCamViewerProps> = ({
                   boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.2)',
                 }}
               />
-              <span style={{ fontSize: 10, color: '#dc2626', fontWeight: 700 }}>High Focus</span>
+              <span style={{ fontSize: 10, color: '#dc2626', fontWeight: 700 }}>{t('highFocus')}</span>
             </div>
           </div>
         </div>
