@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "contract:emit": "prisma contract emit",
-    "postinstall": "prisma skills sync || exit 0"
+ "scripts": {
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "contract:emit": "npx --yes prisma@next contract emit"
   },
   "keywords": [],
   "author": "",

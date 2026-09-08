@@ -1,6 +1,6 @@
 import { AppError } from "../common/AppError.js";
 import { db } from "../prisma/db.js";
-import { ADMIN_ROLE } from "../auth/auth.types.js";
+import { ADMIN_ROLE, OFFICER_ROLE } from "../auth/auth.types.js";
 import type { UserRole } from "../auth/auth.types.js";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ function formatMessage(msg: {
 
 /**
  * Send a message from one user to another.
- * Rule: farmers (USER role) can only message officers (ADMIN role).
+ * Rule: farmers (USER role) can only message agriculture officers (OFFICER or ADMIN role).
  * Officers can message anyone.
  */
 export async function sendMessage(
@@ -49,7 +49,7 @@ export async function sendMessage(
   const recipient = await getUserOrThrow(toUserId);
 
   // Farmers can only message officers
-  if (fromRole !== ADMIN_ROLE && recipient.role !== ADMIN_ROLE) {
+  if (fromRole === "USER" && recipient.role !== OFFICER_ROLE && recipient.role !== ADMIN_ROLE) {
     throw new AppError("Farmers can only message agriculture officers", 403);
   }
 
@@ -157,14 +157,16 @@ export async function markAsRead(readerId: number, senderId: number) {
 }
 
 /**
- * List all officers (ADMIN role) — used by farmers to start a conversation.
+ * List all agriculture officers (OFFICER or ADMIN role) — used by farmers to start a conversation.
  */
 export async function getOfficers() {
-  const officers = await db.orm.public.User
-    .where({ role: ADMIN_ROLE })
-    .all();
+  const [officers, admins] = await Promise.all([
+    db.orm.public.User.where({ role: OFFICER_ROLE }).all(),
+    db.orm.public.User.where({ role: ADMIN_ROLE }).all(),
+  ]);
+  const recipients = [...officers, ...admins];
 
-  return officers.map((u) => ({
+  return recipients.map((u) => ({
     id: u.id,
     name: u.name,
     email: u.email,

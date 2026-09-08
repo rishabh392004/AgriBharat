@@ -15,6 +15,7 @@ router.use(authMiddleware);
 
 router.post("/", createScanController);
 router.get("/", getScansController);
+router.get("/history", getScansController);
 router.get("/:id", getScanController);
 router.use(diagnosisRoutes);
 

@@ -60,3 +60,29 @@ CREATE TABLE IF NOT EXISTS public."officerProfile" (
 );
 
 CREATE INDEX IF NOT EXISTS "officerProfile_userId_idx" ON public."officerProfile" ("userId");
+
+-- 5. Disease result table
+CREATE TABLE IF NOT EXISTS public."diseaseResult" (
+  "id"          SERIAL PRIMARY KEY,
+  "scanId"      INT4 NOT NULL UNIQUE REFERENCES public."scan"("id"),
+  "disease"     TEXT NOT NULL,
+  "confidence"  FLOAT8 NOT NULL,
+  "severity"    TEXT NOT NULL,
+  "actions"     TEXT NOT NULL,
+  "precautions" TEXT NOT NULL,
+  "provider"    TEXT NOT NULL,
+  "createdAt"   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 6. Message table
+CREATE TABLE IF NOT EXISTS public."message" (
+  "id"         SERIAL PRIMARY KEY,
+  "fromUserId" INT4 NOT NULL REFERENCES public."user"("id"),
+  "toUserId"   INT4 NOT NULL REFERENCES public."user"("id"),
+  "content"    TEXT NOT NULL,
+  "isRead"     BOOLEAN NOT NULL DEFAULT false,
+  "createdAt"  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS "message_fromUserId_idx" ON public."message" ("fromUserId");
+CREATE INDEX IF NOT EXISTS "message_toUserId_idx" ON public."message" ("toUserId");

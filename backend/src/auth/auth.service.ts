@@ -6,11 +6,12 @@ import { generateToken } from "../common/jwt.js";
 import {
   USER_ROLE,
   ADMIN_ROLE,
+  OFFICER_ROLE,
   type UserRole,
 } from "./auth.types.js";
 
 function validateUserRole(role: string): UserRole {
-  if (role === USER_ROLE || role === ADMIN_ROLE) {
+  if (role === USER_ROLE || role === OFFICER_ROLE || role === ADMIN_ROLE) {
     return role;
   }
 

@@ -8,75 +8,123 @@ import type {
 } from "./diagnosis.types.js";
 
 const MOCK_PROVIDER_NAME = "mock";
+const ML_PROVIDER_NAME = "resnet34-fastapi";
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? "http://localhost:8000";
 
-/** Image URLs containing this token make the mock provider fail deterministically. */
-export const MOCK_DIAGNOSIS_FAILURE_TOKEN = "__diagnosis_fail";
+const MOCK_DISEASES = ["Leaf Rust", "Powdery Mildew", "Early Blight", "Stem Borer", "Healthy"] as const;
 
-/** All diseases the mock provider can return — covers the full knowledge base. */
-const MOCK_DISEASES = [
-  "Leaf Rust",
-  "Powdery Mildew",
-  "Early Blight",
-  "Stem Borer",
-  "Healthy",
-] as const;
-
-function deterministicHash(imageUrl: string): number {
+function deterministicHash(value: string): number {
   let hash = 0;
-  for (let i = 0; i < imageUrl.length; i += 1) {
-    hash = (hash * 31 + imageUrl.charCodeAt(i)) >>> 0;
-  }
+  for (let i = 0; i < value.length; i += 1) hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
   return hash;
 }
 
-/** Pick a disease deterministically from the image URL — same URL always gives same disease. */
-function deterministicDisease(imageUrl: string): string {
-  return MOCK_DISEASES[deterministicHash(imageUrl) % MOCK_DISEASES.length];
+function mockDiagnosis(imageUrl: string): DiagnosisResult {
+  const hash = deterministicHash(imageUrl);
+  const disease = MOCK_DISEASES[hash % MOCK_DISEASES.length]!;
+  const confidence = Number((0.70 + (hash % 26) / 100).toFixed(2));
+  const severity: Severity = confidence >= 0.9 ? "severe" : confidence >= 0.8 ? "moderate" : "mild";
+  return {
+    scanId: 0,
+    imageUrl,
+    disease,
+    confidence,
+    severity,
+    recommendation: getRecommendation(disease),
+    provider: MOCK_PROVIDER_NAME,
+  };
 }
 
-/** Range: 0.70 – 0.95 (realistic confidence band). */
-function deterministicConfidence(imageUrl: string): number {
-  return Number((0.70 + (deterministicHash(imageUrl) % 26) / 100).toFixed(2));
+interface MlResponse {
+  status: "success";
+  predicted_disease: string;
+  confidence: number;
+  severity_analysis: {
+    affected_leaf_area_percent?: number;
+    foliar_damage_percent?: number;
+    infection_stage?: string;
+    recommended_urgency?: string;
+  };
+  flag_officer_review: boolean;
+  top_3_predictions: Array<{ class: string; confidence: number }>;
 }
 
-function confidenceToSeverity(confidence: number): Severity {
-  if (confidence >= 0.9) return "severe";
-  if (confidence >= 0.8) return "moderate";
-  if (confidence >= 0.7) return "mild";
+function toSeverity(ml: MlResponse): Severity {
+  const damage = ml.severity_analysis.foliar_damage_percent ?? ml.severity_analysis.affected_leaf_area_percent ?? 0;
+  if (damage >= 50 || ml.severity_analysis.recommended_urgency === "CRITICAL") return "severe";
+  if (damage >= 25) return "moderate";
+  if (damage > 0) return "mild";
   return "none";
 }
 
-export const mockDiagnosisProvider: DiagnosisProvider = {
-  async diagnose(input: DiagnosisRequest): Promise<DiagnosisResult> {
-    if (input.imageUrl.includes(MOCK_DIAGNOSIS_FAILURE_TOKEN)) {
-      throw new AppError("Diagnosis provider failed", 502);
-    }
+function isValidMlResponse(value: unknown): value is MlResponse {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return v.status === "success" && typeof v.predicted_disease === "string" &&
+    typeof v.confidence === "number" && Number.isFinite(v.confidence) &&
+    v.confidence >= 0 && v.confidence <= 1 && typeof v.severity_analysis === "object" &&
+    Array.isArray(v.top_3_predictions) && typeof v.flag_officer_review === "boolean";
+}
 
-    // Simulate realistic ML processing time
-    await new Promise((resolve) => setTimeout(resolve, 800));
+async function realMlProvider(input: DiagnosisRequest): Promise<DiagnosisResult> {
+  let imageResponse: Response;
+  try {
+    imageResponse = await fetch(input.imageUrl, { signal: AbortSignal.timeout(10_000) });
+  } catch {
+    throw new AppError("Unable to download scan image", 502);
+  }
 
-    const disease = deterministicDisease(input.imageUrl);
-    const confidence = deterministicConfidence(input.imageUrl);
-    const severity = confidenceToSeverity(confidence);
-    const recommendation = getRecommendation(disease);
+  if (!imageResponse.ok || !imageResponse.body) throw new AppError("Unable to download scan image", 502);
 
-    return {
-      scanId: input.scanId,
-      imageUrl: input.imageUrl,
-      disease,
-      confidence,
-      severity,
-      recommendation,
-      provider: MOCK_PROVIDER_NAME,
-    };
-  },
-};
+  const contentType = imageResponse.headers.get("content-type")?.split(";", 1)[0] ?? "";
+  if (!contentType.startsWith("image/")) throw new AppError("Scan image URL is not an image", 400);
+
+  const bytes = new Uint8Array(await imageResponse.arrayBuffer());
+  if (bytes.byteLength === 0 || bytes.byteLength > 10 * 1024 * 1024) {
+    throw new AppError("Scan image must be between 1 byte and 10 MB", 400);
+  }
+
+  const form = new FormData();
+  form.append("image", new Blob([bytes.buffer as ArrayBuffer], { type: contentType }), "scan-image");
+
+  let mlResponse: Response;
+  try {
+    mlResponse = await fetch(`${ML_SERVICE_URL.replace(/\/$/, "")}/predict`, {
+      method: "POST",
+      body: form,
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new AppError("ML service unavailable", 502);
+  }
+
+  if (!mlResponse.ok) throw new AppError("ML service returned an error", 502);
+
+  let payload: unknown;
+  try {
+    payload = await mlResponse.json();
+  } catch {
+    throw new AppError("ML service returned invalid JSON", 502);
+  }
+  if (!isValidMlResponse(payload)) throw new AppError("ML service returned an invalid diagnosis", 502);
+
+  return {
+    scanId: input.scanId,
+    imageUrl: input.imageUrl,
+    disease: payload.predicted_disease,
+    confidence: payload.confidence,
+    severity: toSeverity(payload),
+    recommendation: getRecommendation(payload.predicted_disease),
+    provider: ML_PROVIDER_NAME,
+  };
+}
+
+export async function diagnoseWithProvider(input: DiagnosisRequest): Promise<DiagnosisResult> {
+  if (process.env.ML_SERVICE_URL) return realMlProvider(input);
+  const result = mockDiagnosis(input.imageUrl);
+  return { ...result, scanId: input.scanId };
+}
 
 export function getDiagnosisProvider(): DiagnosisProvider {
-  // When the ML team provides a real endpoint, set ML_API_URL in .env to activate it.
-  if (process.env.ML_API_URL) {
-    // TODO: return realMlProvider when ML team is ready
-    console.warn("ML_API_URL set but real provider not yet implemented — using mock.");
-  }
-  return mockDiagnosisProvider;
+  return { diagnose: diagnoseWithProvider };
 }
