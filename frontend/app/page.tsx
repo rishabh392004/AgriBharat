@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { LanguageSelector } from '@/components/language-selector'
 import { LeafMark } from '@/components/leaf-mark'
+import { SplashBgAnimation } from '@/components/splash-bg-animation'
 import { useI18n } from '@/lib/i18n'
 import { ArrowRight, ShieldCheck, Sparkles, CloudSun, CheckCircle2 } from 'lucide-react'
 
@@ -21,6 +22,9 @@ export default function SplashPage() {
 
   return (
     <main className="splash">
+      {/* Delicate Ambient Agricultural Atmosphere & Floating Pollen */}
+      <SplashBgAnimation />
+
       {/* Top Bar for Language Switcher on Splash */}
       <div style={{ position: 'absolute', top: 20, right: 24, zIndex: 50 }}>
         <LanguageSelector />
