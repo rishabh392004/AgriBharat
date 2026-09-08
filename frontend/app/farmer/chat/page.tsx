@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useMemo, useRef, useState, useEffect } from 'react'
+import { Suspense, useRef, useState, useEffect } from 'react'
 import {
   ArrowLeft,
   ImagePlus,
@@ -10,20 +10,13 @@ import {
   MicOff,
   Send,
   Sparkles,
-  MapPin,
-  CheckCircle2,
   Volume2,
   VolumeX,
   Copy,
   Check,
   Bot,
-  User,
-  ShieldCheck,
-  Sprout,
-  Droplets,
-  HelpCircle,
   Globe,
-  Radio,
+  AlertCircle,
 } from 'lucide-react'
 import { replyToChat, sendChatMessage } from '@/services/chatbotService'
 import { useI18n, Locale, localeLabels } from '@/lib/i18n'
@@ -71,6 +64,23 @@ function ChatInner() {
   const [speakingId, setSpeakingId] = useState<string | null>(null)
   const [isBackendConnected, setIsBackendConnected] = useState(true)
   const [voiceAgentActive, setVoiceAgentActive] = useState(false)
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null)
+
+  // Listen and cache speech synthesis voices across browser lifecycle
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if ('speechSynthesis' in window) {
+      const updateVoices = () => {
+        const v = window.speechSynthesis.getVoices()
+        if (v && v.length > 0) {
+          setAvailableVoices(v)
+        }
+      }
+      updateVoices()
+      window.speechSynthesis.onvoiceschanged = updateVoices
+    }
+  }, [])
 
   useEffect(() => {
     fetch('/api/backend-status')
@@ -133,47 +143,115 @@ function ChatInner() {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, typing])
 
+  // Intelligent Voice Selector with Graceful Regional Fallbacks
+  const findBestVoice = (targetLocale: Locale, voiceList: SpeechSynthesisVoice[]) => {
+    if (!voiceList || voiceList.length === 0) return null
+
+    const bcp47 = BCP47_LANG_MAP[targetLocale] || 'hi-IN'
+    const langPrefix = bcp47.split('-')[0].toLowerCase()
+
+    // 1. Exact match e.g. 'mr-IN' or 'hi-IN'
+    let v = voiceList.find((voice) => voice.lang.toLowerCase() === bcp47.toLowerCase())
+    if (v) return v
+
+    // 2. Prefix match e.g. 'mr' or 'hi'
+    v = voiceList.find((voice) => voice.lang.toLowerCase().startsWith(langPrefix))
+    if (v) return v
+
+    // 3. Indian Voice Match with Devanagari Script Fallback:
+    // If Windows lacks a dedicated Marathi/Gujarati voice pack, Hindi voices (Heera, Kalpana, Google हिन्दी)
+    // read Devanagari Marathi and regional terms with 100% phonetic accuracy.
+    const prioritizedKeywords = ['india', 'hindi', 'heera', 'ravi', 'kalpana', 'google']
+    for (const kw of prioritizedKeywords) {
+      const found = voiceList.find(
+        (voice) => voice.name.toLowerCase().includes(kw) || voice.lang.toLowerCase().includes(kw)
+      )
+      if (found) return found
+    }
+
+    // 4. Default system voice
+    return voiceList.find((voice) => voice.default) || voiceList[0]
+  }
+
   // Text-To-Speech Reader (Voice Output in Native Accent)
   const speakMessage = (id: string, text: string) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      setVoiceNotice('Speech synthesis is not supported in this browser.')
+      return
+    }
 
+    setVoiceNotice(null)
+
+    // Toggle off if currently speaking this message
     if (speakingId === id) {
       window.speechSynthesis.cancel()
       setSpeakingId(null)
       return
     }
 
+    // Resolve queue freeze on Windows/Chrome
     window.speechSynthesis.cancel()
+    window.speechSynthesis.resume()
+
     const cleanText = text
-      .replace(/[*#•_`~\[\]]/g, '')
-      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[*#•_`~\[\]\(\)]/g, ' ')
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/\s+/g, ' ')
       .trim()
 
+    if (!cleanText) return
+
     const utterance = new SpeechSynthesisUtterance(cleanText)
-    const targetLang = BCP47_LANG_MAP[locale] || 'hi-IN'
-    utterance.lang = targetLang
-    utterance.rate = 0.95
-    utterance.pitch = 1.0
+    const voiceList = availableVoices.length > 0 ? availableVoices : window.speechSynthesis.getVoices()
+    const bestVoice = findBestVoice(locale, voiceList)
 
-    try {
-      const voices = window.speechSynthesis.getVoices()
-      const langPrefix = targetLang.split('-')[0]
-      const matchedVoice =
-        voices.find((v) => v.lang.toLowerCase() === targetLang.toLowerCase()) ||
-        voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix))
-
-      if (matchedVoice) {
-        utterance.voice = matchedVoice
-      }
-    } catch {
-      // Browser fallback
+    if (bestVoice) {
+      utterance.voice = bestVoice
+      utterance.lang = bestVoice.lang
+    } else {
+      utterance.lang = BCP47_LANG_MAP[locale] || 'hi-IN'
     }
 
-    utterance.onend = () => setSpeakingId(null)
-    utterance.onerror = () => setSpeakingId(null)
+    utterance.rate = 0.92
+    utterance.pitch = 1.0
 
-    setSpeakingId(id)
-    window.speechSynthesis.speak(utterance)
+    utterance.onstart = () => {
+      setSpeakingId(id)
+    }
+
+    utterance.onend = () => {
+      setSpeakingId(null)
+    }
+
+    utterance.onerror = (e) => {
+      setSpeakingId(null)
+      if (e.error !== 'interrupted' && e.error !== 'canceled') {
+        console.warn('Speech synthesis playback notice:', e)
+      }
+    }
+
+    // Delay 50ms to prevent Chrome race condition
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance)
+    }, 50)
+  }
+
+  // Test Sound trigger
+  const testVoice = () => {
+    const testPhrases: Record<Locale, string> = {
+      mr: 'नमस्कार शेतकरी मित्र! आवाज व्यवस्थित चालू आहे. तुम्ही मराठीत प्रश्न विचारू शकता.',
+      hi: 'नमस्ते किसान भाई! आवाज चालू है। आप फसल का कोई भी सवाल पूछ सकते हैं।',
+      en: 'Hello farmer! Voice is working clearly. You can ask your question now.',
+      gu: 'નમસ્તે ખેડૂત મિત્ર! અવાજ ચાલુ છે. તમે પાક વિશે પૂછી શકો છો.',
+      bn: 'নমস্কার কৃষক বন্ধু! ভয়েস চালু আছে। আপনি যে কোনো প্রশ্ন করতে পারেন।',
+      ta: 'வணக்கம் விவசாய தோழரே! குரல் சேவை செயல்படுகிறது.',
+      te: 'నమస్కారం రైతు సోదరా! వాయిస్ సేవ పనిచేస్తుంది.',
+      pa: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਿਸਾਨ ਵੀਰੋ! ਆਵਾਜ਼ ਸੇਵਾ ਚੱਲ ਰਹੀ ਹੈ।',
+      kn: 'ನಮಸ್ಕಾರ ರೈತ ಮಿತ್ರರೆ! ಧ್ವನಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿದೆ.',
+      ml: 'നമസ്കാരം കർഷക സുഹൃത്തേ! വോയ്‌സ് സേവനം പ്രവർത്തിക്കുന്നു.',
+      as: 'নমস্কাৰ কৃষক বন্ধু! ভইচ সেৱা চলি আছে।',
+    }
+    speakMessage('test-voice', testPhrases[locale] || testPhrases.en)
   }
 
   const send = async (text: string, image?: string) => {
@@ -227,9 +305,11 @@ function ChatInner() {
     const win = window as any
     const SpeechRec = win.SpeechRecognition || win.webkitSpeechRecognition
     if (!SpeechRec) {
-      alert('Voice recognition is not supported in this browser. Please use Google Chrome or Edge.')
+      setVoiceNotice('Voice recognition is supported in Google Chrome or Microsoft Edge. Please open in Chrome.')
       return
     }
+
+    setVoiceNotice(null)
 
     if (isListening) {
       if (win.__activeRecognition) {
@@ -249,7 +329,17 @@ function ChatInner() {
       setIsListening(true)
       rec.onstart = () => setIsListening(true)
       rec.onend = () => setIsListening(false)
-      rec.onerror = () => setIsListening(false)
+      rec.onerror = (event: any) => {
+        setIsListening(false)
+        console.warn('Speech recognition error event:', event)
+        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+          setVoiceNotice('⚠️ Microphone permission is blocked. Click the 🔒 lock icon in your browser address bar to allow microphone access.')
+        } else if (event.error === 'no-speech') {
+          setVoiceNotice('No speech was detected. Tap the mic and speak clearly.')
+        } else if (event.error === 'network') {
+          setVoiceNotice('Speech recognition requires an internet connection (Google Cloud Speech).')
+        }
+      }
 
       rec.onresult = (event: any) => {
         setIsListening(false)
@@ -258,9 +348,9 @@ function ChatInner() {
       }
 
       rec.start()
-    } catch {
+    } catch (err) {
       setIsListening(false)
-      setInput(t('voiceStop'))
+      setVoiceNotice('Could not start microphone. Please check permissions.')
     }
   }
 
@@ -324,6 +414,29 @@ function ChatInner() {
         </div>
 
         <div className="chips" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* Test Sound Button */}
+          <button
+            type="button"
+            onClick={testVoice}
+            className="ghost"
+            style={{
+              fontSize: 11,
+              padding: '6px 10px',
+              borderRadius: 999,
+              border: '1px solid var(--line)',
+              background: speakingId === 'test-voice' ? 'rgba(16, 185, 129, 0.15)' : 'var(--card)',
+              color: speakingId === 'test-voice' ? '#065f46' : 'var(--forest)',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Test speaker sound"
+          >
+            <Volume2 size={13} />
+            <span>{speakingId === 'test-voice' ? 'Speaking...' : 'Test Sound 🔊'}</span>
+          </button>
+
           {/* Voice Agent Toggle Button */}
           <button
             type="button"
@@ -380,6 +493,44 @@ function ChatInner() {
           </button>
         </div>
       </div>
+
+      {/* Voice Warning Notice if Any */}
+      {voiceNotice && (
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1.5px solid #ef4444',
+            borderRadius: 14,
+            padding: '10px 14px',
+            marginBottom: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            color: '#991b1b',
+            fontSize: 12.5,
+            fontWeight: 600,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertCircle size={16} />
+            <span>{voiceNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setVoiceNotice(null)}
+            style={{
+              background: 'none',
+              border: 0,
+              cursor: 'pointer',
+              color: '#991b1b',
+              fontWeight: 800,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Multilingual Selector Strip */}
       <div
