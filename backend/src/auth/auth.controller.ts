@@ -17,11 +17,11 @@ export async function register(req: Request, res: Response) {
 
   const { email, password, name } = result.data;
 
-  const user = await registerUser(email, password, name);
+  const authData = await registerUser(email, password, name);
 
   res.status(201).json({
     message: "User registered successfully",
-    user,
+    ...authData,
   });
 }
 
