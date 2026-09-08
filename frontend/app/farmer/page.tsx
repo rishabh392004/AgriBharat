@@ -12,6 +12,9 @@ import {
   Sparkles,
   CheckCircle2,
   TrendingUp,
+  MapPin,
+  Navigation,
+  Loader2,
 } from 'lucide-react'
 import { CountUp } from '@/components/count-up'
 import { useAuth } from '@/lib/auth'
@@ -20,16 +23,38 @@ import { alerts, scans, weatherFull } from '@/data/mock'
 import { WhatsAppBanner } from '@/components/whatsapp/WhatsAppBanner'
 import { WeatherRiskWidget } from '@/components/weather-risk-widget'
 import { OutbreakMap } from '@/components/outbreak-map'
+import { toast } from '@/components/toast'
+import { detectLiveLocation } from '@/lib/location'
 
 export default function FarmerDashboard() {
   const { t } = useI18n()
-  const { farmer } = useAuth()
+  const { farmer, setFarmer } = useAuth()
   const latest = scans[0]
+  const [locating, setLocating] = useState(false)
 
   const [backendStatus, setBackendStatus] = useState<{
     nodeBackend: { status: string; latencyMs: number }
     chatbotAi: { status: string; latencyMs: number }
   } | null>(null)
+
+  const handleDetectLocation = async () => {
+    setLocating(true)
+    try {
+      const res = await detectLiveLocation()
+      setFarmer((prev) => ({
+        ...prev,
+        location: res.locationName,
+        latitude: res.latitude,
+        longitude: res.longitude,
+      }))
+      toast(`📍 Live GPS detected: ${res.locationName}`)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unable to retrieve live location'
+      toast(msg)
+    } finally {
+      setLocating(false)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/backend-status')
@@ -72,7 +97,45 @@ export default function FarmerDashboard() {
           {t('namaste', { name: farmer.firstName })} <span className="wave-hand">👋</span>
         </h1>
         <p className="muted">{t('keepHealthy')}</p>
-        <p className="loc">📍 {farmer.location}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+          <p className="loc" style={{ margin: 0 }}>📍 {farmer.location}</p>
+          {farmer.latitude && farmer.longitude ? (
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+              ({farmer.latitude.toFixed(2)}°N, {farmer.longitude.toFixed(2)}°E)
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={handleDetectLocation}
+            disabled={locating}
+            style={{
+              background: 'rgba(46, 125, 50, 0.1)',
+              border: '1px solid rgba(46, 125, 50, 0.28)',
+              color: 'var(--leaf)',
+              borderRadius: 999,
+              padding: '2px 9px',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: locating ? 'wait' : 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Update to current live GPS location"
+          >
+            {locating ? (
+              <>
+                <Loader2 size={11} className="spin" />
+                Detecting GPS...
+              </>
+            ) : (
+              <>
+                <Navigation size={11} />
+                📍 Live GPS
+              </>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* CTA Row with Interactive Hover Micro-Animations */}

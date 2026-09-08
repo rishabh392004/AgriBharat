@@ -5,6 +5,7 @@ import {
   register,
   login,
   getMe,
+  updateMe,
 } from "./auth.controller.js";
 
 import { authMiddleware } from "./auth.middleware.js";
@@ -25,5 +26,7 @@ router.post("/register", authRateLimit, register);
 router.post("/login", authRateLimit, login);
 
 router.get("/me", authMiddleware, getMe);
+router.patch("/me", authMiddleware, updateMe);
+router.put("/me", authMiddleware, updateMe);
 
 export default router;

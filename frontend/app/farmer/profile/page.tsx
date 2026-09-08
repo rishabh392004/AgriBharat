@@ -1,14 +1,27 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CountUp } from '@/components/count-up'
 import { LanguageSelector } from '@/components/language-selector'
 import { localeLabels, useI18n } from '@/lib/i18n'
 import { useAuth } from '@/lib/auth'
 import { scans } from '@/data/mock'
 import { toast } from '@/components/toast'
-import { UserCheck, Phone, MapPin, Award, Sprout, Activity, ShieldAlert, Sparkles, Droplets } from 'lucide-react'
+import { detectLiveLocation } from '@/lib/location'
+import {
+  UserCheck,
+  Phone,
+  MapPin,
+  Award,
+  Sprout,
+  Activity,
+  ShieldAlert,
+  Sparkles,
+  Droplets,
+  Navigation,
+  Loader2,
+} from 'lucide-react'
 
 export default function ProfilePage() {
   const { t } = useI18n()
@@ -16,6 +29,41 @@ export default function ProfilePage() {
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(farmer)
+  const [locating, setLocating] = useState(false)
+
+  // Keep draft in sync whenever farmer loads from localStorage or auth updates
+  useEffect(() => {
+    setDraft(farmer)
+  }, [farmer])
+
+  const handleDetectLocation = async () => {
+    setLocating(true)
+    try {
+      const res = await detectLiveLocation()
+      const updatedData = {
+        location: res.locationName,
+        latitude: res.latitude,
+        longitude: res.longitude,
+      }
+      setDraft((prev) => ({ ...prev, ...updatedData }))
+
+      // Update farmer directly so hero and state update in real-time
+      setFarmer((prev) => ({ ...prev, ...updatedData }))
+      toast(`📍 Live GPS detected: ${res.locationName}`)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unable to retrieve live location'
+      toast(msg)
+    } finally {
+      setLocating(false)
+    }
+  }
+
+  const handleSave = () => {
+    setFarmer(draft)
+    setEditing(false)
+    toast('Profile updated successfully!')
+  }
+
   const latest = scans[0]
   const healthy = scans.filter((s) => s.status === 'Healthy').length
   const issues = scans.length - healthy
@@ -28,13 +76,71 @@ export default function ProfilePage() {
           <div className="ava xl">{farmer.initials}</div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', color: '#ffffff' }}>{farmer.name}</h1>
-              <span className="chip" style={{ background: 'rgba(232,200,104,0.25)', color: '#f0d57e', border: '1px solid rgba(232,200,104,0.4)', fontSize: 11 }}>
+              <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', color: '#ffffff' }}>
+                {farmer.name}
+              </h1>
+              <span
+                className="chip"
+                style={{
+                  background: 'rgba(232,200,104,0.25)',
+                  color: '#f0d57e',
+                  border: '1px solid rgba(232,200,104,0.4)',
+                  fontSize: 11,
+                }}
+              >
                 {t('verifiedFarmer')}
               </span>
             </div>
-            <p style={{ margin: '4px 0 0', color: '#c0d6be', fontSize: 13 }}>
-              {farmer.farmName} · 📍 {farmer.location}
+            <p
+              style={{
+                margin: '4px 0 0',
+                color: '#c0d6be',
+                fontSize: 13,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexWrap: 'wrap',
+              }}
+            >
+              <span>{farmer.farmName}</span>
+              <span>·</span>
+              <span>📍 {farmer.location}</span>
+              {farmer.latitude && farmer.longitude ? (
+                <span style={{ fontSize: 11, color: '#a0cfa0' }}>
+                  ({farmer.latitude.toFixed(4)}° N, {farmer.longitude.toFixed(4)}° E)
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleDetectLocation}
+                disabled={locating}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: '#ffffff',
+                  borderRadius: 999,
+                  padding: '2px 8px',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  cursor: locating ? 'wait' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+                title="Detect your device GPS live location"
+              >
+                {locating ? (
+                  <>
+                    <Loader2 size={10} className="spin" />
+                    Detecting GPS...
+                  </>
+                ) : (
+                  <>
+                    <Navigation size={10} />
+                    📍 Live GPS
+                  </>
+                )}
+              </button>
             </p>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: '#a0bfa0' }}>
               {t('farmerId')}: KR-FARM-9942 · {t('activeMemberSince')}
@@ -44,23 +150,39 @@ export default function ProfilePage() {
 
         {/* Quick Badges & Header Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ background: 'rgba(255,255,255,0.08)', padding: '8px 14px', borderRadius: 14, textAlign: 'center', border: '1px solid rgba(255,255,255,0.12)' }}>
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              padding: '8px 14px',
+              borderRadius: 14,
+              textAlign: 'center',
+              border: '1px solid rgba(255,255,255,0.12)',
+            }}
+          >
             <b style={{ display: 'block', fontSize: 18, color: '#ffffff' }}>{farmer.farmArea}</b>
-            <span style={{ fontSize: 10, color: '#a8c2a4', textTransform: 'uppercase' }}>{t('acresLabel')}</span>
+            <span style={{ fontSize: 10, color: '#a8c2a4', textTransform: 'uppercase' }}>
+              {t('acresLabel')}
+            </span>
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.08)', padding: '8px 14px', borderRadius: 14, textAlign: 'center', border: '1px solid rgba(255,255,255,0.12)' }}>
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              padding: '8px 14px',
+              borderRadius: 14,
+              textAlign: 'center',
+              border: '1px solid rgba(255,255,255,0.12)',
+            }}
+          >
             <b style={{ display: 'block', fontSize: 18, color: '#ffffff' }}>{farmer.experience}y</b>
-            <span style={{ fontSize: 10, color: '#a8c2a4', textTransform: 'uppercase' }}>{t('experienceLabel')}</span>
+            <span style={{ fontSize: 10, color: '#a8c2a4', textTransform: 'uppercase' }}>
+              {t('experienceLabel')}
+            </span>
           </div>
           {editing ? (
             <button
               className="btn btn-gold"
               style={{ padding: '10px 20px', borderRadius: 999, fontWeight: 750 }}
-              onClick={() => {
-                setFarmer(draft)
-                setEditing(false)
-                toast(t('save'))
-              }}
+              onClick={handleSave}
             >
               {t('save')}
             </button>
@@ -68,7 +190,10 @@ export default function ProfilePage() {
             <button
               className="btn btn-gold"
               style={{ padding: '10px 20px', borderRadius: 999, fontWeight: 750 }}
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                setDraft(farmer)
+                setEditing(true)
+              }}
             >
               {t('editProfile')}
             </button>
@@ -89,15 +214,74 @@ export default function ProfilePage() {
             <div style={{ display: 'grid', gap: 10 }}>
               <div className="field">
                 <label>{t('fullName')}</label>
-                <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value, firstName: e.target.value.split(' ')[0] })} />
+                <input
+                  value={draft.name}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    const parts = val.trim().split(/\s+/)
+                    const inits = parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'KB'
+                    setDraft({
+                      ...draft,
+                      name: val,
+                      firstName: parts[0] || val,
+                      initials: inits,
+                    })
+                  }}
+                  placeholder="e.g. Ramesh Patel"
+                />
               </div>
               <div className="field">
                 <label>{t('phone')}</label>
-                <input value={draft.mobile} onChange={(e) => setDraft({ ...draft, mobile: e.target.value })} />
+                <input
+                  value={draft.mobile}
+                  onChange={(e) => setDraft({ ...draft, mobile: e.target.value })}
+                  placeholder="10-digit mobile number"
+                />
               </div>
               <div className="field">
-                <label>{t('location')}</label>
-                <input value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <label style={{ margin: 0 }}>{t('location')}</label>
+                  <button
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={locating}
+                    style={{
+                      background: 'rgba(46, 125, 50, 0.12)',
+                      border: '1px solid rgba(46, 125, 50, 0.3)',
+                      color: 'var(--leaf)',
+                      borderRadius: 999,
+                      padding: '3px 9px',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: locating ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    {locating ? (
+                      <>
+                        <Loader2 size={11} className="spin" />
+                        Detecting...
+                      </>
+                    ) : (
+                      <>
+                        <Navigation size={11} />
+                        📍 Detect Live GPS
+                      </>
+                    )}
+                  </button>
+                </div>
+                <input
+                  value={draft.location}
+                  onChange={(e) => setDraft({ ...draft, location: e.target.value })}
+                  placeholder="e.g. Niphad, Nashik"
+                />
+                {draft.latitude && draft.longitude ? (
+                  <small style={{ color: 'var(--leaf)', fontSize: 11, display: 'block', marginTop: 3 }}>
+                    Live GPS: {draft.latitude.toFixed(4)}° N, {draft.longitude.toFixed(4)}° E
+                  </small>
+                ) : null}
               </div>
             </div>
           ) : (
@@ -110,13 +294,47 @@ export default function ProfilePage() {
                 <span className="muted">{t('phone')}</span>
                 <strong>{farmer.mobile}</strong>
               </div>
-              <div className="profile-metric-row">
+              <div className="profile-metric-row" style={{ alignItems: 'flex-start' }}>
                 <span className="muted">{t('location')}</span>
-                <strong>{farmer.location}</strong>
+                <div style={{ textAlign: 'right' }}>
+                  <strong style={{ display: 'block' }}>{farmer.location}</strong>
+                  {farmer.latitude && farmer.longitude ? (
+                    <small style={{ color: 'var(--leaf)', fontSize: 11, display: 'block' }}>
+                      ({farmer.latitude.toFixed(4)}° N, {farmer.longitude.toFixed(4)}° E)
+                    </small>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={locating}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--leaf)',
+                      cursor: locating ? 'wait' : 'pointer',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: '3px 0 0',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 3,
+                    }}
+                  >
+                    {locating ? (
+                      <>
+                        <Loader2 size={10} className="spin" /> Locating...
+                      </>
+                    ) : (
+                      <>
+                        <Navigation size={10} /> 📍 Detect Live Location
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="profile-metric-row">
                 <span className="muted">{t('talukaDistrict')}</span>
-                <strong>Niphad, Nashik</strong>
+                <strong>{farmer.location.includes(',') ? farmer.location : `${farmer.location}, Nashik`}</strong>
               </div>
               <div className="profile-metric-row">
                 <span className="muted">{t('preferredLang')}</span>
@@ -124,7 +342,9 @@ export default function ProfilePage() {
               </div>
               <div className="profile-metric-row">
                 <span className="muted">{t('kisanPortalStatus')}</span>
-                <span className="chip low" style={{ fontSize: 10, padding: '2px 8px' }}>{t('activeStatus')}</span>
+                <span className="chip low" style={{ fontSize: 10, padding: '2px 8px' }}>
+                  {t('activeStatus')}
+                </span>
               </div>
             </div>
           )}

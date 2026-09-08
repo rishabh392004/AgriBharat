@@ -18,6 +18,8 @@ export interface DemoFarmer {
   soilType: string
   cropHealth: number
   diseaseRisk: RiskLevel
+  latitude?: number
+  longitude?: number
 }
 
 export interface DemoOfficer {

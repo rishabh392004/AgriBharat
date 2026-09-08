@@ -112,6 +112,16 @@ export const authService = {
     }
   },
 
+  async updateProfile(data: { name?: string; mobile?: string; location?: string }): Promise<void> {
+    try {
+      if (data.name) {
+        await apiHttp.patch('/auth/me', { name: data.name })
+      }
+    } catch (err) {
+      console.warn('Backend profile update failed or offline, kept in local session:', err)
+    }
+  },
+
   logout() {
     if (typeof window === 'undefined') return
     window.localStorage.removeItem(KEY)

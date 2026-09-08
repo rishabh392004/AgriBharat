@@ -16,11 +16,16 @@ import {
   Focus,
   Leaf,
   ShieldCheck,
+  MapPin,
+  Loader2,
 } from 'lucide-react'
 import { CROPS, CROP_METADATA, predictCrop, type CropName } from '@/services/cropService'
 import { saveLastPrediction } from '@/lib/prediction-store'
 import { saveScan } from '@/services/historyService'
 import { useI18n } from '@/lib/i18n'
+import { useAuth } from '@/lib/auth'
+import { toast } from '@/components/toast'
+import { detectLiveLocation } from '@/lib/location'
 
 const steps = ['stepQuality', 'stepSymptoms', 'stepDisease', 'stepSeverity', 'stepRisk'] as const
 
@@ -36,6 +41,7 @@ const CROP_CATEGORIES: Record<CropCategory, { label: string; icon: string; crops
 
 export default function ScanPage() {
   const { t, locale } = useI18n()
+  const { farmer, setFarmer } = useAuth()
   const router = useRouter()
   const galleryRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -51,6 +57,7 @@ export default function ScanPage() {
   const [error, setError] = useState('')
   const [running, setRunning] = useState(false)
   const [doneSteps, setDoneSteps] = useState(0)
+  const [locating, setLocating] = useState(false)
 
   // Live Camera Viewfinder State
   const [cameraActive, setCameraActive] = useState(false)
@@ -217,7 +224,10 @@ export default function ScanPage() {
     setRunning(true)
     setDoneSteps(0)
     const timers = steps.map((_, i) => setTimeout(() => setDoneSteps(i + 1), 400 * (i + 1)))
-    const result = await predictCrop(file, selectedCrop)
+    const result = await predictCrop(file, selectedCrop, {
+      latitude: farmer.latitude,
+      longitude: farmer.longitude,
+    })
     if (preview) {
       result.imageUrl = preview
     }
@@ -250,7 +260,7 @@ export default function ScanPage() {
       {/* Page Header Card */}
       <div className="scan-header-card">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
             <span className="chip low" style={{ fontSize: 11, padding: '3px 10px' }}>
               <Sparkles size={13} style={{ marginRight: 4 }} />
               AI Vision v2.4 Active
@@ -258,6 +268,54 @@ export default function ScanPage() {
             <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>
               16 Crops • Real-Time Diagnostics
             </span>
+            <button
+              type="button"
+              onClick={async () => {
+                setLocating(true)
+                try {
+                  const res = await detectLiveLocation()
+                  setFarmer((prev) => ({
+                    ...prev,
+                    location: res.locationName,
+                    latitude: res.latitude,
+                    longitude: res.longitude,
+                  }))
+                  toast(`📍 Field location set: ${res.locationName}`)
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : 'Unable to retrieve live GPS'
+                  toast(msg)
+                } finally {
+                  setLocating(false)
+                }
+              }}
+              disabled={locating}
+              style={{
+                background: 'rgba(46, 125, 50, 0.1)',
+                border: '1px solid rgba(46, 125, 50, 0.28)',
+                color: 'var(--leaf)',
+                borderRadius: 999,
+                padding: '2px 9px',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: locating ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+              title="Update live GPS for current field scan"
+            >
+              {locating ? (
+                <>
+                  <Loader2 size={11} className="spin" />
+                  Detecting GPS...
+                </>
+              ) : (
+                <>
+                  <MapPin size={11} />
+                  📍 {farmer.location || 'Detect GPS'}
+                </>
+              )}
+            </button>
           </div>
           <h1 style={{ margin: '2px 0 6px', fontSize: 'clamp(24px, 4vw, 32px)', letterSpacing: '-0.02em' }}>
             {t('scanCrop')}

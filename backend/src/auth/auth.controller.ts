@@ -2,7 +2,12 @@ import type { Request, Response } from "express";
 import { registerSchema, loginSchema } from "./auth.schema.js";
 import type { AuthenticatedRequest } from "./auth.middleware.js";
 import { AppError } from "../common/AppError.js";
-import { getUserById, registerUser, loginUser } from "./auth.service.js";
+import {
+  getUserById,
+  registerUser,
+  loginUser,
+  updateUserProfile,
+} from "./auth.service.js";
 
 export async function register(req: Request, res: Response) {
   const result = registerSchema.safeParse(req.body);
@@ -61,6 +66,27 @@ export async function getMe(
   }
 
   res.status(200).json({
+    user,
+  });
+}
+
+export async function updateMe(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  if (!req.user) {
+    throw new AppError("Authentication required", 401);
+  }
+
+  const { name } = req.body;
+  const user = await updateUserProfile(req.user.userId, { name });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  res.status(200).json({
+    message: "Profile updated successfully",
     user,
   });
 }

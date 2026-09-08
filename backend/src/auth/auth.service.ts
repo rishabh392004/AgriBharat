@@ -177,3 +177,16 @@ export async function getUserById(userId: number) {
     createdAt: user.createdAt,
   };
 }
+
+export async function updateUserProfile(
+  userId: number,
+  data: { name?: string }
+) {
+  if (data.name !== undefined) {
+    await db.orm.public.User
+      .where({ id: userId })
+      .update({ name: data.name });
+  }
+
+  return getUserById(userId);
+}
