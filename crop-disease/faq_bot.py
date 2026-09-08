@@ -227,4 +227,107 @@ async def ask_farmer_faq(payload: FAQQuery):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("faq_bot:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run("faq_bot:app", host="0.0.0.0", port=8001, reload=True)
+import os
+import io
+from typing import List, Optional
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from google import genai
+from google.genai import types
+
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+ai_client = genai.Client(api_key=GEMINI_API_KEY)
+
+app = FastAPI(title="AgriFAQ Chat Service", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+FARMER_FAQ_SYSTEM_PROMPT = """
+You are 'Kisan Salahkar', a dedicated general agricultural assistant for Indian farmers.
+Answer general farming questions (sowing, irrigation schedules, fertilizer calculation, government schemes like PM-Kisan, and weed control).
+Respond concisely in bullet points. Match the user's language (Hindi, Marathi, or English).
+"""
+
+class MessageItem(BaseModel):
+    role: str
+    content: str
+
+class FAQQuery(BaseModel):
+    question: str
+    chat_history: Optional[List[MessageItem]] = []
+
+class FAQAnswer(BaseModel):
+    answer: str
+    status: str
+
+@app.post("/transcribe")
+async def transcribe_audio(audio_file: UploadFile = File(...)):
+    """Directly transcribes Indian spoken audio using Gemini's native audio model."""
+    if not audio_file:
+        raise HTTPException(status_code=400, detail="No audio file uploaded.")
+
+    audio_bytes = await audio_file.read()
+    if len(audio_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
+
+    mime = audio_file.content_type or "audio/wav"
+    # Ensure supported audio mime types
+    if "octet-stream" in mime or not mime:
+        mime = "audio/wav"
+
+    try:
+        response = ai_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=audio_bytes, mime_type=mime),
+                "Accurately transcribe this farmer's voice inquiry into clean text. "
+                "The speech might be in Hindi, Marathi, Hinglish, or English. "
+                "Output ONLY the exact transcribed sentence. Do not add explanations, quotes, or greetings."
+            ]
+        )
+        return {
+            "status": "success",
+            "transcribed_text": response.text.strip()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Audio transcription error: {str(e)}")
+
+@app.post("/ask", response_model=FAQAnswer)
+async def ask_farmer_faq(payload: FAQQuery):
+    if not payload.question.strip():
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+
+    contents = []
+    for item in payload.chat_history:
+        contents.append(types.Content(role=item.role, parts=[types.Part.from_text(text=item.content)]))
+
+    contents.append(types.Content(role="user", parts=[types.Part.from_text(text=payload.question)]))
+
+    try:
+        response = ai_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=FARMER_FAQ_SYSTEM_PROMPT,
+                temperature=0.4,
+                max_output_tokens=600
+            )
+        )
+        return FAQAnswer(answer=response.text, status="success")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"FAQ Error: {str(e)}")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("faq_bot:app", host="127.0.0.1", port=8001, reload=False)
