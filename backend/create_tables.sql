@@ -1,7 +1,8 @@
--- AgriBharat Complete Database Setup
--- Standalone SQL script for provisioning or restoring a PostgreSQL database.
--- Note: In production or automated CI/CD, migrations via 'npx prisma contract emit'
--- and 'npx prisma db migrate' are the canonical path.
+-- AgriBharat Complete Database Schema — REFERENCE ONLY
+-- !! THIS FILE IS NOT USED FOR DATABASE PROVISIONING !!
+-- The canonical provisioning path is: 'npx prisma db init'
+-- which applies all tracked forward migrations in migrations/app/.
+-- This file exists as a human-readable snapshot of the current schema.
 
 CREATE SCHEMA IF NOT EXISTS public;
 

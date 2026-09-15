@@ -75,25 +75,21 @@ The database schema encompasses 6 tables:
 
 ### Primary Method: Prisma Next Migrations Workflow
 
-The schema is defined in `src/prisma/contract.prisma`. All migrations are managed through `@prisma/orm-postgres`:
+The schema is defined in `src/prisma/contract.prisma`. All migrations are managed through `@prisma/cli-engine`. This is the **single canonical source of truth** for database provisioning.
 
 1. **Verify migration history:**
    ```bash
-   npx prisma migration check
+   npx prisma migration status
    ```
 2. **Apply migrations to the target database:**
-   Execute migrations against your target `DATABASE_URL`:
+   Execute the initialization against your target `DATABASE_URL`:
    ```bash
-   npx prisma migration apply
+   npx prisma db init
    ```
 
-### Fallback Method: Raw SQL Execution (`create_tables.sql`)
+### Archived: Raw SQL (`create_tables.sql`)
 
-For fresh staging or production PostgreSQL instances where direct DDL is preferred:
-```bash
-psql "$DATABASE_URL" -f create_tables.sql
-```
-The `create_tables.sql` script creates all 6 tables, primary keys, indexes, and foreign key constraints with proper types.
+The `create_tables.sql` script is maintained **strictly as a human-readable reference artifact** of the current schema. It must **not** be used for provisioning production databases, as doing so will create a divergent schema state that breaks the migration toolchain.
 
 ---
 
