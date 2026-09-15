@@ -15,10 +15,9 @@ COPY prisma.config.ts ./
 # Install all dependencies (including devDependencies required for compilation and Prisma contract)
 RUN npm ci
 
-# Copy application source, migrations, and reference snapshots
+# Copy application source and migrations
 COPY src/ ./src/
 COPY migrations/ ./migrations/
-COPY refs/ ./refs/
 
 # Generate Prisma contract and compile TypeScript to JavaScript in dist/
 RUN npm run contract:emit && npm run build
