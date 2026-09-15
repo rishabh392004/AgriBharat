@@ -35,19 +35,20 @@ export async function diagnoseScan(
     throw new AppError("Scan not found", 404);
   }
 
-  if (scan.status === "PROCESSING") {
-    throw new AppError("Diagnosis already in progress", 409);
-  }
-
   if (scan.status === "COMPLETED") {
     throw new AppError("Diagnosis already completed", 409);
   }
 
-  if (scan.status === "FAILED") {
-    throw new AppError(
-      "Previous diagnosis failed. Create a new scan to try again.",
-      409
-    );
+  if (scan.status === "PROCESSING") {
+    // H5: Recover scans stuck in PROCESSING longer than 2 minutes (e.g. server crashed mid-inference)
+    const STALE_PROCESSING_THRESHOLD_MS = 2 * 60 * 1000;
+    const updatedAtMs = new Date(scan.updatedAt).getTime();
+    const isStale = !isNaN(updatedAtMs) && (Date.now() - updatedAtMs > STALE_PROCESSING_THRESHOLD_MS);
+
+    if (!isStale) {
+      throw new AppError("Diagnosis already in progress", 409);
+    }
+    console.warn(`[Diagnosis] Recovering stale PROCESSING scan ${scanId} (last updated: ${scan.updatedAt})`);
   }
 
   await setScanStatus(scanId, "PROCESSING");
@@ -63,8 +64,7 @@ export async function diagnoseScan(
       ...(scan.longitude != null && { longitude: scan.longitude }),
     });
 
-    // Persist the result to DB — includes all ML-specific fields
-    await db.orm.public.DiseaseResult.create({
+    const resultPayload = {
       scanId: result.scanId,
       disease: result.disease,
       confidence: result.confidence,
@@ -72,15 +72,21 @@ export async function diagnoseScan(
       actions: JSON.stringify(result.recommendation.actions),
       precautions: JSON.stringify(result.recommendation.precautions),
       provider: result.provider,
-      // Extended ML fields
       flagOfficerReview: result.flagOfficerReview,
       foliarDamagePercent: result.foliarDamagePercent,
       urgency: result.urgency,
       etlStatus: result.etlStatus,
       top3Predictions: JSON.stringify(result.top3Predictions),
       weatherContext: JSON.stringify(result.weatherContext),
-      // gradCamBase64 is NOT persisted — too large for DB column
-    });
+    };
+
+    // Upsert DiseaseResult so retries safely update rather than conflict
+    const existingResult = await db.orm.public.DiseaseResult.where({ scanId }).first();
+    if (existingResult) {
+      await db.orm.public.DiseaseResult.where({ scanId }).update(resultPayload);
+    } else {
+      await db.orm.public.DiseaseResult.create(resultPayload);
+    }
 
     await setScanStatus(scanId, "COMPLETED");
 
