@@ -1,6 +1,5 @@
 import { AppError } from "../common/AppError.js";
-
-const CHATBOT_SERVICE_URL = process.env.CHATBOT_SERVICE_URL ?? "http://localhost:8001";
+import { env } from "../config/env.js";
 
 export interface ChatMessage {
   role: "user" | "model";
@@ -21,8 +20,11 @@ export async function askChatbot(
   chatHistory: ChatMessage[] = [],
   language: string = "en"
 ): Promise<ChatbotResponse> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), env.CHATBOT_TIMEOUT_MS);
+
   try {
-    const res = await fetch(`${CHATBOT_SERVICE_URL}/ask`, {
+    const res = await fetch(`${env.CHATBOT_SERVICE_URL}/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -30,16 +32,22 @@ export async function askChatbot(
         chat_history: chatHistory,
         language,
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timer);
 
     if (!res.ok) {
       const err = await res.text();
       throw new AppError(`Chatbot service error: ${err}`, 502);
     }
 
-    return await res.json() as ChatbotResponse;
+    return (await res.json()) as ChatbotResponse;
   } catch (error) {
+    clearTimeout(timer);
     if (error instanceof AppError) throw error;
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new AppError("Chatbot service timed out. Please try again later.", 504);
+    }
     throw new AppError("Chatbot service is unavailable. Please try again later.", 503);
   }
 }
@@ -48,10 +56,18 @@ export async function askChatbot(
  * Health check for the chatbot Python service.
  */
 export async function checkChatbotHealth(): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+
   try {
-    const res = await fetch(`${CHATBOT_SERVICE_URL}/health`, { method: "GET" });
+    const res = await fetch(`${env.CHATBOT_SERVICE_URL}/health`, {
+      method: "GET",
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
     return res.ok;
   } catch {
+    clearTimeout(timer);
     return false;
   }
 }

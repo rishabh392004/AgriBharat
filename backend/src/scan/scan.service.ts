@@ -1,5 +1,6 @@
 import { db } from "../prisma/db.js";
 import { AppError } from "../common/AppError.js";
+import { assertPublicHttpUrl } from "../common/urlSafety.js";
 
 /**
  * Creates a new scan record in the database.
@@ -16,6 +17,9 @@ export async function createScan(
   latitude?: number,
   longitude?: number
 ) {
+  // Validate image URL against SSRF and private address ranges
+  await assertPublicHttpUrl(imageUrl);
+
   // Verify the farm exists and belongs to the authenticated user
   const farm = await db.orm.public.Farm
     .where({

@@ -22,6 +22,12 @@ const envSchema = z.object({
 
   // Timeout for ML service requests in milliseconds (default 30 seconds)
   ML_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
+
+  // Python Gemini FAQ chatbot service URL
+  CHATBOT_SERVICE_URL: z.string().url().default("http://localhost:8001"),
+
+  // Timeout for Chatbot service requests in milliseconds (default 15 seconds)
+  CHATBOT_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
 });
 
 export const env = envSchema.parse(process.env);

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { FormData, Blob } from "formdata-node";
 
 import { AppError } from "../common/AppError.js";
+import { assertPublicHttpUrl } from "../common/urlSafety.js";
 import { env } from "../config/env.js";
 import { getRecommendation } from "../recommendation/recommendation.service.js";
 import type {
@@ -213,9 +214,13 @@ export const realMlProvider: DiagnosisProvider = {
     const mlUrl = env.ML_SERVICE_URL;
     const timeoutMs = env.ML_TIMEOUT_MS;
 
-    // --- Step 1: Download the image from its URL ---
+    // --- Step 1: Download the image from its URL (with SSRF & size guard) ---
+    const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
     let imageBuffer: ArrayBuffer;
     try {
+      // Re-validate URL immediately before fetch to protect against DNS rebinding (TOCTOU)
+      await assertPublicHttpUrl(input.imageUrl);
+
       const controller = new AbortController();
       const downloadTimer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -230,7 +235,48 @@ export const realMlProvider: DiagnosisProvider = {
           502
         );
       }
-      imageBuffer = await imageRes.arrayBuffer();
+
+      // Early check via Content-Length header
+      const contentLengthHeader = imageRes.headers.get("content-length");
+      if (contentLengthHeader) {
+        const length = parseInt(contentLengthHeader, 10);
+        if (!isNaN(length) && length > MAX_IMAGE_SIZE_BYTES) {
+          throw new AppError(
+            `Image exceeds maximum allowed size of 10 MB (${(length / (1024 * 1024)).toFixed(1)} MB)`,
+            400
+          );
+        }
+      }
+
+      // Stream read with running byte guard in case Content-Length was omitted/incorrect
+      if (!imageRes.body) {
+        throw new AppError("Image response body is empty", 502);
+      }
+
+      const reader = imageRes.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let totalBytes = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          totalBytes += value.byteLength;
+          if (totalBytes > MAX_IMAGE_SIZE_BYTES) {
+            await reader.cancel();
+            throw new AppError("Image exceeds maximum allowed size of 10 MB", 400);
+          }
+          chunks.push(value);
+        }
+      }
+
+      const merged = new Uint8Array(totalBytes);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      imageBuffer = merged.buffer;
     } catch (err) {
       if (err instanceof AppError) throw err;
       const msg = err instanceof Error ? err.message : String(err);
