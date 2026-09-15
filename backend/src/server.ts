@@ -1,0 +1,47 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import authRoutes from "./auth/auth.routes.js";
+import { errorMiddleware } from "./common/error.middleware.js";
+import { env } from "./config/env.js";
+import scanRoutes from "./scan/scan.routes.js";
+import farmRoutes from "./farm/farm.routes.js";
+import messageRoutes from "./message/message.routes.js";
+import officerRoutes from "./officer/officer.routes.js";
+import chatbotRoutes from "./chatbot/chatbot.routes.js";
+
+const app = express();
+
+app.use(
+  cors({
+    origin: [env.FRONTEND_URL, "http://localhost:3000", "http://127.0.0.1:3000"],
+    credentials: true,
+  })
+);
+app.use(helmet());
+app.use(morgan("dev"));
+app.use(express.json({ limit: "1mb" }));
+
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/scans", scanRoutes);
+app.use("/api/v1/farms", farmRoutes);
+app.use("/api/v1/messages", messageRoutes);
+app.use("/api/v1/officer", officerRoutes);
+app.use("/api/v1/chatbot", chatbotRoutes);
+
+app.get("/health", (_req, res) => {
+  res.json({
+    status: "OK",
+    service: "AgriBharat Backend",
+  });
+});
+
+app.use(errorMiddleware);
+
+const PORT = env.PORT;
+
+app.listen(PORT, () => {
+  console.log(`AgriBharat backend running on port ${PORT}`);
+});

@@ -1,0 +1,97 @@
+// use prisma-next
+
+model User {
+  id           Int               @id @default(autoincrement())
+  email        String            @unique
+  passwordHash String
+  name         String?
+  role         String             @default("USER")
+  createdAt    TimestamptzString @default(now())
+  updatedAt    temporal.updatedAtString()
+
+  farms            Farm[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  officerProfile   OfficerProfile?
+}
+
+model Scan {
+  id          Int               @id @default(autoincrement())
+  farmId      Int
+  imageUrl    String
+  cropName    String            @default("Auto")
+  latitude    Float?
+  longitude   Float?
+  status      String            @default("PENDING")
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+
+  farm        Farm              @relation(fields: [farmId], references: [id])
+  result      DiseaseResult?
+}
+
+model DiseaseResult {
+  id                  Int               @id @default(autoincrement())
+  scanId              Int               @unique
+  disease             String
+  confidence          Float
+  severity            String
+  actions             String
+  precautions         String
+  provider            String
+  // Extended ML fields — persisted from real ResNet-34 inference
+  flagOfficerReview   Boolean           @default(false)
+  foliarDamagePercent Float             @default(0)
+  urgency             String            @default("LOW")
+  etlStatus           String            @default("")
+  top3Predictions     String            @default("[]")
+  weatherContext      String            @default("{}")
+  createdAt           TimestamptzString @default(now())
+
+  scan                Scan              @relation(fields: [scanId], references: [id])
+}
+
+model Farm {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  name      String
+  location  String
+  cropType  String
+  area      Float
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  user      User              @relation(fields: [userId], references: [id])
+  scans     Scan[]
+}
+
+model Message {
+  id         Int               @id @default(autoincrement())
+  fromUserId Int
+  toUserId   Int
+  content    String
+  isRead     Boolean           @default(false)
+  createdAt  TimestamptzString @default(now())
+
+  from       User              @relation("SentMessages",     fields: [fromUserId], references: [id])
+  to         User              @relation("ReceivedMessages", fields: [toUserId],   references: [id])
+}
+
+model OfficerProfile {
+  id               Int               @id @default(autoincrement())
+  userId           Int               @unique
+  badgeNumber      String            @unique
+  designation      String
+  department       String
+  jurisdiction     String
+  district         String
+  state            String
+  phone            String?
+  officeAddress    String?
+  isActive         Boolean           @default(true)
+  flaggedScansCount Int              @default(0)
+  createdAt        TimestamptzString @default(now())
+  updatedAt        temporal.updatedAtString()
+
+  user             User              @relation(fields: [userId], references: [id])
+}
