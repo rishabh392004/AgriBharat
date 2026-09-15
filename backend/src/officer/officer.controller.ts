@@ -57,7 +57,7 @@ export async function getOfficerProfileController(
     return;
   }
 
-  const profile = await getOfficerProfileByUserId(targetUserId);
+  const profile = await getOfficerProfileByUserId(targetUserId, req.user.userId, req.user.role);
   res.status(200).json({ profile });
 }
 

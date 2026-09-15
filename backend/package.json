@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "seed:officer": "tsx src/scripts/seedOfficer.ts"
   },
   "keywords": [],
   "author": "",

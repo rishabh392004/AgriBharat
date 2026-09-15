@@ -104,3 +104,28 @@ export async function getUserById(userId: number) {
     createdAt: user.createdAt,
   };
 }
+
+export async function updateUserRole(userId: number, newRole: UserRole) {
+  const user = await db.orm.public.User
+    .where({ id: userId })
+    .first();
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const updated = await db.orm.public.User
+    .where({ id: userId })
+    .update({ role: newRole });
+
+  if (!updated) {
+    throw new AppError("Failed to update user role", 500);
+  }
+
+  return {
+    id: updated.id,
+    email: updated.email,
+    name: updated.name,
+    role: updated.role,
+  };
+}
