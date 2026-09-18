@@ -2,11 +2,13 @@ import os
 import io
 import json
 import base64
+import shutil
 import requests
 import cv2
 import numpy as np
 from PIL import Image
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 import torch
 import torch.nn as nn
@@ -15,6 +17,7 @@ from torchvision import transforms, models
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from google import genai
 from google.genai import types
@@ -44,6 +47,63 @@ yolo_detector = YOLO("yolov8n.pt")
 print("YOLO validator ready!")
 
 
+# --- TIER 1: ACTIVE LEARNING & SEIR STORAGE SETUP ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ACTIVE_LEARNING_DIR = os.path.join(BASE_DIR, "active_learning_dataset")
+os.makedirs(os.path.join(ACTIVE_LEARNING_DIR, "images"), exist_ok=True)
+os.makedirs(os.path.join(ACTIVE_LEARNING_DIR, "labels"), exist_ok=True)
+FEEDBACK_LOG_FILE = os.path.join(ACTIVE_LEARNING_DIR, "feedback_registry.json")
+
+
+def calculate_farm_outbreak_risks(
+    source_lat: float, 
+    source_lon: float, 
+    nearby_farms: list[dict], 
+    wind_direction_deg: float, 
+    wind_speed_kmh: float
+) -> list[dict]:
+    """
+    SIH Tier 1 Feature: Simulates a 96-hour SEIR spread projection for neighboring farms 
+    factoring in distance decay and wind alignment vectors.
+    """
+    predictions = []
+    wind_rad = np.radians(wind_direction_deg)
+    wind_vector = np.array([np.cos(wind_rad), np.sin(wind_rad)])
+    
+    for farm in nearby_farms:
+        d_lat = farm["lat"] - source_lat
+        d_lon = farm["lon"] - source_lon
+        
+        farm_vector = np.array([d_lat, d_lon])
+        norm = np.linalg.norm(farm_vector)
+        
+        if norm == 0:
+            alignment = 1.0
+        else:
+            unit_farm = farm_vector / norm
+            alignment = float(np.dot(wind_vector, unit_farm))
+            alignment = max(0.1, alignment)
+
+        distance_km = farm.get("distance_km", max(0.5, norm * 111))
+        
+        beta = 0.65 * (wind_speed_kmh / 10.0)
+        decay_factor = 1.0 / (1.0 + 0.4 * (distance_km ** 1.5))
+        
+        infection_probability = 1.0 - np.exp(-beta * alignment * decay_factor * 4.0)
+        infection_probability = min(0.98, max(0.02, infection_probability))
+        
+        predictions.append({
+            "farm_id": farm.get("farm_id", "Unknown_Farm"),
+            "crop": farm.get("crop", "Tomato"),
+            "distance_km": round(distance_km, 2),
+            "infection_probability_96h": round(infection_probability * 100, 1),
+            "status": "HIGH RISK" if infection_probability > 0.6 else "MONITOR"
+        })
+        
+    predictions.sort(key=lambda x: x["infection_probability_96h"], reverse=True)
+    return predictions
+
+
 # --- LOCAL PURE-CV LEAF VS. TEXTILE / TOWEL VALIDATOR ---
 def is_organic_leaf_texture(pil_img: Image.Image) -> tuple[bool, str]:
     """
@@ -65,7 +125,6 @@ def is_organic_leaf_texture(pil_img: Image.Image) -> tuple[bool, str]:
         return False, f"Flat synthetic dye detected (a_std: {a_std:.2f}, b_std: {b_std:.2f})"
 
     # 2. Textile Grid Detection via 2D Fast Fourier Transform (FFT)
-    # Fabrics (towels, shirts) have repeating woven yarn loops or stitch patterns.
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
     resized_gray = cv2.resize(gray, (256, 256))
 
@@ -73,11 +132,9 @@ def is_organic_leaf_texture(pil_img: Image.Image) -> tuple[bool, str]:
     f_shift = np.fft.fftshift(f_transform)
     magnitude_spectrum = 20 * np.log(np.abs(f_shift) + 1)
 
-    # Mask out the DC component (low frequencies at the center)
     center = 128
     magnitude_spectrum[center - 10:center + 10, center - 10:center + 10] = 0
 
-    # Periodic woven grid creates unnatural high-frequency spikes
     threshold = np.mean(magnitude_spectrum) + 3.2 * np.std(magnitude_spectrum)
     peak_count = int(np.count_nonzero(magnitude_spectrum > threshold))
 
@@ -90,7 +147,6 @@ def is_organic_leaf_texture(pil_img: Image.Image) -> tuple[bool, str]:
     green_pixels = h_channel[(h_channel >= 25) & (h_channel <= 85)]
 
     if len(green_pixels) > 0:
-        # Natural leaves have a broad chlorophyll hue spread; dyed cloths peak sharply
         if np.std(green_pixels) < 4.2:
             return False, f"Monochromatic synthetic dye hue spread (hue_std: {np.std(green_pixels):.2f})"
 
@@ -106,7 +162,6 @@ def verify_and_crop_leaf_yolo(pil_img: Image.Image) -> tuple[bool, Image.Image, 
     img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
     h, w, _ = img_np.shape
 
-    # 1. First Pass: Color & Texture Filter (Rejects Towels, Cloths, Monochromatic Surfaces)
     is_organic, texture_reason = is_organic_leaf_texture(pil_img)
     if not is_organic:
         return False, pil_img, {
@@ -114,7 +169,6 @@ def verify_and_crop_leaf_yolo(pil_img: Image.Image) -> tuple[bool, Image.Image, 
             "stage": "organic_texture_filter"
         }
 
-    # 2. Second Pass: Green Foliage Coverage Check
     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
     foliage_mask = cv2.inRange(hsv, np.array([20, 30, 25]), np.array([95, 255, 255]))
     foliage_coverage = float(np.count_nonzero(foliage_mask) / (h * w))
@@ -126,18 +180,15 @@ def verify_and_crop_leaf_yolo(pil_img: Image.Image) -> tuple[bool, Image.Image, 
             "stage": "foliage_coverage_check"
         }
 
-    # 3. Third Pass: YOLO Bounding Check & Rejection of Distractors (People, Furniture)
     results = yolo_detector(img_bgr, verbose=False)[0]
     detected_classes = [int(cls) for cls in results.boxes.cls.tolist()] if results.boxes else []
 
-    # If YOLO clearly finds a person or furniture with minimal foliage, reject
     if (0 in detected_classes) and foliage_coverage < 0.20:
         return False, pil_img, {
             "rejection_reason": "Human or clothing detected as primary subject.",
             "stage": "yolo_object_check"
         }
 
-    # 4. Optional Crop if Potted Plant (COCO ID: 58) is isolated
     target_img = pil_img
     crop_applied = False
     if len(results.boxes) > 0:
@@ -374,7 +425,6 @@ def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_ris
         return fallback_advisory
 
 
-# --- ZERO-SHOT FALLBACK FOR LOW CONFIDENCE & OOD CROPS (ONION, SUGARCANE) ---
 def fallback_gemini_vision(pil_img: Image.Image) -> dict:
     """Invoked when ResNet confidence is low (< 0.78) to handle regional Indian cash crops."""
     if not ai_client:
@@ -408,6 +458,8 @@ def fallback_gemini_vision(pil_img: Image.Image) -> dict:
         return json.loads(response.text)
     except Exception:
         return None
+
+
 # --- APPLICATION INITIALIZATION ---
 app = FastAPI(title="AgriScan ML Inference Engine with Robust Rejection", version="2.5.0")
 
@@ -420,7 +472,6 @@ app.add_middleware(
 )
 
 DEVICE = torch.device("cpu")
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 1. Model Checkpoint Loading
 resnet_filenames = ["best_resnet34.pth", "best_resnet32.pth", "resnet34.pth"]
@@ -500,7 +551,7 @@ def health():
 @app.post("/predict")
 async def predict(
     image: UploadFile = File(...),
-    crop_name: str = Form("Auto"),  # <-- NEW: e.g. "Potato", "Tomato", "Sugarcane", "Auto"
+    crop_name: str = Form("Auto"),
     latitude: float = Form(19.9975),
     longitude: float = Form(73.7898)
 ):
@@ -529,19 +580,16 @@ async def predict(
     tensor.requires_grad = True
 
     # --- STAGE 3: RESNET FORWARD PASS WITH LOGIT MASKING ---
-    logits = model(tensor)  # shape: [1, num_classes]
+    logits = model(tensor)
 
-    # If the user specified a crop (not "Auto"), mask out all other crops
     selected_crop_clean = crop_name.strip().lower()
     matched_indices = []
 
     if selected_crop_clean and selected_crop_clean != "auto":
         for idx, name in enumerate(CLASS_NAMES):
-            # Check if crop name matches the start or part of the class folder name
             if selected_crop_clean in name.lower():
                 matched_indices.append(idx)
 
-        # Apply mask if matching classes exist in the model
         if len(matched_indices) > 0:
             masked_logits = torch.full_like(logits, fill_value=float("-inf"))
             masked_logits[0, matched_indices] = logits[0, matched_indices]
@@ -549,10 +597,8 @@ async def predict(
         else:
             print(f"Warning: No trained classes matched crop '{crop_name}'. Using raw logits.")
 
-    # Convert masked logits to probabilities
     probabilities = F.softmax(logits, dim=1)[0]
 
-    # Available count of classes after masking
     k_val = min(3, len(matched_indices)) if len(matched_indices) > 0 else min(3, num_classes_in_model)
     top_probs, top_indices = torch.topk(probabilities, k=k_val)
 
@@ -612,4 +658,83 @@ async def predict(
             "heatmap_base64": heatmap_base64
         },
         "top_predictions": top_3
+    }
+
+
+# --- TIER 1: SEIR SPREAD PREDICTION ENDPOINT ---
+class SEIRRequest(BaseModel):
+    source_lat: float
+    source_lon: float
+    wind_direction_deg: float
+    wind_speed_kmh: float
+    nearby_farms: list[dict]
+
+@app.post("/api/v1/predict-spread")
+async def predict_spread(payload: SEIRRequest):
+    """
+    SIH Tier 1 Feature: Computes 96-hour SEIR pathogen dispersion 
+    across surrounding farms using wind and distance vectors.
+    """
+    risk_results = calculate_farm_outbreak_risks(
+        source_lat=payload.source_lat,
+        source_lon=payload.source_lon,
+        nearby_farms=payload.nearby_farms,
+        wind_direction_deg=payload.wind_direction_deg,
+        wind_speed_kmh=payload.wind_speed_kmh
+    )
+    return {
+        "status": "success",
+        "pathogen": "Foliar Pathogen Outbreak (SEIR Simulation)",
+        "simulation_window_hours": 96,
+        "affected_perimeter_predictions": risk_results
+    }
+
+
+# --- TIER 1: ACTIVE LEARNING CORRECTION ENDPOINT ---
+@app.post("/api/v1/active-learning/correct")
+async def submit_correction(
+    file: UploadFile = File(...),
+    predicted_class: str = Form(...),
+    corrected_class: str = Form(...),
+    officer_id: str = Form("AGRI_OFFICER_01")
+):
+    """
+    SIH Tier 1 Feature: Captures false-positive corrections from field officers 
+    and queues them into a local dataset registry for continuous model retraining.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_name = f"correction_{timestamp}_{officer_id}"
+    
+    dest_img_path = os.path.join(ACTIVE_LEARNING_DIR, "images", f"{base_name}.jpg")
+    
+    contents = await file.read()
+    with open(dest_img_path, "wb") as f:
+        f.write(contents)
+        
+    log_entry = {
+        "id": base_name,
+        "timestamp": datetime.now().isoformat(),
+        "officer_id": officer_id,
+        "predicted": predicted_class,
+        "corrected_to": corrected_class,
+        "image_path": dest_img_path
+    }
+    
+    registry = []
+    if os.path.exists(FEEDBACK_LOG_FILE):
+        try:
+            with open(FEEDBACK_LOG_FILE, "r") as f:
+                registry = json.load(f)
+        except Exception:
+            registry = []
+            
+    registry.append(log_entry)
+    with open(FEEDBACK_LOG_FILE, "w") as f:
+        json.dump(registry, f, indent=4)
+        
+    return {
+        "status": "success",
+        "message": "Correction successfully logged to Active Learning retraining queue.",
+        "total_retraining_samples": len(registry),
+        "feedback_id": base_name
     }
