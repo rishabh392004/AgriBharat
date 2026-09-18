@@ -68,9 +68,34 @@ export async function deleteFarm(
 ) {
   const farm = await getFarmById(farmId, userId);
 
-  await db.orm.public.Farm
-    .where({ id: farm.id })
-    .delete();
+  // M2: Guard against foreign key violation when deleting farm with existing scans
+  const existingScans = await db.orm.public.Scan
+    .where({ farmId: farm.id })
+    .all();
+
+  if (existingScans.length > 0) {
+    throw new AppError(
+      `Cannot delete farm: ${existingScans.length} scan(s) are associated with this farm. Delete or reassign scans first.`,
+      409
+    );
+  }
+
+  try {
+    await db.orm.public.Farm
+      .where({ id: farm.id })
+      .delete();
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      msg.includes("foreign key") ||
+      msg.includes("violates foreign key constraint") ||
+      (err as { code?: string })?.code === "23503"
+    ) {
+      throw new AppError("Cannot delete farm because dependent records exist", 409);
+    }
+    throw new AppError("Failed to delete farm", 500);
+  }
 
   return farm;
 }

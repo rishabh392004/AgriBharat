@@ -71,11 +71,25 @@ export async function getMyOfficerProfile(userId: number) {
 
 /**
  * Get any officer profile by their userId (admin or public lookup).
+ * Masks personal phone for non-officer/admin users (M3).
  */
-export async function getOfficerProfileByUserId(targetUserId: number) {
+export async function getOfficerProfileByUserId(
+  targetUserId: number,
+  requestingUserId?: number,
+  requestingRole?: string
+) {
   const profile = await db.orm.public.OfficerProfile.where({ userId: targetUserId }).first();
   if (!profile) throw new AppError("Officer profile not found", 404);
-  return formatProfile(profile);
+  const formatted = formatProfile(profile);
+
+  if (requestingRole !== "ADMIN" && requestingRole !== "OFFICER" && requestingUserId !== targetUserId) {
+    return {
+      ...formatted,
+      phone: formatted.phone ? `${formatted.phone.slice(0, 3)}****${formatted.phone.slice(-2)}` : null,
+    };
+  }
+
+  return formatted;
 }
 
 /**

@@ -1,0 +1,617 @@
+[
+  {
+    "id": "table.diseaseResult",
+    "label": "Create table \"diseaseResult\"",
+    "summary": "Creates table \"diseaseResult\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "diseaseResult"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"diseaseResult\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"diseaseResult\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"diseaseResult\"",
+        "sql": "CREATE TABLE \"public\".\"diseaseResult\" (\n  \"actions\" text NOT NULL,\n  \"confidence\" float8 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"disease\" text NOT NULL,\n  \"etlStatus\" text DEFAULT '' NOT NULL,\n  \"flagOfficerReview\" bool DEFAULT false NOT NULL,\n  \"foliarDamagePercent\" float8 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"precautions\" text NOT NULL,\n  \"provider\" text NOT NULL,\n  \"scanId\" int4 NOT NULL,\n  \"severity\" text NOT NULL,\n  \"top3Predictions\" text DEFAULT '[]' NOT NULL,\n  \"urgency\" text DEFAULT 'LOW' NOT NULL,\n  \"weatherContext\" text DEFAULT '{}' NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"diseaseResult\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"diseaseResult\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.message",
+    "label": "Create table \"message\"",
+    "summary": "Creates table \"message\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "message"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"message\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"message\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"message\"",
+        "sql": "CREATE TABLE \"public\".\"message\" (\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"fromUserId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isRead\" bool DEFAULT false NOT NULL,\n  \"toUserId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"message\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"message\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.officerProfile",
+    "label": "Create table \"officerProfile\"",
+    "summary": "Creates table \"officerProfile\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "officerProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"officerProfile\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"officerProfile\"",
+        "sql": "CREATE TABLE \"public\".\"officerProfile\" (\n  \"badgeNumber\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"department\" text NOT NULL,\n  \"designation\" text NOT NULL,\n  \"district\" text NOT NULL,\n  \"flaggedScansCount\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isActive\" bool DEFAULT true NOT NULL,\n  \"jurisdiction\" text NOT NULL,\n  \"officeAddress\" text,\n  \"phone\" text,\n  \"state\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"officerProfile\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.scan.cropName",
+    "label": "Add column \"cropName\" to \"scan\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "cropName",
+        "table": "scan"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"cropName\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "scan",
+          "cropName"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"cropName\"",
+        "sql": "ALTER TABLE \"public\".\"scan\" ADD COLUMN \"cropName\" text DEFAULT 'Auto' NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"cropName\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "scan",
+          "cropName"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.scan.latitude",
+    "label": "Add column \"latitude\" to \"scan\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "latitude",
+        "table": "scan"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"latitude\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "scan",
+          "latitude"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"latitude\"",
+        "sql": "ALTER TABLE \"public\".\"scan\" ADD COLUMN \"latitude\" float8"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"latitude\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "scan",
+          "latitude"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.scan.longitude",
+    "label": "Add column \"longitude\" to \"scan\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "longitude",
+        "table": "scan"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"longitude\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "scan",
+          "longitude"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"longitude\"",
+        "sql": "ALTER TABLE \"public\".\"scan\" ADD COLUMN \"longitude\" float8"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"longitude\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "scan",
+          "longitude"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.diseaseResult.diseaseResult_scanId_key",
+    "label": "Add unique constraint on \"diseaseResult\" (scanId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "diseaseResult_scanId_key",
+        "table": "diseaseResult"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"diseaseResult_scanId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "diseaseResult_scanId_key",
+          "public",
+          "\"public\".\"diseaseResult\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"diseaseResult_scanId_key\"",
+        "sql": "ALTER TABLE \"public\".\"diseaseResult\" ADD CONSTRAINT \"diseaseResult_scanId_key\" UNIQUE (\"scanId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"diseaseResult_scanId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "diseaseResult_scanId_key",
+          "public",
+          "\"public\".\"diseaseResult\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.officerProfile.officerProfile_userId_key",
+    "label": "Add unique constraint on \"officerProfile\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "officerProfile_userId_key",
+        "table": "officerProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"officerProfile_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "officerProfile_userId_key",
+          "public",
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"officerProfile_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"officerProfile\" ADD CONSTRAINT \"officerProfile_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"officerProfile_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "officerProfile_userId_key",
+          "public",
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.officerProfile.officerProfile_badgeNumber_key",
+    "label": "Add unique constraint on \"officerProfile\" (badgeNumber)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "officerProfile_badgeNumber_key",
+        "table": "officerProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"officerProfile_badgeNumber_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "officerProfile_badgeNumber_key",
+          "public",
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"officerProfile_badgeNumber_key\"",
+        "sql": "ALTER TABLE \"public\".\"officerProfile\" ADD CONSTRAINT \"officerProfile_badgeNumber_key\" UNIQUE (\"badgeNumber\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"officerProfile_badgeNumber_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "officerProfile_badgeNumber_key",
+          "public",
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.message.message_fromUserId_idx_9c2ca0ee",
+    "label": "Create index \"message_fromUserId_idx_9c2ca0ee\" on \"message\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "message_fromUserId_idx_9c2ca0ee",
+        "table": "message"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"message_fromUserId_idx_9c2ca0ee\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"message_fromUserId_idx_9c2ca0ee\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"message_fromUserId_idx_9c2ca0ee\"",
+        "sql": "CREATE INDEX \"message_fromUserId_idx_9c2ca0ee\" ON \"public\".\"message\" (\"fromUserId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"message_fromUserId_idx_9c2ca0ee\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"message_fromUserId_idx_9c2ca0ee\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.message.message_toUserId_idx_397e108f",
+    "label": "Create index \"message_toUserId_idx_397e108f\" on \"message\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "message_toUserId_idx_397e108f",
+        "table": "message"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"message_toUserId_idx_397e108f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"message_toUserId_idx_397e108f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"message_toUserId_idx_397e108f\"",
+        "sql": "CREATE INDEX \"message_toUserId_idx_397e108f\" ON \"public\".\"message\" (\"toUserId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"message_toUserId_idx_397e108f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"message_toUserId_idx_397e108f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.diseaseResult.diseaseResult_scanId_fkey",
+    "label": "Add foreign key \"diseaseResult_scanId_fkey\" on \"diseaseResult\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "diseaseResult_scanId_fkey",
+        "table": "diseaseResult"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"diseaseResult_scanId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "diseaseResult_scanId_fkey",
+          "public",
+          "\"public\".\"diseaseResult\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"diseaseResult_scanId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"diseaseResult\"\nADD CONSTRAINT \"diseaseResult_scanId_fkey\"\nFOREIGN KEY (\"scanId\")\nREFERENCES \"public\".\"scan\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"diseaseResult_scanId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "diseaseResult_scanId_fkey",
+          "public",
+          "\"public\".\"diseaseResult\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.message.message_fromUserId_fkey",
+    "label": "Add foreign key \"message_fromUserId_fkey\" on \"message\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "message_fromUserId_fkey",
+        "table": "message"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"message_fromUserId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "message_fromUserId_fkey",
+          "public",
+          "\"public\".\"message\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"message_fromUserId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"message\"\nADD CONSTRAINT \"message_fromUserId_fkey\"\nFOREIGN KEY (\"fromUserId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"message_fromUserId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "message_fromUserId_fkey",
+          "public",
+          "\"public\".\"message\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.message.message_toUserId_fkey",
+    "label": "Add foreign key \"message_toUserId_fkey\" on \"message\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "message_toUserId_fkey",
+        "table": "message"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"message_toUserId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "message_toUserId_fkey",
+          "public",
+          "\"public\".\"message\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"message_toUserId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"message\"\nADD CONSTRAINT \"message_toUserId_fkey\"\nFOREIGN KEY (\"toUserId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"message_toUserId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "message_toUserId_fkey",
+          "public",
+          "\"public\".\"message\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.officerProfile.officerProfile_userId_fkey",
+    "label": "Add foreign key \"officerProfile_userId_fkey\" on \"officerProfile\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "officerProfile_userId_fkey",
+        "table": "officerProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"officerProfile_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "officerProfile_userId_fkey",
+          "public",
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"officerProfile_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"officerProfile\"\nADD CONSTRAINT \"officerProfile_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"officerProfile_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "officerProfile_userId_fkey",
+          "public",
+          "\"public\".\"officerProfile\""
+        ]
+      }
+    ]
+  }
+]

@@ -64,3 +64,34 @@ export async function getMe(
     user,
   });
 }
+
+export async function updateUserRoleController(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const targetUserId = parseInt(rawId ?? "", 10);
+  if (isNaN(targetUserId)) {
+    res.status(400).json({ message: "Invalid user ID" });
+    return;
+  }
+
+  const { updateUserRoleSchema } = await import("./auth.schema.js");
+  const { updateUserRole } = await import("./auth.service.js");
+
+  const result = updateUserRoleSchema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({
+      message: "Validation failed",
+      errors: result.error.flatten().fieldErrors,
+    });
+    return;
+  }
+
+  const user = await updateUserRole(targetUserId, result.data.role);
+
+  res.status(200).json({
+    message: `User role updated to ${result.data.role}`,
+    user,
+  });
+}

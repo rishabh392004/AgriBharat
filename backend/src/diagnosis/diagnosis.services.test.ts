@@ -22,6 +22,10 @@ vi.mock("../prisma/db.js", () => ({
         },
         DiseaseResult: {
           create: vi.fn().mockResolvedValue({ id: 1 }),
+          where: vi.fn(() => ({
+            first: vi.fn().mockResolvedValue(null),
+            update: vi.fn().mockResolvedValue({ id: 1 }),
+          })),
         },
       },
     },
@@ -92,7 +96,7 @@ describe("diagnoseScan", () => {
     });
   });
 
-  it("throws 409 when diagnosis is already in progress", async () => {
+  it("throws 409 when diagnosis is actively in progress", async () => {
     firstMock.mockResolvedValue({
       id: 1,
       farmId: 1,
@@ -101,6 +105,7 @@ describe("diagnoseScan", () => {
       cropName: "Auto",
       latitude: null,
       longitude: null,
+      updatedAt: new Date().toISOString(), // recent -> active
     });
 
     farmFirstMock.mockResolvedValue({ id: 1 });
@@ -108,6 +113,28 @@ describe("diagnoseScan", () => {
     await expect(diagnoseScan(1, 1)).rejects.toMatchObject({
       message: "Diagnosis already in progress",
       statusCode: 409,
+    });
+  });
+
+  it("recovers and proceeds with diagnosis when scan is in stale PROCESSING state", async () => {
+    firstMock.mockResolvedValue({
+      id: 1,
+      farmId: 1,
+      imageUrl: "https://example.com/plant.jpg",
+      status: "PROCESSING",
+      cropName: "Auto",
+      latitude: null,
+      longitude: null,
+      updatedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago -> stale
+    });
+
+    farmFirstMock.mockResolvedValue({ id: 1 });
+    diagnoseMock.mockResolvedValue(makeMockResult());
+
+    const result = await diagnoseScan(1, 1);
+    expect(result).toMatchObject({
+      scanId: 1,
+      disease: "Healthy",
     });
   });
 

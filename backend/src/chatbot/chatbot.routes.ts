@@ -1,12 +1,21 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { askController, chatbotHealthController } from "./chatbot.controller.js";
 
 const router = Router();
 
+export const chatbotRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  limit: 10, // 10 requests per minute per IP
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { message: "Too many questions. Please wait a moment and try again." },
+});
+
 /**
  * @route   POST /api/v1/chatbot/ask
  * @desc    Ask a farming question to Kisan Salahkar (Gemini AI)
- * @access  Public (no auth needed — chatbot is open to all users)
+ * @access  Public (rate-limited)
  *
  * Body:
  * {
@@ -17,7 +26,7 @@ const router = Router();
  *   ]
  * }
  */
-router.post("/ask", askController);
+router.post("/ask", chatbotRateLimit, askController);
 
 /**
  * @route   GET /api/v1/chatbot/health

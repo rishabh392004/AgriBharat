@@ -1,5 +1,6 @@
 import { db } from "../prisma/db.js";
 import { AppError } from "../common/AppError.js";
+import { assertPublicHttpUrl } from "../common/urlSafety.js";
 
 /**
  * Creates a new scan record in the database.
@@ -16,6 +17,9 @@ export async function createScan(
   latitude?: number,
   longitude?: number
 ) {
+  // Validate image URL against SSRF and private address ranges
+  await assertPublicHttpUrl(imageUrl);
+
   // Verify the farm exists and belongs to the authenticated user
   const farm = await db.orm.public.Farm
     .where({
@@ -90,15 +94,19 @@ export async function getScansByUser(userId: number) {
     .where({ userId })
     .all();
 
-  const scans: NonNullable<Awaited<ReturnType<typeof db.orm.public.Scan.first>>>[] = [];
-
-  for (const farm of farms) {
-    const farmScans = await db.orm.public.Scan
-      .where({ farmId: farm.id })
-      .all();
-
-    scans.push(...farmScans);
+  if (farms.length === 0) {
+    return [];
   }
+
+  // M1: Concurrently fetch scans across all farms to avoid serial N+1 round-trips
+  const farmScansList = await Promise.all(
+    farms.map((farm) => db.orm.public.Scan.where({ farmId: farm.id }).all())
+  );
+
+  const scans = farmScansList.flat();
+  scans.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   return scans.map((scan) => ({
     id: scan.id,
