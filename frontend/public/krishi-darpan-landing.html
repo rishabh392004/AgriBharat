@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>कृषि दर्पण | Krishi Darpan AI - Detect Early. Protect Your Crop.</title>
+  <meta name="description" content="AI-powered plant pathology platform for Indian farmers. Scan crop leaf photos for instant disease diagnosis, bio-pesticide recommendations, and precautions." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+  <!-- React 18 CDN + Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'krishi-bg': '#0B3D2E',
+            'krishi-dark': '#051F17',
+            'krishi-gold': '#F5C518',
+            'krishi-pink': '#FF2E88',
+            'krishi-cream': '#FFF6DC',
+          },
+          fontFamily: {
+            sans: ['Outfit', 'Noto Sans Devanagari', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --color-bg: #0B3D2E;
+      --color-dark: #051F17;
+      --color-gold: #F5C518;
+      --color-pink: #FF2E88;
+      --color-cream: #FFF6DC;
+    }
+
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-cream);
+      font-family: 'Outfit', 'Noto Sans Devanagari', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .poster-dashed-gold {
+      border: 2px dashed var(--color-gold);
+    }
+    .poster-dashed-pink {
+      border: 2px dashed var(--color-pink);
+    }
+
+    @keyframes rotateMandala {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes scanLineAnim {
+      0% { top: 0%; opacity: 0.8; }
+      50% { top: 92%; opacity: 1; }
+      100% { top: 0%; opacity: 0.8; }
+    }
+
+    .mandala-spin {
+      animation: rotateMandala 60s linear infinite;
+    }
+
+    .scan-laser {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #FF2E88, #F5C518, #FF2E88, transparent);
+      box-shadow: 0 0 15px #FF2E88, 0 0 25px #F5C518;
+      animation: scanLineAnim 2s ease-in-out infinite;
+      z-index: 10;
+    }
+
+    .hover-lift {
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const DEMO_DISEASES = [
+      {
+        id: 'wheat-yellow-rust',
+        crop: 'Wheat (गेहूं)',
+        disease: 'Yellow Rust (पीला रतुआ)',
+        scientific: 'Puccinia striiformis',
+        severity: '34% High Severity',
+        confidence: '98.8%',
+        symptoms: 'Yellow pustules arranged in linear stripes on leaf blades.',
+        organicCure: 'Neem Oil emulsion (5ml/L) + Trichoderma viride bio-fungicide',
+        chemicalCure: 'Propiconazole 25% EC @ 1ml/L water',
+        precaution: 'Avoid excessive nitrogenous fertilizers. Maintain adequate field drainage.',
+        audioTextHi: 'फसल: गेहूं। बीमारी: पीला रतुआ। जैविक उपचार: नीम का तेल और ट्राइकोडर्मा विरिडी का छिड़काव करें।',
+        image: 'leaf_sample.jpg',
+      },
+      {
+        id: 'rice-blast',
+        crop: 'Paddy / Rice (धान)',
+        disease: 'Paddy Blast (धान का झुलसा रोग)',
+        scientific: 'Magnaporthe oryzae',
+        severity: '18% Moderate',
+        confidence: '97.4%',
+        symptoms: 'Spindle-shaped lesions with grey centers and dark reddish-brown borders.',
+        organicCure: 'Pseudomonas fluorescens 10g/L spray at 10-day intervals',
+        chemicalCure: 'Tricyclazole 75% WP @ 0.6g/L water',
+        precaution: 'Use certified resistant seed varieties. Avoid late evening irrigation.',
+        audioTextHi: 'फसल: धान। बीमारी: धान का झुलसा रोग। जैविक उपचार: स्यूडोमोनास फ्लोरेसेंस का छिड़काव करें।',
+        image: 'leaf_sample.jpg',
+      }
+    ];
+
+    const KVK_STATIONS = [
+      {
+        id: 'kvk-ludhiana',
+        name: 'KVK Ludhiana (PAU Campus)',
+        district: 'Ludhiana, Punjab',
+        distance: '4.2 km',
+        phone: '+91 98140-12345',
+        officer: 'Dr. Gurpreet Singh (Senior Agronomist)',
+        bioStock: 'Trichoderma viride, Neem Oil 10,000 PPM',
+        status: 'Active · Stock Available',
+      },
+      {
+        id: 'kvk-karnal',
+        name: 'KVK Karnal (ICAR-CSSRI)',
+        district: 'Karnal, Haryana',
+        distance: '12.8 km',
+        phone: '+91 98120-67890',
+        officer: 'Dr. Ramesh Kumar (Plant Pathologist)',
+        bioStock: 'Pseudomonas fluorescens, Copper Sulfate',
+        status: 'Active · Officer On Duty',
+      }
+    ];
+
+    function KrishiDarpanApp() {
+      const [activeStep, setActiveStep] = React.useState(1);
+      const [selectedDisease, setSelectedDisease] = React.useState(DEMO_DISEASES[0]);
+      const [isScanning, setIsScanning] = React.useState(false);
+      const [scanCompleted, setScanCompleted] = React.useState(true);
+      const [isPlayingAudio, setIsPlayingAudio] = React.useState(false);
+      const [kvkModalOpen, setKvkModalOpen] = React.useState(false);
+
+      const handleSpeakAudio = () => {
+        if ('speechSynthesis' in window) {
+          if (isPlayingAudio) {
+            window.speechSynthesis.cancel();
+            setIsPlayingAudio(false);
+            return;
+          }
+          const utterance = new SpeechSynthesisUtterance(selectedDisease.audioTextHi);
+          utterance.lang = 'hi-IN';
+          utterance.onstart = () => setIsPlayingAudio(true);
+          utterance.onend = () => setIsPlayingAudio(false);
+          utterance.onerror = () => setIsPlayingAudio(false);
+          window.speechSynthesis.speak(utterance);
+        }
+      };
+
+      const handleSendWhatsAppWeb = () => {
+        const text = encodeURIComponent(
+          `🌾 KRISHI DARPAN REPORT 🌾\nCrop: ${selectedDisease.crop}\nDisease: ${selectedDisease.disease}\nRemedy: ${selectedDisease.organicCure}`
+        );
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-krishi-bg text-krishi-cream">
+          {/* Header */}
+          <header className="bg-krishi-dark border-b-2 border-krishi-gold/40 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+            <div className="flex items-center gap-3">
+              <span className="bg-krishi-pink text-white font-black text-sm px-3 py-1 rounded shadow-[2px_2px_0px_#F5C518]">
+                कृषि दर्पण
+              </span>
+              <span className="text-krishi-gold font-black text-xl tracking-wider uppercase">
+                KRISHI DARPAN
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setKvkModalOpen(true)}
+                className="hover-lift bg-krishi-dark border border-dashed border-krishi-gold text-krishi-gold font-bold text-xs px-3 py-1.5 rounded"
+              >
+                📍 KVK LOCATIONS
+              </button>
+              <a href="/farmer/scan" className="hover-lift bg-krishi-pink text-white font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#F5C518]">
+                SCAN NOW 📷
+              </a>
+              <a href="/login" className="hover-lift border border-dashed border-krishi-gold text-krishi-gold text-xs px-3 py-1.5 rounded font-bold">
+                LOG IN
+              </a>
+              <a href="/signup" className="hover-lift bg-krishi-gold text-krishi-dark font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#FF2E88]">
+                SIGN UP
+              </a>
+            </div>
+          </header>
+
+          {/* Main Layout */}
+          <main className="grid grid-cols-1 lg:grid-cols-2 flex-1 relative">
+            <section className="p-8 lg:p-12 flex flex-col justify-between relative border-r border-krishi-gold/20">
+              <div>
+                <h1 className="text-4xl sm:text-6xl font-black text-krishi-gold leading-none uppercase mb-4 tracking-tight drop-shadow-[3px_3px_0px_#051F17]">
+                  DETECT EARLY.<br />PROTECT YOUR CROP.
+                </h1>
+
+                <p className="text-lg text-krishi-cream/90 max-w-xl mb-6 font-medium">
+                  Scan any diseased crop leaf with your phone camera. Instant diagnostic report with pathogen identification, bio-pesticide recommendations & precautions in seconds.
+                </p>
+
+                <div className="flex flex-wrap gap-3 mb-8">
+                  <a href="/farmer/scan" className="hover-lift bg-krishi-pink text-white font-black text-sm px-6 py-3.5 rounded-lg shadow-[4px_4px_0px_#F5C518]">
+                    SCAN LEAF NOW 📷
+                  </a>
+                  <button onClick={() => setKvkModalOpen(true)} className="hover-lift bg-krishi-dark text-krishi-gold border-2 border-dashed border-krishi-gold font-bold text-sm px-5 py-3.5 rounded-lg">
+                    KVK MAP STATIONS 📍
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Right Panel */}
+            <section className="bg-krishi-dark p-6 sm:p-10 flex flex-col gap-6">
+              <div className="bg-krishi-bg border-2 border-krishi-gold rounded-lg p-5 shadow-[6px_6px_0px_#F5C518]">
+                {scanCompleted && (
+                  <div className="bg-krishi-dark border border-krishi-gold p-4 rounded flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-krishi-pink text-[10px] font-bold block">DIAGNOSIS RESULT</span>
+                        <h3 className="text-krishi-gold font-black text-lg m-0">{selectedDisease.disease}</h3>
+                      </div>
+                      <span className="bg-krishi-gold/20 text-krishi-gold border border-krishi-gold text-xs font-bold px-2 py-0.5 rounded">
+                        CONFIDENCE: {selectedDisease.confidence}
+                      </span>
+                    </div>
+
+                    {/* Audio Assistant */}
+                    <button
+                      onClick={handleSpeakAudio}
+                      className="bg-krishi-gold/20 text-krishi-gold border border-krishi-gold text-xs font-bold py-2 rounded flex items-center justify-center gap-2"
+                    >
+                      <span>{isPlayingAudio ? '⏹️' : '🔊'}</span>
+                      {isPlayingAudio ? 'STOPPING AUDIO...' : 'LISTEN AUDIO ADVISORY (हिंदी Voice)'}
+                    </button>
+
+                    <div className="text-xs">
+                      <strong className="text-krishi-gold block">🌱 ORGANIC REMEDY:</strong>
+                      <span>{selectedDisease.organicCure}</span>
+                    </div>
+
+                    {/* WhatsApp */}
+                    <button
+                      onClick={handleSendWhatsAppWeb}
+                      className="bg-emerald-500 text-black font-black text-xs py-2 rounded flex items-center justify-center gap-2"
+                    >
+                      💬 SEND REPORT TO WHATSAPP
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </main>
+
+          {/* KVK Modal */}
+          {kvkModalOpen && (
+            <div className="fixed inset-0 bg-krishi-dark/90 backdrop-blur-md z-50 grid place-items-center p-6">
+              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-xl w-full relative">
+                <button onClick={() => setKvkModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
+                <h2 className="text-krishi-gold font-black text-xl mb-4">📍 KRISHI VIGYAN KENDRA (KVK) LOCATIONS</h2>
+                <div className="space-y-3">
+                  {KVK_STATIONS.map((st) => (
+                    <div key={st.id} className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs flex justify-between">
+                      <div>
+                        <strong className="text-krishi-gold block text-sm">{st.name}</strong>
+                        <span>Officer: {st.officer}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-krishi-pink font-bold block">{st.distance}</span>
+                        <a href={`tel:${st.phone}`} className="text-krishi-gold underline">Call Officer</a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<KrishiDarpanApp />);
+  </script>
+</body>
+</html>
