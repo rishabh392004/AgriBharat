@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   Info,
+  Bot,
+  Sprout,
 } from 'lucide-react'
 import { getWhatsAppDeepLink, WHATSAPP_CONFIG } from '@/config/whatsapp'
 import { useI18n } from '@/lib/i18n'
@@ -196,20 +198,20 @@ export const WhatsAppBanner: React.FC<WhatsAppBannerProps> = ({
                 color: '#e5f6e8',
               }}
             >
-              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                📷 {t('step1SendPhoto')}
+              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Camera size={13} /> {t('step1SendPhoto')}
               </span>
               <span>→</span>
-              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                🤖 {t('step2AiDiagnosis')}
+              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Bot size={13} /> {t('step2AiDiagnosis')}
               </span>
               <span>→</span>
-              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                🌱 {t('step3IcarRemedy')}
+              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Sprout size={13} /> {t('step3IcarRemedy')}
               </span>
               <span>→</span>
-              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                🔊 {t('step4VoiceNote')}
+              <span style={{ background: 'rgba(255,255,255,0.12)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Volume2 size={13} /> {t('step4VoiceNote')}
               </span>
             </div>
           </div>

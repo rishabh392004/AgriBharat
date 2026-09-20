@@ -234,8 +234,11 @@ JWT_SECRET="your-secret-key-minimum-32-chars"
 JWT_EXPIRES_IN="7d"
 PORT=5000
 
-# Python ML service URL
+# Python FastAPI ML disease-detection service (main.py → port 8000)
 ML_SERVICE_URL="http://localhost:8000"
+
+# Python Gemini FAQ chatbot service (faq_bot.py → port 8001)
+CHATBOT_SERVICE_URL="http://localhost:8001"
 ```
 
 ---

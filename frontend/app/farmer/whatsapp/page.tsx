@@ -22,6 +22,8 @@ import {
   CheckCircle2,
   Layers,
   Info,
+  Bot,
+  Sprout,
 } from 'lucide-react'
 import { getWhatsAppDeepLink, WHATSAPP_CONFIG } from '@/config/whatsapp'
 import { CROPS, CROP_METADATA } from '@/services/cropService'
@@ -175,7 +177,123 @@ export default function WhatsAppPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Top Banner Header */}
+
+      {/* ── Integration Status Panel ─────────────────────────────────────── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          borderRadius: 20,
+          padding: '18px 22px',
+          border: '1.5px solid #334155',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 16,
+          flexWrap: 'wrap',
+        }}
+      >
+        {/* Left: Status Indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 220 }}>
+          <div
+            style={{
+              width: 44, height: 44, borderRadius: 12,
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              display: 'grid', placeItems: 'center', flexShrink: 0,
+            }}
+          >
+            <Info size={22} color="#ffffff" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Integration Status
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
+              Backend Webhook: Ready to Deploy
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Status Grid */}
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+          {[
+            { label: 'Interactive Demo Simulator', status: '✅ Live Now', color: '#22c55e', desc: 'Full chat simulation running on this page' },
+            { label: 'Backend Webhook Endpoint', status: '✅ Code Ready', color: '#22c55e', desc: 'POST /api/v1/whatsapp/webhook — compiled & registered' },
+            { label: 'ML → WhatsApp Pipeline', status: '✅ Code Ready', color: '#22c55e', desc: 'ResNet-34 → TwiML response chain implemented' },
+            { label: 'Twilio Credentials', status: '⚙️ Pending Config', color: '#f59e0b', desc: 'Set TWILIO_ACCOUNT_SID + AUTH_TOKEN in .env to go live' },
+          ].map((item) => (
+            <div
+              key={item.label}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 10, padding: '10px 12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#cbd5e1' }}>{item.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 800, color: item.color }}>{item.status}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 10, color: '#64748b', lineHeight: 1.4 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Activation Guide Accordion ───────────────────────────────────── */}
+      <div
+        style={{
+          background: '#f0fdf4',
+          border: '1.5px solid #86efac',
+          borderRadius: 16,
+          padding: '14px 18px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <CheckCircle2 size={18} color="#16a34a" />
+          <strong style={{ fontSize: 13, color: '#15803d' }}>
+            3-Step Activation — Go Live in &lt;10 Minutes
+          </strong>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+          {[
+            {
+              step: '1',
+              title: 'Get Free Twilio Account',
+              desc: 'twilio.com/try-twilio → "Try WhatsApp" → Join Sandbox (free)',
+              color: '#2563eb',
+            },
+            {
+              step: '2',
+              title: 'Expose Backend via ngrok',
+              desc: 'ngrok http 5000 → Copy HTTPS URL → Set in .env as TWILIO_*',
+              color: '#7c3aed',
+            },
+            {
+              step: '3',
+              title: 'Set Webhook in Twilio Console',
+              desc: 'Paste https://<ngrok>/api/v1/whatsapp/webhook → Save → Done',
+              color: '#059669',
+            },
+          ].map((s) => (
+            <div key={s.step} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div
+                style={{
+                  width: 24, height: 24, borderRadius: '50%',
+                  background: s.color, color: '#fff',
+                  display: 'grid', placeItems: 'center',
+                  fontSize: 11, fontWeight: 800, flexShrink: 0,
+                }}
+              >
+                {s.step}
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b' }}>{s.title}</div>
+                <div style={{ fontSize: 11, color: '#475569', lineHeight: 1.4 }}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div
         style={{
           background: 'linear-gradient(135deg, #075E54 0%, #128C7E 100%)',
@@ -314,32 +432,40 @@ export default function WhatsAppPage() {
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
-                <span style={{ fontSize: 18 }}>📷</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: '#e8f7ec', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Camera size={16} color="#1b432a" />
+                </div>
                 <div>
                   <strong>{t('farmerSendsPhoto')}</strong>
                   <div className="muted" style={{ fontSize: 11 }}>{t('viaWhatsAppHelpline')}</div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
-                <span style={{ fontSize: 18 }}>🤖</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: '#e8f7ec', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Bot size={16} color="#1b432a" />
+                </div>
                 <div>
                   <strong>{t('visionAiAnalyzes')}</strong>
                   <div className="muted" style={{ fontSize: 11 }}>{t('gradCamRecognition')}</div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
-                <span style={{ fontSize: 18 }}>🌱</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: '#e8f7ec', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Sprout size={16} color="#1b432a" />
+                </div>
                 <div>
                   <strong>{t('icarDosageCalculated')}</strong>
                   <div className="muted" style={{ fontSize: 11 }}>{t('knapsackMixingRatios')}</div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
-                <span style={{ fontSize: 18 }}>🔊</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#f8faf7', borderRadius: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: '#e8f7ec', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Volume2 size={16} color="#1b432a" />
+                </div>
                 <div>
                   <strong>{t('voiceAdvisoryDispatched')}</strong>
                   <div className="muted" style={{ fontSize: 11 }}>{t('spokenAudioMotherTongue')}</div>

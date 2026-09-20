@@ -34,6 +34,7 @@ export interface SessionUser {
   name: string
   role: UserRole
   phone: string
+  farmName?: string
 }
 
 export interface ScanRecord {

@@ -267,7 +267,15 @@ export async function predictCrop(
           attentionPoints: base.attentionPoints,
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      const errMsg = err?.message || String(err)
+      if (
+        errMsg.includes('INVALID_FOLIAGE_DETECTED') ||
+        errMsg.includes('No genuine crop leaf') ||
+        errMsg.includes('genuine crop leaf')
+      ) {
+        throw new Error('INVALID_FOLIAGE_DETECTED: No genuine crop leaf detected in this image. Please re-capture a clear photo of the crop leaf.')
+      }
       console.warn('[CropService] Backend /scans/analyze unavailable, using resilient fallback:', err)
     }
   }

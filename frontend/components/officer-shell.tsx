@@ -7,6 +7,7 @@ import { Bell, ClipboardCheck, Home, LogOut, Map, ShieldCheck } from 'lucide-rea
 import { LanguageSelector } from '@/components/language-selector'
 import { LeafMark } from '@/components/leaf-mark'
 import { DEMO_OFFICER } from '@/data/farmer'
+import { CottonBg } from '@/components/cotton-bg'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 
@@ -42,6 +43,7 @@ export function OfficerShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="shell officer">
+      <CottonBg />
       {/* Desktop Sidebar */}
       <aside className="side">
         <Link href="/officer" className="brand">

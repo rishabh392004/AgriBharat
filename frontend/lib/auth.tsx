@@ -146,17 +146,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService.save(next)
     setUser(next)
 
-    // Also synchronize farmer profile name and initials
+    // Also synchronize farmer profile name, initials, and farmName
     setFarmerState((prev) => {
       const cleanName = next.name?.trim() || prev.name
       const parts = cleanName.split(/\s+/)
       const initials = parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'KB'
+      const firstName = parts[0] || cleanName
+      const calculatedFarmName = next.farmName?.trim() || `${firstName}'s Farm`
+
       const updated: DemoFarmer = {
         ...prev,
         name: cleanName,
-        firstName: parts[0] || cleanName,
+        firstName,
         initials,
         mobile: next.phone || prev.mobile,
+        farmName: calculatedFarmName,
       }
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('kr-farmer', JSON.stringify(updated))

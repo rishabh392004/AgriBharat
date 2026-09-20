@@ -1,6 +1,7 @@
-﻿'use client'
+'use client'
 
 import React, { useEffect, useRef } from 'react'
+// @ts-ignore
 import * as THREE from 'three'
 
 export const Plant3DBackground: React.FC = () => {

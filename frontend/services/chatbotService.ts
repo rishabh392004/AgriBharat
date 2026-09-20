@@ -104,15 +104,46 @@ function detectLocaleFromText(text: string, currentLocale: string): string {
   return currentLocale || 'en'
 }
 
-type Topic = 'nearby' | 'symptoms' | 'precaution' | 'water' | 'yellow' | 'disease' | 'next' | 'fertilizer' | 'default'
+type Topic = 'nearby' | 'symptoms' | 'precaution' | 'water' | 'yellow' | 'disease' | 'next' | 'fertilizer' | 'greeting' | 'introduce' | 'default'
 
 function matchTopic(q: string): Topic {
-  const s = q.toLowerCase()
+  const s = q.toLowerCase().trim()
+
+  // --- Greeting detection ---
+  const greetingWords = [
+    'hi', 'hello', 'hey', 'hlo', 'hii', 'namaste', 'namaskar',
+    'नमस्ते', 'नमस्कार', 'हेलो', 'हाय', 'राम राम', 'प्रणाम', 'सलाम',
+    'নমস্কার', 'ਸਤਿ ਸ੍ਰੀ', 'ਨਮਸਤੇ', 'வணக்கம்', 'నమస్కారం', 'നമസ്കാരം'
+  ]
+  if (greetingWords.some((w) => s === w || s.startsWith(w + ' ') || s.endsWith(' ' + w))) {
+    return 'greeting'
+  }
+
+  // --- Self-introduction / describe detection ---
   if (
-    s.includes('nearby') || s.includes('help') || s.includes('kendra') || s.includes('store') ||
+    s.includes('describe') || s.includes('who are you') || s.includes('what are you') ||
+    s.includes('introduce') || s.includes('yourself') || s.includes('jkrishi') ||
+    s.includes('kisan salahkar') || s.includes('about you') || s.includes('tell me about') ||
+    s.includes('what can you do') || s.includes('what do you do') ||
+    s.includes('अपने बारे में') || s.includes('बताओ') || s.includes('आप कौन') ||
+    s.includes('तुम कौन') || s.includes('तुम क्या') || s.includes('आप क्या') ||
+    s.includes('क्या काम') || s.includes('खुद के बारे में') || s.includes('अपना परिचय') ||
+    s.includes('परिचय') || s.includes('तुम्ही कोण') || s.includes('स्वतःबद्दल') ||
+    s.includes('तुमचा परिचय') || s.includes('काय करू शकता')
+  ) {
+    return 'introduce'
+  }
+
+  if (
+    s.includes('nearby') || s.includes('kendra') || s.includes('store') || s.includes('find center') ||
     s.includes('मदत') || s.includes('नजीक') || s.includes('केंद्र') || s.includes('দোকান') ||
     s.includes('સહાય') || s.includes('உதவி') || s.includes('సహాయం')
   ) {
+    return 'nearby'
+  }
+
+  // Only match 'help' if it comes with more context (avoid matching "please help me", a greeting)
+  if (s.includes('help center') || s.includes('help me find') || s.includes('मदत केंद्र') || s.includes('help with crop')) {
     return 'nearby'
   }
 
@@ -172,6 +203,12 @@ function matchTopic(q: string): Topic {
 const RESPONSES: Record<string, Record<Topic, (disease?: string) => { text: string; suggestMap?: boolean }>> = {
   // HINDI
   hi: {
+    greeting: () => ({
+      text: `नमस्ते किसान भाई! 🙏\n\nमैं **Kisan Salahkar (JKrishi AI)** हूँ — आपका डिजिटल कृषि सलाहकार। आप मुझसे पूछ सकते हैं:\n\n🌾 फसल रोग की पहचान\n💊 दवा छिड़काव की सही मात्रा\n💧 सिंचाई का सही समय\n🧪 खाद और NPK की जरूरत\n📍 नजदीकी कृषि केंद्र\n\nबोलिए या लिखिए — मैं हमेशा तैयार हूँ!`,
+    }),
+    introduce: () => ({
+      text: `🤖 **JKrishi AI (Kisan Salahkar) — मेरा परिचय:**\n\nमैं AgriBharat का **बहुभाषी AI कृषि सलाहकार** हूँ। मुझे विशेष रूप से भारतीय किसानों के लिए बनाया गया है।\n\n🌐 **मैं क्या कर सकता हूँ:**\n• फसल रोग की पहचान (AI स्कैन + सलाह)\n• दवा की सही खुराक और छिड़काव समय\n• जैविक व रासायनिक उपचार की जानकारी\n• NPK खाद की मात्रा और मिट्टी परीक्षण सलाह\n• नजदीकी कृषि विज्ञान केंद्र (KVK) ढूंढना\n• सरकारी योजनाएं जैसे PM-Kisan की जानकारी\n\n🗣️ **भाषा:** हिन्दी, मराठी, गुजराती, तमिल, तेलुगु और 8 अन्य भाषाओं में बात करें।\n\nबताइए — आपकी फसल में क्या समस्या है?`,
+    }),
     nearby: (d) => ({
       text: d
         ? `📍 **नजदीकी सहायता केंद्र (${d} के लिए):**\n\n1. **कृषि सेवा केंद्र, नासिक रोड** (2.4 किमी) - कवकनाशी व कीटनाशक उपलब्ध हैं।\n2. **कृषि विज्ञान केंद्र (KVK), पिंपलगांव** (4.1 किमी) - विशेषज्ञ परामर्श व मिट्टी परीक्षण।\n\n📞 किसान कॉल सेंटर: 1800-180-1551 (टोल-फ्री)\n'नजदीकी मदद' टैब खोलकर सटीक लोकेशन व मैप देखें।`
@@ -212,6 +249,12 @@ const RESPONSES: Record<string, Record<Topic, (disease?: string) => { text: stri
 
   // MARATHI
   mr: {
+    greeting: () => ({
+      text: `नमस्कार शेतकरी मित्र! 🙏\n\nमी **Kisan Salahkar (JKrishi AI)** आहे — तुमचा डिजिटल कृषी सल्लागार. तुम्ही मला विचारू शकता:\n\n🌾 पिकावरील रोगाची ओळख\n💊 फवारणीचे योग्य प्रमाण\n💧 पाणी देण्याची योग्य वेळ\n🧪 खत आणि NPK व्यवस्थापन\n📍 जवळचे कृषी केंद्र\n\nबोला किंवा लिहा — मी नेहमी तयार आहे!`,
+    }),
+    introduce: () => ({
+      text: `🤖 **JKrishi AI (Kisan Salahkar) — माझा परिचय:**\n\nमी AgriBharat चा **बहुभाषी AI कृषी सल्लागार** आहे. मला विशेषतः भारतीय शेतकऱ्यांसाठी तयार केले आहे.\n\n🌐 **मी काय करू शकतो:**\n• पिकावरील रोगाची ओळख (AI स्कॅन + सल्ला)\n• फवारणीचे योग्य प्रमाण आणि वेळ\n• जैविक व रासायनिक उपचार माहिती\n• NPK खत व मातीपरीक्षण सल्ला\n• जवळचे कृषी विज्ञान केंद्र (KVK) शोधणे\n• PM-Kisan सारख्या शासकीय योजनांची माहिती\n\n🗣️ **भाषा:** मराठी, हिन्दी, गुजराती, तमिळ, तेलुगू आणि ८ इतर भाषांमध्ये बोलता येते.\n\nसांगा — तुमच्या पिकात काय समस्या आहे?`,
+    }),
     nearby: (d) => ({
       text: d
         ? `📍 **जवळचे कृषी मदत केंद्र (${d} साठी):**\n\n1. **कृषी सेवा केंद्र, नाशिक रोड** (2.4 किमी) - बुरशीनाशके व खते उपलब्ध.\n2. **कृषी विज्ञान केंद्र (KVK), पिंपळगाव** (4.1 किमी) - तज्ज्ञ कृषी सल्लागार.\n\n📞 किसान कॉल सेंटर: 1800-180-1551 (मोफत)\n'जवळची मदत' टॅब उघडून नकाशावर प्रत्यक्ष ठिकाण पाहा.`
@@ -252,6 +295,12 @@ const RESPONSES: Record<string, Record<Topic, (disease?: string) => { text: stri
 
   // ENGLISH
   en: {
+    greeting: () => ({
+      text: `Hello, Farmer Friend! 🙏\n\nI am **Kisan Salahkar (JKrishi AI)** — your digital agronomy advisor. You can ask me about:\n\n🌾 Crop disease identification\n💊 Spray dosage & timing\n💧 Irrigation scheduling\n🧪 NPK & fertilizer advice\n📍 Nearby Krishi centers\n\nSpeak or type — I am always ready to help!`,
+    }),
+    introduce: () => ({
+      text: `🤖 **JKrishi AI (Kisan Salahkar) — About Me:**\n\nI am AgriBharat's **multilingual AI agriculture advisor**, built specifically for Indian farmers.\n\n🌐 **What I can do:**\n• Identify crop diseases (AI scan + advisory)\n• Recommend exact spray dosages & safe application windows\n• Provide organic & chemical treatment information\n• Advise on NPK nutrition & soil testing\n• Locate nearby Krishi Vigyan Kendra (KVK) centers\n• Explain government schemes like PM-Kisan\n\n🗣️ **Languages:** Hindi, Marathi, Gujarati, Tamil, Telugu and 8 other regional languages.\n\nTell me — what's happening with your crop today?`,
+    }),
     nearby: (d) => ({
       text: d
         ? `📍 **Nearby Agricultural Support Centers for ${d}:**\n\n1. **Krishi Seva Kendra, Nashik Road** (2.4 km) - Fungicides, certified inputs & spraying gear.\n2. **Krishi Vigyan Kendra (KVK), Pimpalgaon** (4.1 km) - Agronomist consultations & soil testing.\n\n📞 Kisan Call Centre: 1800-180-1551 (Toll-Free)\nOpen 'Nearby Help' to view exact map locations and driving routes.`

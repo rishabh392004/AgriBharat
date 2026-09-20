@@ -18,6 +18,9 @@ import {
   ShieldCheck,
   MapPin,
   Loader2,
+  HelpCircle,
+  Play,
+  AlertTriangle,
 } from 'lucide-react'
 import { CROPS, CROP_METADATA, predictCrop, type CropName } from '@/services/cropService'
 import { saveLastPrediction } from '@/lib/prediction-store'
@@ -26,6 +29,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/lib/auth'
 import { toast } from '@/components/toast'
 import { detectLiveLocation } from '@/lib/location'
+import { FarmerTourVideoModal } from '@/components/farmer-tour-video-modal'
 
 const steps = ['stepQuality', 'stepSymptoms', 'stepDisease', 'stepSeverity', 'stepRisk'] as const
 
@@ -58,6 +62,9 @@ export default function ScanPage() {
   const [running, setRunning] = useState(false)
   const [doneSteps, setDoneSteps] = useState(0)
   const [locating, setLocating] = useState(false)
+  const [videoHelpOpen, setVideoHelpOpen] = useState(false)
+  const [showRecaptureModal, setShowRecaptureModal] = useState(false)
+  const [recaptureReason, setRecaptureReason] = useState('')
 
   // Live Camera Viewfinder State
   const [cameraActive, setCameraActive] = useState(false)
@@ -224,33 +231,54 @@ export default function ScanPage() {
     setRunning(true)
     setDoneSteps(0)
     const timers = steps.map((_, i) => setTimeout(() => setDoneSteps(i + 1), 400 * (i + 1)))
-    const result = await predictCrop(file, selectedCrop, {
-      latitude: farmer.latitude,
-      longitude: farmer.longitude,
-    })
-    if (preview) {
-      result.imageUrl = preview
+
+    try {
+      const result = await predictCrop(file, selectedCrop, {
+        latitude: farmer.latitude,
+        longitude: farmer.longitude,
+      })
+      if (preview) {
+        result.imageUrl = preview
+      }
+      timers.forEach(clearTimeout)
+      setDoneSteps(steps.length)
+      saveLastPrediction(result)
+      await saveScan({
+        id: result.scanId,
+        date: '08 Sep 2026',
+        dateIso: '2026-09-08',
+        crop: result.crop,
+        disease: result.disease,
+        confidence: result.confidence,
+        severity: result.severity,
+        risk: result.riskLevel,
+        status: result.disease === 'Healthy' ? 'Healthy' : 'Needs attention',
+        thumb: result.crop.toLowerCase(),
+        symptoms: result.symptoms,
+        precautions: result.precautions,
+        actions: result.actions,
+        expertHelp: result.expertHelp,
+      })
+      router.push('/farmer/result')
+    } catch (err: any) {
+      timers.forEach(clearTimeout)
+      setRunning(false)
+      const msg = err?.message || String(err)
+      if (
+        msg.includes('INVALID_FOLIAGE_DETECTED') ||
+        msg.includes('No genuine crop leaf') ||
+        msg.includes('genuine crop leaf')
+      ) {
+        setRecaptureReason(
+          locale === 'hi'
+            ? 'इस फोटो में किसी असली पौधे या पत्ते की पहचान नहीं हुई (जैसे फॉर्म, कपड़े या अन्य सामान)। सटीक जांच के लिए कृपया पौधे के पत्ते की स्पष्ट फोटो खींचें।'
+            : 'No genuine crop leaf detected in this photo (e.g. registration form, document, or non-plant object). Please re-capture a clear photo of your crop leaf.'
+        )
+        setShowRecaptureModal(true)
+      } else {
+        setError(msg)
+      }
     }
-    timers.forEach(clearTimeout)
-    setDoneSteps(steps.length)
-    saveLastPrediction(result)
-    await saveScan({
-      id: result.scanId,
-      date: '08 Sep 2026',
-      dateIso: '2026-09-08',
-      crop: result.crop,
-      disease: result.disease,
-      confidence: result.confidence,
-      severity: result.severity,
-      risk: result.riskLevel,
-      status: result.disease === 'Healthy' ? 'Healthy' : 'Needs attention',
-      thumb: result.crop.toLowerCase(),
-      symptoms: result.symptoms,
-      precautions: result.precautions,
-      actions: result.actions,
-      expertHelp: result.expertHelp,
-    })
-    router.push('/farmer/result')
   }
 
   const selectedMeta = CROP_METADATA[selectedCrop]
@@ -315,6 +343,28 @@ export default function ScanPage() {
                   📍 {farmer.location || 'Detect GPS'}
                 </>
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVideoHelpOpen(true)}
+              style={{
+                background: 'linear-gradient(135deg, rgba(232, 200, 104, 0.2), rgba(46, 125, 50, 0.2))',
+                border: '1px solid rgba(232, 200, 104, 0.4)',
+                color: '#b45309',
+                borderRadius: 999,
+                padding: '2px 10px',
+                fontSize: 11,
+                fontWeight: 750,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                cursor: 'pointer',
+              }}
+              title="Watch step-by-step leaf scanning video tour with voice"
+            >
+              <Play size={11} fill="#b45309" />
+              <span>{locale === 'hi' ? 'स्कैन वीडियो गाइड' : 'How to Scan Video'}</span>
             </button>
           </div>
           <h1 style={{ margin: '2px 0 6px', fontSize: 'clamp(24px, 4vw, 32px)', letterSpacing: '-0.02em' }}>
@@ -779,6 +829,177 @@ export default function ScanPage() {
           </div>
         </div>
       </div>
+
+      {/* Multi-Voice Interactive Demo Video Modal focused on Crop Scanning */}
+      <FarmerTourVideoModal
+        isOpen={videoHelpOpen}
+        onClose={() => setVideoHelpOpen(false)}
+        initialStepIndex={1}
+      />
+
+      {/* Re-capture Image Modal Popup when non-leaf object is detected */}
+      {showRecaptureModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(10, 20, 14, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'grid',
+            placeItems: 'center',
+            padding: 16,
+          }}
+          onClick={() => setShowRecaptureModal(false)}
+        >
+          <div
+            style={{
+              background: '#132319',
+              border: '1.5px solid rgba(232, 200, 104, 0.4)',
+              borderRadius: 24,
+              maxWidth: 480,
+              width: '100%',
+              padding: 24,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+              color: 'white',
+              position: 'relative',
+              animation: 'fadeIn 0.25s ease-out',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Icon */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+              <div
+                style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: 16,
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#f87171',
+                  flexShrink: 0,
+                }}
+              >
+                <AlertTriangle size={28} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff' }}>
+                  {locale === 'hi' ? 'कोई पत्ती नहीं मिली • पुनः फोटो लें' : 'No Crop Leaf Detected • Re-capture'}
+                </h3>
+                <span style={{ fontSize: 12, color: '#f87171', fontWeight: 700 }}>
+                  {locale === 'hi' ? 'अमान्य वस्तु पाई गई (Invalid Object)' : 'Invalid Object / Non-Foliage Detected'}
+                </span>
+              </div>
+            </div>
+
+            {/* Explanation */}
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5, marginBottom: 16 }}>
+              {recaptureReason}
+            </p>
+
+            {/* Best Practice Tips */}
+            <div
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 14,
+                padding: '12px 16px',
+                marginBottom: 20,
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: '#e8c868',
+              }}
+            >
+              <div style={{ fontWeight: 750, marginBottom: 4, color: '#fff', fontSize: 13 }}>
+                🌿 {locale === 'hi' ? 'सही फोटो लेने के टिप्स:' : 'Tips for accurate diagnosis:'}
+              </div>
+              <div>• {locale === 'hi' ? 'केवल असली फसल के पत्ते की तस्वीर लें' : 'Photograph only a real crop leaf'}</div>
+              <div>• {locale === 'hi' ? 'पत्ते को कैमरे के बीच में रखें और फोकस करें' : 'Center the infected leaf in the frame'}</div>
+              <div>• {locale === 'hi' ? 'कागज़, फॉर्म, कपड़े या फर्नीचर स्कैन न करें' : 'Do not scan forms, paper, or clothing'}</div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                type="button"
+                className="btn"
+                style={{
+                  background: 'linear-gradient(135deg, #e8c868, #d4a017)',
+                  color: '#122c1d',
+                  border: 0,
+                  fontWeight: 800,
+                  padding: '12px 18px',
+                  borderRadius: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setShowRecaptureModal(false)
+                  setFile(null)
+                  setPreview('')
+                  setError('')
+                  openCamera()
+                }}
+              >
+                <Camera size={18} />
+                <span>{locale === 'hi' ? 'कैमरा से पुनः फोटो खींचें' : 'Re-capture with Live Camera'}</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn"
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  padding: '10px 18px',
+                  borderRadius: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setShowRecaptureModal(false)
+                  setFile(null)
+                  setPreview('')
+                  setError('')
+                  galleryRef.current?.click()
+                }}
+              >
+                <Upload size={16} />
+                <span>{locale === 'hi' ? 'गैलरी से नई फोटो चुनें' : 'Upload New Photo from Gallery'}</span>
+              </button>
+
+              <button
+                type="button"
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  color: 'rgba(255,255,255,0.6)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                  marginTop: 2,
+                }}
+                onClick={() => setShowRecaptureModal(false)}
+              >
+                {locale === 'hi' ? 'रद्द करें (Cancel)' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

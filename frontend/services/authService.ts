@@ -39,7 +39,7 @@ export const authService = {
       : { name: DEMO_FARMER.name, role: 'farmer', phone: identifier || DEMO_FARMER.mobile }
   },
 
-  async register(name: string, identifier: string, password = 'password123'): Promise<SessionUser> {
+  async register(name: string, identifier: string, password = 'password123', farmName?: string): Promise<SessionUser> {
     const isEmail = identifier.includes('@')
     const email = isEmail ? identifier.trim() : `${identifier.replace(/\D/g, '')}@agribharat.com`
     const safePassword = (password && password.trim().length >= 4) ? password.trim() : 'kisan123'
@@ -58,6 +58,7 @@ export const authService = {
           name: res.user.name || safeName,
           role,
           phone: identifier,
+          ...(farmName ? { farmName } : {}),
         }
       }
     } catch (err) {
@@ -75,6 +76,7 @@ export const authService = {
             name: loginRes.user.name || safeName,
             role,
             phone: identifier,
+            ...(farmName ? { farmName } : {}),
           }
         }
       } catch {
@@ -84,7 +86,7 @@ export const authService = {
     }
 
     await wait(250)
-    return { name: safeName, role: 'farmer', phone: identifier }
+    return { name: safeName, role: 'farmer', phone: identifier, ...(farmName ? { farmName } : {}) }
   },
 
   async demoFarmer(): Promise<SessionUser> {
