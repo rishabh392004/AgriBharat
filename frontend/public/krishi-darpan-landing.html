@@ -55,45 +55,28 @@
       overflow-x: hidden;
     }
 
-    .poster-dashed-gold {
-      border: 2px dashed var(--color-gold);
-    }
-    .poster-dashed-pink {
-      border: 2px dashed var(--color-pink);
-    }
+    .poster-dashed-gold { border: 2px dashed var(--color-gold); }
+    .poster-dashed-pink { border: 2px dashed var(--color-pink); }
 
     @keyframes rotateMandala {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-
     @keyframes scanLineAnim {
       0% { top: 0%; opacity: 0.8; }
       50% { top: 92%; opacity: 1; }
       100% { top: 0%; opacity: 0.8; }
     }
 
-    .mandala-spin {
-      animation: rotateMandala 60s linear infinite;
-    }
-
+    .mandala-spin { animation: rotateMandala 60s linear infinite; }
     .scan-laser {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 4px;
+      position: absolute; left: 0; right: 0; height: 4px;
       background: linear-gradient(90deg, transparent, #FF2E88, #F5C518, #FF2E88, transparent);
       box-shadow: 0 0 15px #FF2E88, 0 0 25px #F5C518;
-      animation: scanLineAnim 2s ease-in-out infinite;
-      z-index: 10;
+      animation: scanLineAnim 2s ease-in-out infinite; z-index: 10;
     }
-
-    .hover-lift {
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-    }
-    .hover-lift:hover {
-      transform: translateY(-3px);
-    }
+    .hover-lift { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-3px); }
   </style>
 </head>
 <body>
@@ -108,10 +91,9 @@
         scientific: 'Puccinia striiformis',
         severity: '34% High Severity',
         confidence: '98.8%',
-        symptoms: 'Yellow pustules arranged in linear stripes on leaf blades.',
         organicCure: 'Neem Oil emulsion (5ml/L) + Trichoderma viride bio-fungicide',
         chemicalCure: 'Propiconazole 25% EC @ 1ml/L water',
-        precaution: 'Avoid excessive nitrogenous fertilizers. Maintain adequate field drainage.',
+        passportId: 'KD-2026-PB-84920',
         audioTextHi: 'फसल: गेहूं। बीमारी: पीला रतुआ। जैविक उपचार: नीम का तेल और ट्राइकोडर्मा विरिडी का छिड़काव करें।',
         image: 'leaf_sample.jpg',
       },
@@ -122,61 +104,35 @@
         scientific: 'Magnaporthe oryzae',
         severity: '18% Moderate',
         confidence: '97.4%',
-        symptoms: 'Spindle-shaped lesions with grey centers and dark reddish-brown borders.',
         organicCure: 'Pseudomonas fluorescens 10g/L spray at 10-day intervals',
         chemicalCure: 'Tricyclazole 75% WP @ 0.6g/L water',
-        precaution: 'Use certified resistant seed varieties. Avoid late evening irrigation.',
+        passportId: 'KD-2026-HR-11029',
         audioTextHi: 'फसल: धान। बीमारी: धान का झुलसा रोग। जैविक उपचार: स्यूडोमोनास फ्लोरेसेंस का छिड़काव करें।',
         image: 'leaf_sample.jpg',
       }
     ];
 
-    const KVK_STATIONS = [
-      {
-        id: 'kvk-ludhiana',
-        name: 'KVK Ludhiana (PAU Campus)',
-        district: 'Ludhiana, Punjab',
-        distance: '4.2 km',
-        phone: '+91 98140-12345',
-        officer: 'Dr. Gurpreet Singh (Senior Agronomist)',
-        bioStock: 'Trichoderma viride, Neem Oil 10,000 PPM',
-        status: 'Active · Stock Available',
-      },
-      {
-        id: 'kvk-karnal',
-        name: 'KVK Karnal (ICAR-CSSRI)',
-        district: 'Karnal, Haryana',
-        distance: '12.8 km',
-        phone: '+91 98120-67890',
-        officer: 'Dr. Ramesh Kumar (Plant Pathologist)',
-        bioStock: 'Pseudomonas fluorescens, Copper Sulfate',
-        status: 'Active · Officer On Duty',
-      }
+    const MANDI_PRICES = [
+      { store: 'KVK Ludhiana Bio-Store', neemPrice: 290, trichodermaPrice: 165, location: 'Ludhiana PAU', status: '⭐ Best Govt Price' },
+      { store: 'IFFCO Farmers Kendra', neemPrice: 320, trichodermaPrice: 180, location: 'GT Road Center', status: 'In Stock ✅' },
+      { store: 'National Fertilizers Ltd', neemPrice: 310, trichodermaPrice: 175, location: 'Model Town', status: 'In Stock ✅' },
+    ];
+
+    const SPRAY_SCHEDULE = [
+      { day: 'Today (Sun)', temp: '28°C', rain: '10%', wind: '6 km/h', status: '🟢 EXCELLENT SPRAY WINDOW (8 AM - 11 AM)' },
+      { day: 'Tomorrow (Mon)', temp: '24°C', rain: '82%', wind: '18 km/h', status: '🔴 DO NOT SPRAY (High Rain Washout Risk)' },
+      { day: 'Tue', temp: '26°C', rain: '20%', wind: '12 km/h', status: '🟡 MODERATE SPRAY WINDOW' },
     ];
 
     function KrishiDarpanApp() {
-      const [activeStep, setActiveStep] = React.useState(1);
       const [selectedDisease, setSelectedDisease] = React.useState(DEMO_DISEASES[0]);
-      const [isScanning, setIsScanning] = React.useState(false);
-      const [scanCompleted, setScanCompleted] = React.useState(true);
-      const [isPlayingAudio, setIsPlayingAudio] = React.useState(false);
-      const [kvkModalOpen, setKvkModalOpen] = React.useState(false);
-
-      const handleSpeakAudio = () => {
-        if ('speechSynthesis' in window) {
-          if (isPlayingAudio) {
-            window.speechSynthesis.cancel();
-            setIsPlayingAudio(false);
-            return;
-          }
-          const utterance = new SpeechSynthesisUtterance(selectedDisease.audioTextHi);
-          utterance.lang = 'hi-IN';
-          utterance.onstart = () => setIsPlayingAudio(true);
-          utterance.onend = () => setIsPlayingAudio(false);
-          utterance.onerror = () => setIsPlayingAudio(false);
-          window.speechSynthesis.speak(utterance);
-        }
-      };
+      const [farmAcres, setFarmAcres] = React.useState(2.5);
+      const [dosageModalOpen, setDosageModalOpen] = React.useState(false);
+      const [insuranceModalOpen, setInsuranceModalOpen] = React.useState(false);
+      const [weatherModalOpen, setWeatherModalOpen] = React.useState(false);
+      const [mandiModalOpen, setMandiModalOpen] = React.useState(false);
+      const [passportModalOpen, setPassportModalOpen] = React.useState(false);
+      const [insuranceSubmitted, setInsuranceSubmitted] = React.useState(false);
 
       const handleSendWhatsAppWeb = () => {
         const text = encodeURIComponent(
@@ -187,37 +143,32 @@
 
       return (
         <div className="min-h-screen flex flex-col bg-krishi-bg text-krishi-cream">
+          {/* Ticker */}
+          <div className="bg-red-900 text-white px-4 py-1.5 text-xs font-bold flex justify-between items-center border-b border-krishi-pink">
+            <span>🔴 LIVE OUTBREAK ALERT: High Rust Spore Risk in Ludhiana & Karnal Agri Belt (Humidity 92%)</span>
+            <div className="flex gap-2">
+              <button onClick={() => setWeatherModalOpen(true)} className="bg-krishi-gold text-black px-2 py-0.5 rounded text-[11px] font-black">🌤️ WEATHER</button>
+              <button onClick={() => setMandiModalOpen(true)} className="bg-krishi-pink text-white px-2 py-0.5 rounded text-[11px] font-black">🛒 STORE PRICES</button>
+            </div>
+          </div>
+
           {/* Header */}
           <header className="bg-krishi-dark border-b-2 border-krishi-gold/40 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
             <div className="flex items-center gap-3">
-              <span className="bg-krishi-pink text-white font-black text-sm px-3 py-1 rounded shadow-[2px_2px_0px_#F5C518]">
-                कृषि दर्पण
-              </span>
-              <span className="text-krishi-gold font-black text-xl tracking-wider uppercase">
-                KRISHI DARPAN
-              </span>
+              <span className="bg-krishi-pink text-white font-black text-sm px-3 py-1 rounded shadow-[2px_2px_0px_#F5C518]">कृषि दर्पण</span>
+              <span className="text-krishi-gold font-black text-xl tracking-wider uppercase">KRISHI DARPAN</span>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setKvkModalOpen(true)}
-                className="hover-lift bg-krishi-dark border border-dashed border-krishi-gold text-krishi-gold font-bold text-xs px-3 py-1.5 rounded"
-              >
-                📍 KVK LOCATIONS
-              </button>
-              <a href="/farmer/scan" className="hover-lift bg-krishi-pink text-white font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#F5C518]">
-                SCAN NOW 📷
-              </a>
-              <a href="/login" className="hover-lift border border-dashed border-krishi-gold text-krishi-gold text-xs px-3 py-1.5 rounded font-bold">
-                LOG IN
-              </a>
-              <a href="/signup" className="hover-lift bg-krishi-gold text-krishi-dark font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#FF2E88]">
-                SIGN UP
-              </a>
+              <button onClick={() => setDosageModalOpen(true)} className="hover-lift bg-krishi-gold/15 text-krishi-gold border border-krishi-gold text-xs font-bold px-3 py-1.5 rounded">🧮 DOSAGE CALCULATOR</button>
+              <button onClick={() => setInsuranceModalOpen(true)} className="hover-lift bg-krishi-pink/15 text-krishi-pink border border-krishi-pink text-xs font-bold px-3 py-1.5 rounded">🛡️ PMFBY INSURANCE</button>
+              <a href="/farmer/scan" className="hover-lift bg-krishi-pink text-white font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#F5C518]">SCAN NOW 📷</a>
+              <a href="/login" className="hover-lift border border-dashed border-krishi-gold text-krishi-gold text-xs px-3 py-1.5 rounded font-bold">LOG IN</a>
+              <a href="/signup" className="hover-lift bg-krishi-gold text-krishi-dark font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#FF2E88]">SIGN UP</a>
             </div>
           </header>
 
-          {/* Main Layout */}
+          {/* Main Hero Grid */}
           <main className="grid grid-cols-1 lg:grid-cols-2 flex-1 relative">
             <section className="p-8 lg:p-12 flex flex-col justify-between relative border-r border-krishi-gold/20">
               <div>
@@ -230,78 +181,142 @@
                 </p>
 
                 <div className="flex flex-wrap gap-3 mb-8">
-                  <a href="/farmer/scan" className="hover-lift bg-krishi-pink text-white font-black text-sm px-6 py-3.5 rounded-lg shadow-[4px_4px_0px_#F5C518]">
-                    SCAN LEAF NOW 📷
-                  </a>
-                  <button onClick={() => setKvkModalOpen(true)} className="hover-lift bg-krishi-dark text-krishi-gold border-2 border-dashed border-krishi-gold font-bold text-sm px-5 py-3.5 rounded-lg">
-                    KVK MAP STATIONS 📍
-                  </button>
+                  <button onClick={() => setDosageModalOpen(true)} className="hover-lift bg-krishi-pink text-white font-black text-sm px-6 py-3.5 rounded-lg shadow-[4px_4px_0px_#F5C518]">🧮 DOSAGE CALCULATOR</button>
+                  <button onClick={() => setInsuranceModalOpen(true)} className="hover-lift bg-krishi-gold text-krishi-dark font-black text-sm px-6 py-3.5 rounded-lg shadow-[4px_4px_0px_#FF2E88]">🛡️ PMFBY INSURANCE</button>
+                  <button onClick={() => setWeatherModalOpen(true)} className="hover-lift bg-krishi-dark text-krishi-gold border-2 border-dashed border-krishi-gold font-bold text-sm px-5 py-3.5 rounded-lg">🌤️ SPRAY WEATHER</button>
                 </div>
               </div>
             </section>
 
-            {/* Right Panel */}
+            {/* Right Scanner */}
             <section className="bg-krishi-dark p-6 sm:p-10 flex flex-col gap-6">
               <div className="bg-krishi-bg border-2 border-krishi-gold rounded-lg p-5 shadow-[6px_6px_0px_#F5C518]">
-                {scanCompleted && (
-                  <div className="bg-krishi-dark border border-krishi-gold p-4 rounded flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-krishi-pink text-[10px] font-bold block">DIAGNOSIS RESULT</span>
-                        <h3 className="text-krishi-gold font-black text-lg m-0">{selectedDisease.disease}</h3>
-                      </div>
-                      <span className="bg-krishi-gold/20 text-krishi-gold border border-krishi-gold text-xs font-bold px-2 py-0.5 rounded">
-                        CONFIDENCE: {selectedDisease.confidence}
-                      </span>
+                <div className="bg-krishi-dark border border-krishi-gold p-4 rounded flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="text-krishi-pink text-[10px] font-bold block">DIAGNOSIS RESULT</span>
+                      <h3 className="text-krishi-gold font-black text-lg m-0">{selectedDisease.disease}</h3>
                     </div>
-
-                    {/* Audio Assistant */}
-                    <button
-                      onClick={handleSpeakAudio}
-                      className="bg-krishi-gold/20 text-krishi-gold border border-krishi-gold text-xs font-bold py-2 rounded flex items-center justify-center gap-2"
-                    >
-                      <span>{isPlayingAudio ? '⏹️' : '🔊'}</span>
-                      {isPlayingAudio ? 'STOPPING AUDIO...' : 'LISTEN AUDIO ADVISORY (हिंदी Voice)'}
-                    </button>
-
-                    <div className="text-xs">
-                      <strong className="text-krishi-gold block">🌱 ORGANIC REMEDY:</strong>
-                      <span>{selectedDisease.organicCure}</span>
-                    </div>
-
-                    {/* WhatsApp */}
-                    <button
-                      onClick={handleSendWhatsAppWeb}
-                      className="bg-emerald-500 text-black font-black text-xs py-2 rounded flex items-center justify-center gap-2"
-                    >
-                      💬 SEND REPORT TO WHATSAPP
-                    </button>
+                    <span className="bg-krishi-gold/20 text-krishi-gold border border-krishi-gold text-xs font-bold px-2 py-0.5 rounded">CONFIDENCE: {selectedDisease.confidence}</span>
                   </div>
-                )}
+
+                  <div className="text-xs">
+                    <strong className="text-krishi-gold block">🌱 ORGANIC REMEDY:</strong>
+                    <span>{selectedDisease.organicCure}</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button onClick={() => setPassportModalOpen(true)} className="flex-1 bg-krishi-gold text-krishi-dark font-black text-xs py-2 rounded">📜 CROP PASSPORT</button>
+                    <button onClick={handleSendWhatsAppWeb} className="bg-emerald-500 text-black font-black text-xs px-3 py-2 rounded">💬 WHATSAPP</button>
+                  </div>
+                </div>
               </div>
             </section>
           </main>
 
-          {/* KVK Modal */}
-          {kvkModalOpen && (
-            <div className="fixed inset-0 bg-krishi-dark/90 backdrop-blur-md z-50 grid place-items-center p-6">
-              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-xl w-full relative">
-                <button onClick={() => setKvkModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
-                <h2 className="text-krishi-gold font-black text-xl mb-4">📍 KRISHI VIGYAN KENDRA (KVK) LOCATIONS</h2>
-                <div className="space-y-3">
-                  {KVK_STATIONS.map((st) => (
-                    <div key={st.id} className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs flex justify-between">
-                      <div>
-                        <strong className="text-krishi-gold block text-sm">{st.name}</strong>
-                        <span>Officer: {st.officer}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-krishi-pink font-bold block">{st.distance}</span>
-                        <a href={`tel:${st.phone}`} className="text-krishi-gold underline">Call Officer</a>
-                      </div>
+          {/* Dosage Calculator Modal */}
+          {dosageModalOpen && (
+            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
+              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-lg w-full relative shadow-[8px_8px_0px_#FF2E88]">
+                <button onClick={() => setDosageModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
+                <h2 className="text-krishi-gold font-black text-xl mb-2">🧮 AI BIO-PESTICIDE DOSAGE CALCULATOR</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-krishi-gold text-xs font-bold block mb-1">FARM AREA (ACRES):</label>
+                    <input type="number" step="0.5" value={farmAcres} onChange={(e) => setFarmAcres(parseFloat(e.target.value) || 1)} className="bg-krishi-dark text-krishi-gold border-1.5 border-krishi-gold p-2 rounded text-lg font-bold w-full" />
+                  </div>
+                  <div className="bg-krishi-dark border border-dashed border-krishi-gold p-4 rounded text-xs space-y-2">
+                    <div className="text-krishi-pink font-extrabold text-sm">RECOMMENDED MIX FOR {farmAcres} ACRES:</div>
+                    <div>💧 Water: <strong className="text-krishi-gold">{farmAcres * 200} Liters</strong></div>
+                    <div>🌿 Neem Oil (10,000 PPM): <strong className="text-krishi-gold">{(farmAcres * 1.0).toFixed(1)} Liters</strong></div>
+                    <div>🦠 Trichoderma Viride: <strong className="text-krishi-gold">{(farmAcres * 1.0).toFixed(1)} kg</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Insurance Claim Modal */}
+          {insuranceModalOpen && (
+            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
+              <div className="bg-krishi-bg border-4 border-krishi-pink rounded-xl p-6 max-w-lg w-full relative shadow-[8px_8px_0px_#F5C518]">
+                <button onClick={() => setInsuranceModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
+                <h2 className="text-krishi-pink font-black text-xl mb-2">🛡️ PMFBY CROP INSURANCE AUTO-CLAIM</h2>
+                {insuranceSubmitted ? (
+                  <div className="bg-emerald-950 border border-emerald-400 text-emerald-300 p-4 rounded text-center font-bold">
+                    🎉 CLAIM SUBMITTED! Ref: PMFBY-2026-CLAIM-99201
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs space-y-1">
+                      <div><strong>Passport ID:</strong> {selectedDisease.passportId}</div>
+                      <div><strong>Damage Grade:</strong> <span className="text-krishi-pink font-bold">{selectedDisease.severity}</span></div>
+                    </div>
+                    <button onClick={() => setInsuranceSubmitted(true)} className="w-full bg-krishi-pink text-white font-black py-3 rounded uppercase">SUBMIT TO PMFBY PORTAL 🚀</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Weather Schedule Modal */}
+          {weatherModalOpen && (
+            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
+              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-xl w-full relative shadow-[8px_8px_0px_#FF2E88]">
+                <button onClick={() => setWeatherModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
+                <h2 className="text-krishi-gold font-black text-xl mb-3">🌤️ 7-DAY SPRAY WEATHER SCHEDULE</h2>
+                <div className="space-y-2">
+                  {SPRAY_SCHEDULE.map((sc, i) => (
+                    <div key={i} className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs flex justify-between items-center">
+                      <div><strong className="text-krishi-gold">{sc.day}</strong> — {sc.temp} · Rain: {sc.rain}</div>
+                      <span className="text-[11px] font-bold text-krishi-gold">{sc.status}</span>
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mandi Price Comparison Modal */}
+          {mandiModalOpen && (
+            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
+              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-xl w-full relative shadow-[8px_8px_0px_#FF2E88]">
+                <button onClick={() => setMandiModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
+                <h2 className="text-krishi-gold font-black text-xl mb-3">🛒 KISAN MANDI BIO-PESTICIDE STORE PRICES</h2>
+                <div className="space-y-2">
+                  {MANDI_PRICES.map((m, i) => (
+                    <div key={i} className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs flex justify-between items-center">
+                      <div>
+                        <strong className="text-krishi-gold text-sm block">{m.store}</strong>
+                        <span>Neem Oil 1L: <strong>₹{m.neemPrice}</strong> | Trichoderma 1kg: <strong>₹{m.trichodermaPrice}</strong></span>
+                      </div>
+                      <span className="text-krishi-pink font-bold text-[11px]">{m.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Passport Modal */}
+          {passportModalOpen && (
+            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
+              <div className="bg-[#FFF6DC] text-[#051F17] border-4 border-krishi-gold rounded-xl p-6 max-w-lg w-full relative shadow-[10px_10px_0px_#FF2E88]">
+                <button onClick={() => setPassportModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
+                <div className="border-b-2 border-[#051F17] pb-3 mb-4 text-center">
+                  <div className="text-krishi-pink font-black text-xs uppercase">ICAR COMPLIANT</div>
+                  <h2 className="text-xl font-black">OFFICIAL CROP HEALTH PASSPORT</h2>
+                  <div className="text-xs font-bold text-emerald-800">PASSPORT ID: {selectedDisease.passportId}</div>
+                </div>
+                <div className="space-y-2 text-xs mb-4">
+                  <div><strong>Crop:</strong> {selectedDisease.crop}</div>
+                  <div><strong>Pathogen:</strong> {selectedDisease.disease} ({selectedDisease.scientific})</div>
+                  <div><strong>Severity:</strong> <span className="text-krishi-pink font-bold">{selectedDisease.severity}</span></div>
+                  <div><strong>Remedy:</strong> {selectedDisease.organicCure}</div>
+                </div>
+                <a href={`/verify/passport/${selectedDisease.passportId}`} className="block w-full bg-krishi-dark text-krishi-gold text-center py-2.5 rounded font-black text-xs">
+                  VERIFY ON GOVERNMENT PORTAL 🛡️
+                </a>
               </div>
             </div>
           )}
@@ -309,8 +324,7 @@
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<KrishiDarpanApp />);
+    ReactDOM.createRoot(document.getElementById('root')).render(<KrishiDarpanApp />);
   </script>
 </body>
 </html>
