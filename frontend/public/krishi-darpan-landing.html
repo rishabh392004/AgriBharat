@@ -1,330 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>कृषि दर्पण | Krishi Darpan AI - Detect Early. Protect Your Crop.</title>
-  <meta name="description" content="AI-powered plant pathology platform for Indian farmers. Scan crop leaf photos for instant disease diagnosis, bio-pesticide recommendations, and precautions." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Krishi Darphan — Scan a leaf. Save the harvest.</title>
+<meta name="description" content="Free AI crop disease detection for farmers. Photograph a leaf, get the diagnosis and treatment tips in seconds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Noto+Sans+Devanagari:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --green-deep:#2E5339; --green-mid:#3F7D45; --green-soft:#A9D18D; --green-pale:#DCEEDB;
+  --soil:#8B5E3C; --gold:#E8B84B; --gold-deep:#C98F1E;
+  --cream:#FAF7F0; --card:#fff; --ink:#213026; --ink-soft:#5C6B60; --border:#E7E1D4;
+  --sky1:#FFF1D6; --sky2:#F9D890; --sky3:#DCEEDB; --hill-back:#7FB069; --hill-mid:#3F7D45; --hill-front:#2E5339;
+  --hero-ink:#1F3A27; --hero-ink-soft:#33463a; --hero-accent:#8B5E3C; --hero-btn-bg:#2E5339; --hero-btn-fg:#fff; --hero-line:#2E5339; --hero-line-hover-fg:#fff;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --cream:#141B16; --card:#1E2A21; --ink:#F1EFE7; --ink-soft:#B9C2BB; --border:#2F3E31;
+    --sky1:#3A2F3F; --sky2:#B8753C; --sky3:#2E4A35; --hill-back:#3F6B45; --hill-mid:#2E5339; --hill-front:#1B3324;
+    --hero-ink:#F8F3E4; --hero-ink-soft:#E9E2CF; --hero-accent:#F2C862; --hero-btn-bg:#E8B84B; --hero-btn-fg:#213026; --hero-line:#F8F3E4; --hero-line-hover-fg:#213026;
+  }
+}
+:root[data-theme="dark"]{
+  --cream:#141B16; --card:#1E2A21; --ink:#F1EFE7; --ink-soft:#B9C2BB; --border:#2F3E31;
+  --sky1:#3A2F3F; --sky2:#B8753C; --sky3:#2E4A35; --hill-back:#3F6B45; --hill-mid:#2E5339; --hill-front:#1B3324;
+  --hero-ink:#F8F3E4; --hero-ink-soft:#E9E2CF; --hero-accent:#F2C862; --hero-btn-bg:#E8B84B; --hero-btn-fg:#213026; --hero-line:#F8F3E4; --hero-line-hover-fg:#213026;
+}
+*{box-sizing:inherit;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 72px)}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--cream);color:var(--ink);line-height:1.6;overflow-x:hidden}
+h1,h2,h3,.brand,.btn{font-family:'Outfit',system-ui,sans-serif}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:6px}
+.container{width:min(1080px,100% - 40px);margin-inline:auto}
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;padding:12px 24px;border-radius:999px;border:2px solid transparent;text-decoration:none;cursor:pointer;transition:transform .15s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn-solid{background:var(--green-deep);color:#fff}
+.btn-solid:hover{background:var(--green-mid)}
+.btn-line{border-color:var(--green-deep);color:var(--green-deep);background:rgba(255,255,255,.35)}
+.btn-line:hover{background:var(--green-deep);color:#fff}
+.btn-gold{background:var(--gold);color:#213026}
+.btn-gold:hover{background:#f2c862}
 
-  <!-- React 18 CDN + Babel -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+/* hero buttons follow the sky */
+.hero .btn-solid{background:var(--hero-btn-bg);color:var(--hero-btn-fg)}
+.hero .btn-solid:hover{background:var(--hero-btn-bg);filter:brightness(1.12)}
+.hero .btn-line{border-color:var(--hero-line);color:var(--hero-line);background:transparent}
+.hero .btn-line:hover{background:var(--hero-line);color:var(--hero-line-hover-fg)}
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'krishi-bg': '#0B3D2E',
-            'krishi-dark': '#051F17',
-            'krishi-gold': '#F5C518',
-            'krishi-pink': '#FF2E88',
-            'krishi-cream': '#FFF6DC',
-          },
-          fontFamily: {
-            sans: ['Outfit', 'Noto Sans Devanagari', 'system-ui', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
+/* nav */
+.nav{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:10;padding:18px 0}
+.nav .container{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:22px;text-decoration:none;color:var(--hero-ink)}
+.nav-links{display:flex;align-items:center;gap:10px}
+.nav-links a.plain{font-weight:500;font-size:14px;text-decoration:none;padding:8px 12px;color:var(--hero-ink)}
+.nav .btn{padding:9px 20px;font-size:14px}
 
-  <style>
-    :root {
-      --color-bg: #0B3D2E;
-      --color-dark: #051F17;
-      --color-gold: #F5C518;
-      --color-pink: #FF2E88;
-      --color-cream: #FFF6DC;
-    }
+/* hero */
+.hero{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;
+  background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 55%,var(--sky3) 100%);color:var(--hero-ink)}
+.sun{position:absolute;left:50%;top:36%;width:min(46vw,360px);aspect-ratio:1;margin-left:calc(min(46vw,360px) / -2);border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,#FFE9A8 0%,var(--gold) 62%,#E39F2E 100%);box-shadow:0 0 120px 50px rgba(232,184,74,.45);
+  animation:rise 2.4s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{transform:translateY(55%);opacity:.2}to{transform:none;opacity:1}}
+.hills{position:absolute;left:0;right:0;bottom:0;width:100%;height:46%;display:block}
+.hero-copy{position:relative;z-index:3;text-align:center;padding:0 20px;margin-bottom:clamp(120px,22vh,220px)}
+.hero-copy h1{font-size:clamp(46px,11vw,138px);font-weight:800;line-height:.95;letter-spacing:-.03em;color:var(--hero-ink)}
+.hindi{font-family:'Noto Sans Devanagari','Outfit',sans-serif;font-weight:800;font-size:clamp(26px,5.4vw,60px);line-height:1.2;margin-top:8px;color:var(--hero-accent)}
+.hero-copy .tag{margin-top:14px;font-size:clamp(15px,1.8vw,19px);font-weight:500;color:var(--hero-ink-soft)}
+.hero-cta{margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero-foot{position:relative;z-index:4;background:var(--hill-front);color:#EAF3E6;font-size:14px;font-weight:500}
+.hero-foot .container{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 0}
 
-    body {
-      background-color: var(--color-bg);
-      color: var(--color-cream);
-      font-family: 'Outfit', 'Noto Sans Devanagari', sans-serif;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-    }
+/* stats */
+.stats{padding:clamp(56px,9vw,96px) 0 24px}
+.stats h2{font-size:clamp(20px,2.4vw,26px);font-weight:600;color:var(--ink-soft);margin-bottom:28px;text-align:center}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{text-align:center;padding:24px 8px;border-bottom:3px solid var(--gold)}
+.stat b{display:block;font-family:'Outfit',sans-serif;font-size:clamp(38px,6vw,64px);font-weight:800;line-height:1;color:var(--green-deep)}
+:root[data-theme="dark"] .stat b{color:var(--green-soft)}
+.stat span{display:block;margin-top:8px;font-size:14px;color:var(--ink-soft)}
 
-    .poster-dashed-gold { border: 2px dashed var(--color-gold); }
-    .poster-dashed-pink { border: 2px dashed var(--color-pink); }
+/* steps */
+.steps{padding:clamp(56px,9vw,110px) 0}
+.sec-head{max-width:640px;margin-bottom:36px}
+.sec-head h2{font-size:clamp(30px,5vw,52px);font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.sec-head p{margin-top:12px;color:var(--ink-soft);font-size:17px}
+.step-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.step{background:var(--card);border:1.5px solid var(--border);border-radius:22px;padding:24px 20px 26px;display:flex;flex-direction:column;gap:10px}
+.step:nth-child(2){margin-top:28px}.step:nth-child(3){margin-top:56px}.step:nth-child(4){margin-top:84px}
+.step .n{font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:var(--soil);background:var(--green-pale);align-self:flex-start;padding:4px 12px;border-radius:999px;color:#5b3c22}
+.step h3{font-size:22px;font-weight:700;line-height:1.15}
+.step p{font-size:15px;color:var(--ink-soft)}
+.step svg{width:44px;height:44px;color:var(--green-mid)}
 
-    @keyframes rotateMandala {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes scanLineAnim {
-      0% { top: 0%; opacity: 0.8; }
-      50% { top: 92%; opacity: 1; }
-      100% { top: 0%; opacity: 0.8; }
-    }
+/* faq */
+.faq{padding:clamp(40px,7vw,80px) 0}
+.faq-list{max-width:760px}
+details{border-bottom:1.5px solid var(--border)}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-family:'Outfit',sans-serif;font-weight:600;font-size:clamp(17px,2vw,20px)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;background:var(--green-pale);color:#2E5339;display:grid;place-items:center;font-size:22px;line-height:1;transition:transform .25s,background .2s}
+details[open] summary::after{transform:rotate(45deg);background:var(--gold)}
+details p{padding:0 50px 22px 0;color:var(--ink-soft)}
 
-    .mandala-spin { animation: rotateMandala 60s linear infinite; }
-    .scan-laser {
-      position: absolute; left: 0; right: 0; height: 4px;
-      background: linear-gradient(90deg, transparent, #FF2E88, #F5C518, #FF2E88, transparent);
-      box-shadow: 0 0 15px #FF2E88, 0 0 25px #F5C518;
-      animation: scanLineAnim 2s ease-in-out infinite; z-index: 10;
-    }
-    .hover-lift { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease; }
-    .hover-lift:hover { transform: translateY(-3px); }
-  </style>
+/* manifesto */
+.manifesto{position:relative;background:var(--green-deep);color:#F1EFE7;padding:clamp(64px,10vw,120px) 0 clamp(150px,20vw,240px);overflow:hidden}
+.manifesto h2{font-size:clamp(40px,8vw,96px);font-weight:800;line-height:.98;letter-spacing:-.03em}
+.manifesto p{max-width:56ch;margin-top:22px;font-size:clamp(16px,1.6vw,19px);color:#CFE0CE}
+.manifesto .btn{margin-top:28px}
+.trees{position:absolute;left:0;right:0;bottom:0;width:100%;height:clamp(120px,18vw,210px);display:block}
+
+/* footer */
+footer{background:#16281D;color:#B7C9B8;font-size:14px;padding:22px 0}
+footer .container{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px 24px}
+footer a{text-decoration:none;margin-right:16px}footer a:hover{color:#fff}
+
+/* animated text */
+.hero-copy h1 .word{display:inline-block;overflow:hidden;padding:.06em .02em .14em;margin:-.06em -.02em -.14em;vertical-align:top}
+.ch{display:inline-block;transform-origin:0 100%;animation:chIn .95s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*48ms + 350ms);transition:color .25s,transform .25s}
+.ch:hover{color:var(--gold-deep);transform:translateY(-5%)}
+@keyframes chIn{from{translate:0 115%;rotate:9deg;opacity:0}to{translate:0 0;rotate:0deg;opacity:1}}
+.js .hindi{animation:hindiIn 1.6s cubic-bezier(.2,.7,.2,1) 1.25s both}
+@keyframes hindiIn{from{opacity:0;filter:blur(14px);letter-spacing:.35em}to{opacity:1;filter:blur(0);letter-spacing:0}}
+.hero-copy .tag{min-height:1.7em}
+.caret{display:inline-block;width:2px;height:1.05em;margin-left:3px;vertical-align:-.15em;background:var(--hero-accent);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.marquee{background:var(--gold);color:#213026;overflow:hidden;border-block:2px solid #213026;transform:rotate(-1.2deg);margin:-14px -10px 0;position:relative;z-index:5}
+.marquee .track{display:flex;width:max-content;animation:slide 32s linear infinite}
+.marquee:hover .track{animation-play-state:paused}
+.marquee .grp{display:flex;flex:none}
+.marquee span{font-family:'Outfit',sans-serif;font-weight:800;font-size:clamp(26px,4.4vw,52px);line-height:1;padding:14px 0;white-space:nowrap}
+.marquee span::after{content:"✦";margin:0 clamp(18px,3vw,36px);font-size:.6em;vertical-align:.15em;color:var(--green-deep)}
+@keyframes slide{to{transform:translateX(-50%)}}
+.rw{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
+.ri{display:inline-block}
+.js [data-rise] .ri{translate:0 110%;transition:translate .9s cubic-bezier(.2,.8,.2,1) calc(var(--i)*80ms)}
+.js [data-rise].in .ri{translate:0 0}
+.w{opacity:.18;transition:opacity .35s,filter .35s;filter:blur(2px)}
+.w.on{opacity:1;filter:none}
+@media (max-width:860px){
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .step-grid{grid-template-columns:repeat(2,1fr)}
+  .step:nth-child(n){margin-top:0}
+  .nav-links a.plain{display:none}
+}
+@media (max-width:520px){
+  .step-grid{grid-template-columns:1fr}
+  details p{padding-right:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .sun,.ch,.js .hindi,.caret,.marquee .track{animation:none}html{scroll-behavior:auto}
+  .js [data-rise] .ri{translate:none;transition:none}.w{opacity:1;filter:none}
+}
+</style>
 </head>
 <body>
-  <div id="root"></div>
 
-  <script type="text/babel">
-    const DEMO_DISEASES = [
-      {
-        id: 'wheat-yellow-rust',
-        crop: 'Wheat (गेहूं)',
-        disease: 'Yellow Rust (पीला रतुआ)',
-        scientific: 'Puccinia striiformis',
-        severity: '34% High Severity',
-        confidence: '98.8%',
-        organicCure: 'Neem Oil emulsion (5ml/L) + Trichoderma viride bio-fungicide',
-        chemicalCure: 'Propiconazole 25% EC @ 1ml/L water',
-        passportId: 'KD-2026-PB-84920',
-        audioTextHi: 'फसल: गेहूं। बीमारी: पीला रतुआ। जैविक उपचार: नीम का तेल और ट्राइकोडर्मा विरिडी का छिड़काव करें।',
-        image: 'leaf_sample.jpg',
-      },
-      {
-        id: 'rice-blast',
-        crop: 'Paddy / Rice (धान)',
-        disease: 'Paddy Blast (धान का झुलसा रोग)',
-        scientific: 'Magnaporthe oryzae',
-        severity: '18% Moderate',
-        confidence: '97.4%',
-        organicCure: 'Pseudomonas fluorescens 10g/L spray at 10-day intervals',
-        chemicalCure: 'Tricyclazole 75% WP @ 0.6g/L water',
-        passportId: 'KD-2026-HR-11029',
-        audioTextHi: 'फसल: धान। बीमारी: धान का झुलसा रोग। जैविक उपचार: स्यूडोमोनास फ्लोरेसेंस का छिड़काव करें।',
-        image: 'leaf_sample.jpg',
-      }
-    ];
+<header class="hero">
+  <nav class="nav"><div class="container">
+    <a href="/" class="brand">
+      <svg width="32" height="32" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" stroke="#E8B84B" stroke-width="3" fill="#DCEEDB" fill-opacity="0.4"/>
+        <path d="M15 31C15 21 21 15 31 15C31 25 25 31 15 31Z" fill="#3F7D45"/>
+        <path d="M15 31C21 27 25 22 31 15" stroke="#FFF" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M29 27C31.5 26 33 24 33 22C31 22 29.5 24 29 27Z" fill="#F5C518"/>
+      </svg>
+      Krishi Darphan
+    </a>
+    <div class="nav-links">
+      <a class="plain" href="#how">How it works</a>
+      <a class="plain" href="#faq">FAQs</a>
+      <a class="btn btn-line" href="/login">Log in</a>
+      <a class="btn btn-solid" href="/farmer/scan">Scan Leaf</a>
+    </div>
+  </div></nav>
 
-    const MANDI_PRICES = [
-      { store: 'KVK Ludhiana Bio-Store', neemPrice: 290, trichodermaPrice: 165, location: 'Ludhiana PAU', status: '⭐ Best Govt Price' },
-      { store: 'IFFCO Farmers Kendra', neemPrice: 320, trichodermaPrice: 180, location: 'GT Road Center', status: 'In Stock ✅' },
-      { store: 'National Fertilizers Ltd', neemPrice: 310, trichodermaPrice: 175, location: 'Model Town', status: 'In Stock ✅' },
-    ];
+  <div class="sun" aria-hidden="true"></div>
 
-    const SPRAY_SCHEDULE = [
-      { day: 'Today (Sun)', temp: '28°C', rain: '10%', wind: '6 km/h', status: '🟢 EXCELLENT SPRAY WINDOW (8 AM - 11 AM)' },
-      { day: 'Tomorrow (Mon)', temp: '24°C', rain: '82%', wind: '18 km/h', status: '🔴 DO NOT SPRAY (High Rain Washout Risk)' },
-      { day: 'Tue', temp: '26°C', rain: '20%', wind: '12 km/h', status: '🟡 MODERATE SPRAY WINDOW' },
-    ];
+  <div class="hero-copy">
+    <h1>Krishi Darphan</h1>
+    <div class="hindi" lang="hi">कृषि दर्पण</div>
+    <p class="tag"><span id="typed">Scan a leaf. Know the disease. Save the harvest.</span><span class="caret" aria-hidden="true"></span></p>
+    <div class="hero-cta">
+      <a class="btn btn-solid" href="/farmer/scan">Start scanning free</a>
+      <a class="btn btn-line" href="#how">See how it works</a>
+      <a class="btn btn-gold" href="/farmer/chat">Ask AI Doctor</a>
+    </div>
+  </div>
 
-    function KrishiDarpanApp() {
-      const [selectedDisease, setSelectedDisease] = React.useState(DEMO_DISEASES[0]);
-      const [farmAcres, setFarmAcres] = React.useState(2.5);
-      const [dosageModalOpen, setDosageModalOpen] = React.useState(false);
-      const [insuranceModalOpen, setInsuranceModalOpen] = React.useState(false);
-      const [weatherModalOpen, setWeatherModalOpen] = React.useState(false);
-      const [mandiModalOpen, setMandiModalOpen] = React.useState(false);
-      const [passportModalOpen, setPassportModalOpen] = React.useState(false);
-      const [insuranceSubmitted, setInsuranceSubmitted] = React.useState(false);
+  <svg class="hills" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 150C200 70 380 70 560 130S920 200 1140 110 1360 80 1440 110V300H0Z" fill="var(--hill-back)"/>
+    <path d="M0 200C240 130 420 150 640 190S1040 240 1240 170 1400 160 1440 175V300H0Z" fill="var(--hill-mid)"/>
+    <path d="M0 250C260 210 520 230 760 255S1200 270 1440 235V300H0Z" fill="var(--hill-front)"/>
+    <g stroke="#1B3324" stroke-opacity=".35" stroke-width="3" fill="none"><path d="M0 268C300 240 700 280 1440 250"/><path d="M0 285C300 262 700 296 1440 270"/></g>
+  </svg>
 
-      const handleSendWhatsAppWeb = () => {
-        const text = encodeURIComponent(
-          `🌾 KRISHI DARPAN REPORT 🌾\nCrop: ${selectedDisease.crop}\nDisease: ${selectedDisease.disease}\nRemedy: ${selectedDisease.organicCure}`
-        );
-        window.open(`https://wa.me/?text=${text}`, '_blank');
-      };
+  <div class="hero-foot"><div class="container">
+    <span>AI crop care for every farmer</span>
+    <span>100% Free for farmers</span>
+  </div></div>
+</header>
 
-      return (
-        <div className="min-h-screen flex flex-col bg-krishi-bg text-krishi-cream">
-          {/* Ticker */}
-          <div className="bg-red-900 text-white px-4 py-1.5 text-xs font-bold flex justify-between items-center border-b border-krishi-pink">
-            <span>🔴 LIVE OUTBREAK ALERT: High Rust Spore Risk in Ludhiana & Karnal Agri Belt (Humidity 92%)</span>
-            <div className="flex gap-2">
-              <button onClick={() => setWeatherModalOpen(true)} className="bg-krishi-gold text-black px-2 py-0.5 rounded text-[11px] font-black">🌤️ WEATHER</button>
-              <button onClick={() => setMandiModalOpen(true)} className="bg-krishi-pink text-white px-2 py-0.5 rounded text-[11px] font-black">🛒 STORE PRICES</button>
-            </div>
-          </div>
+<div class="marquee" aria-hidden="true"><div class="track"><div class="grp"><span>Leaf blight</span><span>Yellow rust</span><span>Powdery mildew</span><span>Paddy blast</span><span>Mosaic virus</span><span>Leaf spot</span><span>Whitefly</span><span>Stem borer</span></div><div class="grp"><span>Leaf blight</span><span>Yellow rust</span><span>Powdery mildew</span><span>Paddy blast</span><span>Mosaic virus</span><span>Leaf spot</span><span>Whitefly</span><span>Stem borer</span></div></div></div>
 
-          {/* Header */}
-          <header className="bg-krishi-dark border-b-2 border-krishi-gold/40 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
-            <div className="flex items-center gap-3">
-              <span className="bg-krishi-pink text-white font-black text-sm px-3 py-1 rounded shadow-[2px_2px_0px_#F5C518]">कृषि दर्पण</span>
-              <span className="text-krishi-gold font-black text-xl tracking-wider uppercase">KRISHI DARPAN</span>
-            </div>
+<main>
+  <section class="stats">
+    <div class="container">
+      <h2 data-rise>Built for the field, not the lab</h2>
+      <div class="stat-grid">
+        <div class="stat"><b data-count="16" data-suffix="+">0</b><span>Crops supported</span></div>
+        <div class="stat"><b data-count="38" data-suffix="+">0</b><span>Diseases and pests detected</span></div>
+        <div class="stat"><b data-count="3" data-prefix="&lt;" data-suffix="s">0</b><span>From photo to diagnosis</span></div>
+        <div class="stat"><b data-count="0" data-prefix="₹">0</b><span>Cost to farmers</span></div>
+      </div>
+    </div>
+  </section>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => setDosageModalOpen(true)} className="hover-lift bg-krishi-gold/15 text-krishi-gold border border-krishi-gold text-xs font-bold px-3 py-1.5 rounded">🧮 DOSAGE CALCULATOR</button>
-              <button onClick={() => setInsuranceModalOpen(true)} className="hover-lift bg-krishi-pink/15 text-krishi-pink border border-krishi-pink text-xs font-bold px-3 py-1.5 rounded">🛡️ PMFBY INSURANCE</button>
-              <a href="/farmer/scan" className="hover-lift bg-krishi-pink text-white font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#F5C518]">SCAN NOW 📷</a>
-              <a href="/login" className="hover-lift border border-dashed border-krishi-gold text-krishi-gold text-xs px-3 py-1.5 rounded font-bold">LOG IN</a>
-              <a href="/signup" className="hover-lift bg-krishi-gold text-krishi-dark font-black text-xs px-3.5 py-1.5 rounded shadow-[2px_2px_0px_#FF2E88]">SIGN UP</a>
-            </div>
-          </header>
+  <section class="steps" id="how">
+    <div class="container">
+      <div class="sec-head">
+        <h2 data-rise>Four steps from leaf to treatment</h2>
+        <p>No lab visit, no waiting for a specialist. Just your phone and the affected plant.</p>
+      </div>
+      <div class="step-grid">
+        <article class="step">
+          <span class="n">Step 1</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          <h3>Snap the leaf</h3>
+          <p>Take a clear photo of the affected leaf in daylight.</p>
+        </article>
+        <article class="step">
+          <span class="n">Step 2</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3c-4 2-7 5-7 10a7 7 0 0014 0c0-5-3-8-7-10z"/><path d="M12 8v9M12 12l-3-2M12 14l3-2"/></svg>
+          <h3>AI reads it</h3>
+          <p>Our model checks the spots, colour and pattern against known diseases.</p>
+        </article>
+        <article class="step">
+          <span class="n">Step 3</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+          <h3>Get the diagnosis</h3>
+          <p>See the disease name and how confident the result is.</p>
+        </article>
+        <article class="step">
+          <span class="n">Step 4</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 21V11M12 11c0-4 3-6 7-6 0 4-3 6-7 6zM12 15c0-3-2-5-6-5 0 3 2 5 6 5z"/></svg>
+          <h3>Treat and protect</h3>
+          <p>Follow simple treatment tips to save the rest of your crop.</p>
+        </article>
+      </div>
+    </div>
+  </section>
 
-          {/* Main Hero Grid */}
-          <main className="grid grid-cols-1 lg:grid-cols-2 flex-1 relative">
-            <section className="p-8 lg:p-12 flex flex-col justify-between relative border-r border-krishi-gold/20">
-              <div>
-                <h1 className="text-4xl sm:text-6xl font-black text-krishi-gold leading-none uppercase mb-4 tracking-tight drop-shadow-[3px_3px_0px_#051F17]">
-                  DETECT EARLY.<br />PROTECT YOUR CROP.
-                </h1>
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="sec-head"><h2 data-rise>Questions farmers ask</h2></div>
+      <div class="faq-list">
+        <details><summary>Who can use Krishi Darphan?</summary><p>Any farmer, gardener or agri student. Create a free account and you can start scanning right away.</p></details>
+        <details><summary>Is it really free?</summary><p>Yes. Scanning crops and reading treatment tips costs nothing.</p></details>
+        <details><summary>What should I photograph?</summary><p>One affected leaf, filling most of the frame, in good daylight. Avoid shadows and keep the leaf in focus.</p></details>
+        <details><summary>How accurate is the diagnosis?</summary><p>The result shows a likely disease with high confidence. For severe outbreaks, confirm with your local agriculture officer.</p></details>
+        <details><summary>Which crops are supported?</summary><p>16 major Indian crops including Wheat, Rice, Tomato, Potato, Cotton, Sugarcane, Soybean, and Mustard.</p></details>
+      </div>
+    </div>
+  </section>
 
-                <p className="text-lg text-krishi-cream/90 max-w-xl mb-6 font-medium">
-                  Scan any diseased crop leaf with your phone camera. Instant diagnostic report with pathogen identification, bio-pesticide recommendations & precautions in seconds.
-                </p>
+  <section class="manifesto">
+    <div class="container">
+      <h2 data-scrub>Less guessing.<br>More harvest.</h2>
+      <p data-scrub>By the time a disease is obvious, half the field can be gone. Krishi Darphan helps you catch it while it can still be stopped, using nothing more than the phone in your pocket.</p>
+      <a class="btn btn-gold" href="/farmer/scan">Start Scanning Free</a>
+    </div>
+    <svg class="trees" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="#3F7D45"><path d="M60 200V120M60 120c-30-10-40-40-40-60 30 10 45 30 40 60zM60 130c30-10 40-40 40-60-30 10-45 30-40 60z"/>
+      <path d="M0 200V150c40 20 60 10 90 0s60-10 100 10 50 5 90-10 70-10 100 5 60 15 100 0 80-20 120-5 60 20 100 5 70-15 110 0 60 15 100 0 80-20 110 0 70 20 110 0 60-15 90-5 40 15 60 5v50z" fill="#2A6034"/></g>
+      <g fill="#1F4A29"><path d="M330 200v-80l-22 22 22-38-18 8 18-34 18 34-18-8 22 38-22-22zM760 200v-95l-26 26 26-46-22 10 22-40 22 40-22-10 26 46-26-26zM1180 200v-85l-24 24 24-42-20 9 20-36 20 36-20-9 24 42-24-24z"/></g>
+      <path d="M0 200V172c120-14 240 6 360 0s240-20 360-6 240 18 360 4 240-14 360 2v26z" fill="#16281D"/>
+    </svg>
+  </section>
+</main>
 
-                <div className="flex flex-wrap gap-3 mb-8">
-                  <button onClick={() => setDosageModalOpen(true)} className="hover-lift bg-krishi-pink text-white font-black text-sm px-6 py-3.5 rounded-lg shadow-[4px_4px_0px_#F5C518]">🧮 DOSAGE CALCULATOR</button>
-                  <button onClick={() => setInsuranceModalOpen(true)} className="hover-lift bg-krishi-gold text-krishi-dark font-black text-sm px-6 py-3.5 rounded-lg shadow-[4px_4px_0px_#FF2E88]">🛡️ PMFBY INSURANCE</button>
-                  <button onClick={() => setWeatherModalOpen(true)} className="hover-lift bg-krishi-dark text-krishi-gold border-2 border-dashed border-krishi-gold font-bold text-sm px-5 py-3.5 rounded-lg">🌤️ SPRAY WEATHER</button>
-                </div>
-              </div>
-            </section>
+<footer><div class="container">
+  <span>© 2026 Krishi Darphan AI. Free crop care for farmers.</span>
+  <span><a href="/login">Log in</a><a href="/signup">Sign up</a><a href="#how">How it works</a></span>
+</div></footer>
 
-            {/* Right Scanner */}
-            <section className="bg-krishi-dark p-6 sm:p-10 flex flex-col gap-6">
-              <div className="bg-krishi-bg border-2 border-krishi-gold rounded-lg p-5 shadow-[6px_6px_0px_#F5C518]">
-                <div className="bg-krishi-dark border border-krishi-gold p-4 rounded flex flex-col gap-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-krishi-pink text-[10px] font-bold block">DIAGNOSIS RESULT</span>
-                      <h3 className="text-krishi-gold font-black text-lg m-0">{selectedDisease.disease}</h3>
-                    </div>
-                    <span className="bg-krishi-gold/20 text-krishi-gold border border-krishi-gold text-xs font-bold px-2 py-0.5 rounded">CONFIDENCE: {selectedDisease.confidence}</span>
-                  </div>
+<script>
+(function(){
+  var els=document.querySelectorAll('[data-count]');
+  function run(el){
+    var to=+el.dataset.count,pre=el.dataset.prefix||'',suf=el.dataset.suffix||'',t0=null,d=1200;
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches||to===0){el.textContent=pre+to+suf;return;}
+    function tick(t){t0=t0||t;var p=Math.min((t-t0)/d,1),e=1-Math.pow(1-p,3);
+      el.textContent=pre+Math.round(to*e)+suf;if(p<1)requestAnimationFrame(tick);}
+    requestAnimationFrame(tick);
+  }
+  if(!('IntersectionObserver' in window)){els.forEach(run);return;}
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){run(e.target);io.unobserve(e.target);}});},{threshold:.6});
+  els.forEach(function(el){io.observe(el);});
+})();
+</script>
+<script>
+(function(){
+  var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  document.documentElement.classList.add('js');
 
-                  <div className="text-xs">
-                    <strong className="text-krishi-gold block">🌱 ORGANIC REMEDY:</strong>
-                    <span>{selectedDisease.organicCure}</span>
-                  </div>
+  function splitWords(el,make){
+    var i=0;
+    Array.prototype.slice.call(el.childNodes).forEach(function(n){
+      if(n.nodeType!==3)return;
+      var f=document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach(function(part){
+        if(!part)return;
+        if(/^\s+$/.test(part)){f.appendChild(document.createTextNode(' '));return;}
+        f.appendChild(make(part,i++));
+      });
+      el.replaceChild(f,n);
+    });
+  }
 
-                  <div className="flex gap-2">
-                    <button onClick={() => setPassportModalOpen(true)} className="flex-1 bg-krishi-gold text-krishi-dark font-black text-xs py-2 rounded">📜 CROP PASSPORT</button>
-                    <button onClick={handleSendWhatsAppWeb} className="bg-emerald-500 text-black font-black text-xs px-3 py-2 rounded">💬 WHATSAPP</button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </main>
+  var h=document.querySelector('.hero-copy h1');
+  if(h&&!reduce){
+    var words=h.textContent.trim().split(' '),k=0;
+    h.setAttribute('aria-label',h.textContent.trim());
+    h.textContent='';
+    words.forEach(function(w,wi){
+      var ws=document.createElement('span');ws.className='word';ws.setAttribute('aria-hidden','true');
+      w.split('').forEach(function(c){var s=document.createElement('span');s.className='ch';s.style.setProperty('--i',k++);s.textContent=c;ws.appendChild(s);});
+      h.appendChild(ws);
+      if(wi<words.length-1)h.appendChild(document.createTextNode(' '));
+    });
+  }
 
-          {/* Dosage Calculator Modal */}
-          {dosageModalOpen && (
-            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
-              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-lg w-full relative shadow-[8px_8px_0px_#FF2E88]">
-                <button onClick={() => setDosageModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
-                <h2 className="text-krishi-gold font-black text-xl mb-2">🧮 AI BIO-PESTICIDE DOSAGE CALCULATOR</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-krishi-gold text-xs font-bold block mb-1">FARM AREA (ACRES):</label>
-                    <input type="number" step="0.5" value={farmAcres} onChange={(e) => setFarmAcres(parseFloat(e.target.value) || 1)} className="bg-krishi-dark text-krishi-gold border-1.5 border-krishi-gold p-2 rounded text-lg font-bold w-full" />
-                  </div>
-                  <div className="bg-krishi-dark border border-dashed border-krishi-gold p-4 rounded text-xs space-y-2">
-                    <div className="text-krishi-pink font-extrabold text-sm">RECOMMENDED MIX FOR {farmAcres} ACRES:</div>
-                    <div>💧 Water: <strong className="text-krishi-gold">{farmAcres * 200} Liters</strong></div>
-                    <div>🌿 Neem Oil (10,000 PPM): <strong className="text-krishi-gold">{(farmAcres * 1.0).toFixed(1)} Liters</strong></div>
-                    <div>🦠 Trichoderma Viride: <strong className="text-krishi-gold">{(farmAcres * 1.0).toFixed(1)} kg</strong></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+  var t=document.getElementById('typed');
+  if(t&&!reduce){
+    var ph=['Scan a leaf.','Know the disease.','Save the harvest.'],p=0,c=0,del=false;
+    t.textContent='';
+    (function step(){
+      var s=ph[p],d;
+      if(!del){c++;d=c===s.length?1800:70;if(c===s.length)del=true;}
+      else{c--;d=c===0?350:32;if(c===0){del=false;p=(p+1)%ph.length;}}
+      t.textContent=s.slice(0,c);
+      setTimeout(step,d);
+    })();
+  }
 
-          {/* Insurance Claim Modal */}
-          {insuranceModalOpen && (
-            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
-              <div className="bg-krishi-bg border-4 border-krishi-pink rounded-xl p-6 max-w-lg w-full relative shadow-[8px_8px_0px_#F5C518]">
-                <button onClick={() => setInsuranceModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
-                <h2 className="text-krishi-pink font-black text-xl mb-2">🛡️ PMFBY CROP INSURANCE AUTO-CLAIM</h2>
-                {insuranceSubmitted ? (
-                  <div className="bg-emerald-950 border border-emerald-400 text-emerald-300 p-4 rounded text-center font-bold">
-                    🎉 CLAIM SUBMITTED! Ref: PMFBY-2026-CLAIM-99201
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs space-y-1">
-                      <div><strong>Passport ID:</strong> {selectedDisease.passportId}</div>
-                      <div><strong>Damage Grade:</strong> <span className="text-krishi-pink font-bold">{selectedDisease.severity}</span></div>
-                    </div>
-                    <button onClick={() => setInsuranceSubmitted(true)} className="w-full bg-krishi-pink text-white font-black py-3 rounded uppercase">SUBMIT TO PMFBY PORTAL 🚀</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+  var rises=document.querySelectorAll('[data-rise]');
+  rises.forEach(function(el){
+    splitWords(el,function(w,i){
+      var o=document.createElement('span'),n=document.createElement('span');
+      o.className='rw';n.className='ri';n.style.setProperty('--i',i);n.textContent=w;o.appendChild(n);return o;
+    });
+  });
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.4});
+    rises.forEach(function(el){io.observe(el);});
+  }else{rises.forEach(function(el){el.classList.add('in');});}
 
-          {/* Weather Schedule Modal */}
-          {weatherModalOpen && (
-            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
-              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-xl w-full relative shadow-[8px_8px_0px_#FF2E88]">
-                <button onClick={() => setWeatherModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
-                <h2 className="text-krishi-gold font-black text-xl mb-3">🌤️ 7-DAY SPRAY WEATHER SCHEDULE</h2>
-                <div className="space-y-2">
-                  {SPRAY_SCHEDULE.map((sc, i) => (
-                    <div key={i} className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs flex justify-between items-center">
-                      <div><strong className="text-krishi-gold">{sc.day}</strong> — {sc.temp} · Rain: {sc.rain}</div>
-                      <span className="text-[11px] font-bold text-krishi-gold">{sc.status}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Mandi Price Comparison Modal */}
-          {mandiModalOpen && (
-            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
-              <div className="bg-krishi-bg border-4 border-krishi-gold rounded-xl p-6 max-w-xl w-full relative shadow-[8px_8px_0px_#FF2E88]">
-                <button onClick={() => setMandiModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
-                <h2 className="text-krishi-gold font-black text-xl mb-3">🛒 KISAN MANDI BIO-PESTICIDE STORE PRICES</h2>
-                <div className="space-y-2">
-                  {MANDI_PRICES.map((m, i) => (
-                    <div key={i} className="bg-krishi-dark border border-krishi-gold p-3 rounded text-xs flex justify-between items-center">
-                      <div>
-                        <strong className="text-krishi-gold text-sm block">{m.store}</strong>
-                        <span>Neem Oil 1L: <strong>₹{m.neemPrice}</strong> | Trichoderma 1kg: <strong>₹{m.trichodermaPrice}</strong></span>
-                      </div>
-                      <span className="text-krishi-pink font-bold text-[11px]">{m.status}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Passport Modal */}
-          {passportModalOpen && (
-            <div className="fixed inset-0 bg-krishi-dark/95 backdrop-blur-md z-50 grid place-items-center p-6">
-              <div className="bg-[#FFF6DC] text-[#051F17] border-4 border-krishi-gold rounded-xl p-6 max-w-lg w-full relative shadow-[10px_10px_0px_#FF2E88]">
-                <button onClick={() => setPassportModalOpen(false)} className="absolute top-4 right-4 bg-krishi-pink text-white w-8 h-8 rounded-full font-black">✕</button>
-                <div className="border-b-2 border-[#051F17] pb-3 mb-4 text-center">
-                  <div className="text-krishi-pink font-black text-xs uppercase">ICAR COMPLIANT</div>
-                  <h2 className="text-xl font-black">OFFICIAL CROP HEALTH PASSPORT</h2>
-                  <div className="text-xs font-bold text-emerald-800">PASSPORT ID: {selectedDisease.passportId}</div>
-                </div>
-                <div className="space-y-2 text-xs mb-4">
-                  <div><strong>Crop:</strong> {selectedDisease.crop}</div>
-                  <div><strong>Pathogen:</strong> {selectedDisease.disease} ({selectedDisease.scientific})</div>
-                  <div><strong>Severity:</strong> <span className="text-krishi-pink font-bold">{selectedDisease.severity}</span></div>
-                  <div><strong>Remedy:</strong> {selectedDisease.organicCure}</div>
-                </div>
-                <a href={`/verify/passport/${selectedDisease.passportId}`} className="block w-full bg-krishi-dark text-krishi-gold text-center py-2.5 rounded font-black text-xs">
-                  VERIFY ON GOVERNMENT PORTAL 🛡️
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<KrishiDarpanApp />);
-  </script>
+  var scrubs=document.querySelectorAll('[data-scrub]');
+  scrubs.forEach(function(el){
+    splitWords(el,function(w){var s=document.createElement('span');s.className='w';s.textContent=w;return s;});
+  });
+  function scrub(){
+    var vh=innerHeight;
+    scrubs.forEach(function(el){
+      var ws=el.querySelectorAll('.w'),top=el.getBoundingClientRect().top;
+      var pr=reduce?1:Math.min(1,Math.max(0,(vh*.92-top)/(vh*.42)));
+      var lit=Math.round(pr*ws.length);
+      ws.forEach(function(w,i){w.classList.toggle('on',i<lit);});
+    });
+  }
+  scrub();addEventListener('scroll',scrub,{passive:true});addEventListener('resize',scrub);
+})();
+</script>
 </body>
 </html>
