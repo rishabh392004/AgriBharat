@@ -31,3 +31,13 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+
+// Warn if external service URLs are still defaulting to localhost in production
+if (process.env.NODE_ENV === "production") {
+  if (env.ML_SERVICE_URL.includes("localhost") || env.ML_SERVICE_URL.includes("127.0.0.1")) {
+    console.warn("[Config] WARNING: ML_SERVICE_URL is set to localhost. Ensure the ML service is reachable at this address.");
+  }
+  if (env.CHATBOT_SERVICE_URL.includes("localhost") || env.CHATBOT_SERVICE_URL.includes("127.0.0.1")) {
+    console.warn("[Config] WARNING: CHATBOT_SERVICE_URL is set to localhost. Ensure the chatbot service is reachable at this address.");
+  }
+}

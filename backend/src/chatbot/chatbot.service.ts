@@ -37,8 +37,9 @@ export async function askChatbot(
     clearTimeout(timer);
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new AppError(`Chatbot service error: ${err}`, 502);
+      // Do NOT forward raw internal service body — it may contain stack traces or internal hostnames.
+      console.error(`[Chatbot] Python service returned HTTP ${res.status}`);
+      throw new AppError("Chatbot service returned an error. Please try again later.", 502);
     }
 
     return (await res.json()) as ChatbotResponse;
