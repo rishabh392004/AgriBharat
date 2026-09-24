@@ -11,11 +11,11 @@ export function authorize(...allowedRoles: UserRole[]) {
     next: NextFunction
   ) => {
     if (!req.user) {
-      throw new AppError("Authentication required", 401);
+      return next(new AppError("Authentication required", 401));
     }
 
     if (!allowedRoles.includes(req.user.role as UserRole)) {
-      throw new AppError("Forbidden", 403);
+      return next(new AppError("Forbidden", 403));
     }
 
     next();
