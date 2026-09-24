@@ -590,7 +590,9 @@ export const GradCamViewer: React.FC<GradCamViewerProps> = ({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#4a6f54' }}>
               <Info size={13} />
-              <span>{t('attentionNote')}</span>
+              <span>
+                <strong>AI Visual Focus Heatmap:</strong> Highlights regions analyzed by the neural network during inference. This is an explainable AI visual guide, not absolute ground truth.
+              </span>
             </div>
 
             {/* Gradient Bar Visual */}

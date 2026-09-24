@@ -26,6 +26,7 @@ import {
   Thermometer,
   Droplets,
   MessageSquare,
+  RotateCcw,
 } from 'lucide-react'
 import type { Prediction, PassportRecord } from '@/types'
 import { GradCamViewer } from './GradCamViewer'
@@ -152,7 +153,156 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         </div>
       </div>
 
-      {/* ── 2. Diagnosis Summary & Confidence Banner ── */}
+      {/* ── 2. Visual Demarcation: AI Detection vs Officer Verification ── */}
+      {verifiedRecord ? (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            background: '#f0fdf4',
+            border: '1.5px solid #86efac',
+            borderRadius: 16,
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: '#16a34a',
+                color: '#ffffff',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <strong style={{ fontSize: 14, color: '#166534' }}>
+                  Official Officer Certified Record
+                </strong>
+                <span
+                  style={{
+                    background: '#dcfce7',
+                    color: '#166534',
+                    border: '1px solid #86efac',
+                    borderRadius: 99,
+                    padding: '2px 8px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                >
+                  ✓ VERIFIED
+                </span>
+              </div>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#15803d' }}>
+                Certified by Officer {verifiedRecord.officerName} ({verifiedRecord.locationName}) on {verifiedRecord.verifiedAt || verifiedRecord.date}.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/farmer/crop-health-passport"
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#166534',
+              textDecoration: 'underline',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span>View Certified Passport</span>
+            <ChevronRight size={14} />
+          </Link>
+        </div>
+      ) : (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            background: '#fffbeb',
+            border: '1.5px solid #fde68a',
+            borderRadius: 16,
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: '#d97706',
+                color: '#ffffff',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Clock size={20} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <strong style={{ fontSize: 14, color: '#92400e' }}>
+                  AI Detection (Preliminary - Pending Officer Verification)
+                </strong>
+                <span
+                  style={{
+                    background: '#fef3c7',
+                    color: '#92400e',
+                    border: '1px solid #fcd34d',
+                    borderRadius: 99,
+                    padding: '2px 8px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                >
+                  ⏳ UNVERIFIED
+                </span>
+              </div>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#78350f' }}>
+                This is an automated advisory based on computer vision. District agronomists review high-severity scans for certification.
+              </p>
+            </div>
+          </div>
+          {prediction.isDemo && (
+            <span
+              style={{
+                background: '#ede9fe',
+                color: '#6d28d9',
+                border: '1px solid #c4b5fd',
+                borderRadius: 99,
+                padding: '4px 10px',
+                fontSize: 11.5,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <Sparkles size={12} />
+              <span>Demo / Simulation Preview</span>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ── 3. Diagnosis Summary & Confidence Banner ── */}
       <section className="banner">
         <div className="ring">
           <div>
@@ -399,19 +549,25 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         </section>
       </div>
 
-      {/* ── 8. Expert Agronomist & Agri-Mitra Assistance ── */}
+      {/* ── 8. Expert Agronomist & Agri-Mitra Assistance & Next Steps ── */}
       <section className="card">
         <p className="kicker">{t('expertWhen')}</p>
         <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.6 }}>{prediction.expertHelp}</p>
-        <div className="actions" style={{ marginTop: 14 }}>
+        <div className="actions" style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           <Link className="btn btn-primary" style={{ width: 'auto' }} href={`/farmer/chat?${query}`}>
             <MessageCircle size={16} /> {t('askAi')}
           </Link>
           <Link className="btn btn-gold" style={{ width: 'auto' }} href={`/farmer/help?for=${encodeURIComponent(prediction.disease)}`}>
             <MapPin size={16} /> {t('findHelp')}
           </Link>
-          <Link className="btn btn-secondary" style={{ width: 'auto' }} href="/farmer/whatsapp">
-            <MessageSquare size={16} /> WhatsApp Demo Hub
+          <Link className="btn btn-secondary" style={{ width: 'auto' }} href="/farmer/crop-health-passport">
+            <ShieldCheck size={16} /> Add to Crop Health Passport
+          </Link>
+          <Link className="ghost" style={{ width: 'auto', border: '1px solid var(--line)', background: '#ffffff', textDecoration: 'none', padding: '8px 14px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 650, color: 'var(--ink)' }} href="/farmer/scan">
+            <RotateCcw size={15} /> Retry Scan / New Photo
+          </Link>
+          <Link className="ghost" style={{ width: 'auto', border: '1px solid var(--line)', background: '#ffffff', textDecoration: 'none', padding: '8px 14px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 650, color: 'var(--ink)' }} href="/farmer/history">
+            <Clock size={15} /> View History
           </Link>
         </div>
       </section>

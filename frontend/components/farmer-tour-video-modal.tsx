@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Play,
   Pause,
@@ -231,6 +232,7 @@ export function FarmerTourVideoModal({
   initialStepIndex?: number
 }) {
   const { locale } = useI18n()
+  const [mounted, setMounted] = useState(false)
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStepIndex)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
@@ -245,6 +247,10 @@ export function FarmerTourVideoModal({
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const voiceListRef = useRef<SpeechSynthesisVoice[]>([])
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Pre-load voice list (async in some browsers)
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
@@ -256,6 +262,27 @@ export function FarmerTourVideoModal({
     window.speechSynthesis.onvoiceschanged = load
   }, [])
 
+  // Immediately reset state, autoplay narration, and lock body scroll whenever opened
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStepIndex(initialStepIndex)
+      setProgress(0)
+      setIsPlaying(true)
+      setIsMinimized(false)
+
+      const prevOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+
+      return () => {
+        document.body.style.overflow = prevOverflow
+      }
+    } else {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [isOpen, initialStepIndex])
+
   const step = DEMO_STEPS[currentStepIndex] || DEMO_STEPS[0]
   const stepDuration = 9000 // 9 seconds per step animation
 
@@ -263,6 +290,9 @@ export function FarmerTourVideoModal({
   const speakStep = (stepItem: DemoStep, lang: VoiceLanguage) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
     window.speechSynthesis.cancel()
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume()
+    }
 
     if (isMuted) return
 
@@ -295,8 +325,13 @@ export function FarmerTourVideoModal({
       }
     }
 
-    // Small delay to prevent Chrome race condition
-    setTimeout(() => window.speechSynthesis.speak(utterance), 60)
+    // Small delay to prevent Chrome race condition and ensure voice synthesis starts immediately
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.resume()
+        window.speechSynthesis.speak(utterance)
+      }
+    }, 40)
   }
 
   // Handle step change
@@ -346,6 +381,7 @@ export function FarmerTourVideoModal({
   }, [])
 
   const handleNext = () => {
+    setIsPlaying(true)
     if (currentStepIndex < DEMO_STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1)
     } else {
@@ -354,6 +390,7 @@ export function FarmerTourVideoModal({
   }
 
   const handlePrev = () => {
+    setIsPlaying(true)
     if (currentStepIndex > 0) {
       setCurrentStepIndex((prev) => prev - 1)
     }
@@ -389,18 +426,18 @@ export function FarmerTourVideoModal({
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   // ---------- MINIMIZED BOTTOM BAR ----------
   if (isMinimized) {
-    return (
+    return createPortal(
       <div
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 9999,
+          zIndex: 999999,
           background: 'rgba(9, 22, 14, 0.97)',
           backdropFilter: 'blur(14px)',
           borderTop: '1.5px solid rgba(232, 200, 104, 0.5)',
@@ -490,23 +527,25 @@ export function FarmerTourVideoModal({
             <X size={16} />
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     )
   }
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
-        background: 'rgba(7, 18, 11, 0.88)',
+        zIndex: 999999,
+        background: 'rgba(7, 18, 11, 0.90)',
         backdropFilter: 'blur(10px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.25s ease-out',
+        padding: '14px',
+        overflowY: 'auto',
+        animation: 'fadeIn 0.2s ease-out',
       }}
       onClick={onClose}
     >
@@ -515,13 +554,14 @@ export function FarmerTourVideoModal({
           width: '100%',
           maxWidth: 960,
           background: '#0d2216',
-          border: '1px solid rgba(232, 200, 104, 0.35)',
-          borderRadius: 24,
+          border: '1.5px solid rgba(232, 200, 104, 0.35)',
+          borderRadius: 22,
           overflow: 'hidden',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(46, 125, 50, 0.3)',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.7), 0 0 40px rgba(46, 125, 50, 0.3)',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '92vh',
+          maxHeight: 'calc(100dvh - 28px)',
+          margin: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -531,11 +571,12 @@ export function FarmerTourVideoModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '14px 20px',
+            padding: '12px 18px',
             background: 'rgba(255, 255, 255, 0.04)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             flexWrap: 'wrap',
             gap: 10,
+            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -666,13 +707,15 @@ export function FarmerTourVideoModal({
         <div
           style={{
             position: 'relative',
-            height: 'clamp(280px, 42vw, 420px)',
+            flex: 1,
+            minHeight: 250,
+            maxHeight: 'calc(100dvh - 195px)',
             background: 'radial-gradient(circle at center, #163824 0%, #08160e 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            overflow: 'hidden',
-            padding: '24px',
+            overflowY: 'auto',
+            padding: '16px 20px',
           }}
         >
           {/* Subtle Grid Background */}
@@ -692,15 +735,15 @@ export function FarmerTourVideoModal({
               zIndex: 2,
               width: '100%',
               maxWidth: 680,
-              background: 'rgba(10, 25, 16, 0.85)',
+              background: 'rgba(10, 25, 16, 0.90)',
               border: '1.5px solid rgba(232, 200, 104, 0.4)',
               borderRadius: 20,
-              padding: '22px',
+              padding: '18px 20px',
               backdropFilter: 'blur(12px)',
               boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 16,
+              gap: 14,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 10 }}>
@@ -908,11 +951,11 @@ export function FarmerTourVideoModal({
             <p
               style={{
                 margin: 0,
-                color: 'rgba(255, 255, 255, 0.9)',
-                fontSize: 14,
-                lineHeight: 1.55,
-                background: 'rgba(0, 0, 0, 0.25)',
-                padding: '10px 14px',
+                color: 'rgba(255, 255, 255, 0.92)',
+                fontSize: 13.5,
+                lineHeight: 1.5,
+                background: 'rgba(0, 0, 0, 0.3)',
+                padding: '9px 14px',
                 borderRadius: 12,
                 borderLeft: '3px solid #e8c868',
               }}
@@ -940,10 +983,12 @@ export function FarmerTourVideoModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '14px 22px',
+            padding: '10px 18px',
             background: 'rgba(255, 255, 255, 0.03)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             flexWrap: 'wrap',
-            gap: 12,
+            gap: 10,
+            flexShrink: 0,
           }}
         >
           {/* Play/Pause/Mute */}
@@ -1084,6 +1129,7 @@ export function FarmerTourVideoModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -5,12 +5,10 @@ import type { SessionUser } from '@/types'
 const KEY = 'kr-session'
 
 export const authService = {
-  async login(identifier: string, password = 'password123'): Promise<SessionUser> {
+  async login(identifier: string, password = ''): Promise<SessionUser> {
     const isEmail = identifier.includes('@')
     const email = isEmail ? identifier.trim() : `${identifier.replace(/\D/g, '')}@agribharat.com`
-    const safePassword = (password && password.trim().length >= 4)
-      ? password.trim()
-      : (email.includes('9811122233') || email.includes('officer') ? 'officer123' : 'kisan123')
+    const safePassword = password ? password.trim() : ''
 
     // Attempt real backend authentication
     try {
@@ -39,10 +37,10 @@ export const authService = {
       : { name: DEMO_FARMER.name, role: 'farmer', phone: identifier || DEMO_FARMER.mobile }
   },
 
-  async register(name: string, identifier: string, password = 'password123', farmName?: string): Promise<SessionUser> {
+  async register(name: string, identifier: string, password = '', farmName?: string): Promise<SessionUser> {
     const isEmail = identifier.includes('@')
     const email = isEmail ? identifier.trim() : `${identifier.replace(/\D/g, '')}@agribharat.com`
-    const safePassword = (password && password.trim().length >= 4) ? password.trim() : 'kisan123'
+    const safePassword = password ? password.trim() : ''
     const safeName = name?.trim() || 'Kisan User'
 
     try {

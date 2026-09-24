@@ -16,6 +16,11 @@ import { addVerifiedRecordToPassport } from '@/services/passportService'
 import { toast } from '@/components/toast'
 import { useI18n } from '@/lib/i18n'
 import type { ReviewRecord, ReviewStatus } from '@/types'
+import {
+  AccessibleModal,
+  PrimaryButton,
+  SecondaryButton,
+} from '@/components/ui/design-system'
 
 type FilterTab = 'All' | ReviewStatus
 
@@ -242,38 +247,65 @@ export default function ReviewQueuePage() {
         ))}
       </div>
 
-      {rejectTarget && (
-        <div className="rq-modal-overlay" onClick={() => setRejectTarget(null)}>
-          <div className="rq-modal" onClick={(e) => e.stopPropagation()}>
-            <p className="kicker" style={{ margin: '0 0 8px' }}>Reject Report</p>
-            <h2 style={{ margin: '0 0 6px' }}>{t('confirmReject')}</h2>
-            <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
-              {rejectTarget.crop} · {rejectTarget.disease} · {rejectTarget.farmer}
-            </p>
-            <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>{t('rejectionReason')} (optional)</p>
-            <div className="rq-reason-list">
-              {[t('reasonIncorrect'), t('reasonImage'), t('reasonInsufficient'), t('reasonOther')].map((reason) => (
-                <button
-                  key={reason}
-                  type="button"
-                  className={`rq-reason ${rejectionReason === reason ? 'on' : ''}`}
-                  onClick={() => setRejectionReason(reason)}
-                >
-                  {reason}
-                </button>
-              ))}
+      <AccessibleModal
+        isOpen={Boolean(rejectTarget)}
+        onClose={() => setRejectTarget(null)}
+        title="Reject Crop Diagnosis"
+        description="Provide a clear reason for the farmer before rejecting this diagnostic finding."
+      >
+        {rejectTarget && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: '#fef2f2', padding: '10px 14px', borderRadius: 10, fontSize: 12.5, color: '#991b1b' }}>
+              <strong>Report:</strong> {rejectTarget.crop} · {rejectTarget.disease} · Farmer: {rejectTarget.farmer}
             </div>
-            <div className="rq-modal-actions">
-              <button type="button" className="btn btn-ghost" onClick={() => setRejectTarget(null)}>
+
+            <div>
+              <label
+                htmlFor="rq-rejection-reason"
+                style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: 6 }}
+              >
+                Select Rejection Category
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+                {[t('reasonIncorrect'), t('reasonImage'), t('reasonInsufficient'), t('reasonOther')].map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    className={`rq-reason ${rejectionReason === reason ? 'on' : ''}`}
+                    onClick={() => setRejectionReason(reason)}
+                    style={{
+                      padding: '8px 10px',
+                      fontSize: 12,
+                      borderRadius: 8,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      background: rejectionReason === reason ? '#fee2e2' : '#ffffff',
+                      border: rejectionReason === reason ? '2px solid #ef4444' : '1px solid var(--line)',
+                      color: rejectionReason === reason ? '#991b1b' : 'var(--ink)',
+                      fontWeight: rejectionReason === reason ? 700 : 500,
+                    }}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
+              <SecondaryButton onClick={() => setRejectTarget(null)}>
                 {t('cancel')}
-              </button>
-              <button type="button" className="btn rq-btn-reject-confirm" onClick={confirmReject}>
-                <XCircle size={16} /> {t('rejectReport')}
-              </button>
+              </SecondaryButton>
+              <PrimaryButton
+                variant="danger"
+                icon={<XCircle size={15} />}
+                onClick={confirmReject}
+              >
+                {t('rejectReport')}
+              </PrimaryButton>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </AccessibleModal>
     </>
   )
 }

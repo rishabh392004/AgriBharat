@@ -183,6 +183,7 @@ export default function FarmerDashboard() {
   const [sprayCalcOpen, setSprayCalcOpen] = useState(false)
   const [expandHealth, setExpandHealth] = useState(false)
   const [expandRisk, setExpandRisk] = useState(false)
+  const [showOutbreakMap, setShowOutbreakMap] = useState(false)
   const [sprayTimeSlot, setSprayTimeSlot] = useState<'morning' | 'noon' | 'evening'>('evening')
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({})
   const [activeStoryStep, setActiveStoryStep] = useState<number>(1)
@@ -484,356 +485,237 @@ export default function FarmerDashboard() {
         </div>
       </header>
 
-      {/* 3. Interactive 4-Card Quick Command Center */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: 12,
-        }}
-      >
-        {/* Action 1: Scan Crop */}
-        <Link
-          href="/farmer/scan"
-          style={{
-            background: 'linear-gradient(135deg, #ffffff, #f7faf7)',
-            border: '1.5px solid #cce3d2',
-            borderRadius: 20,
-            padding: '18px 20px',
-            textDecoration: 'none',
-            color: 'var(--ink)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 16px rgba(43,122,77,0.06)',
-            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-          className="hover:scale-102 hover:border-emerald-500"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, #1b4d2e, #2b7a4d)',
-                color: '#ffffff',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow: '0 4px 12px rgba(43,122,77,0.25)',
-              }}
-            >
-              <Camera size={22} />
-            </div>
-            <span style={{ background: '#e8f7ec', color: '#166534', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-              98.4% ACCURACY
-            </span>
-          </div>
-          <div>
-            <strong style={{ fontSize: 16, color: '#1b4d2e', display: 'block' }}>
-              {t('scanCrop')}
-            </strong>
-            <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, display: 'block' }}>
-              Instant leaf pathogen diagnosis & Grad-CAM visualizer
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#2b7a4d', fontSize: 12, fontWeight: 750, marginTop: 14 }}>
-            <span>Open Camera Scanner</span>
-            <ArrowRight size={14} />
-          </div>
-        </Link>
-
-        {/* Action 2: Voice Agronomist Assistant */}
-        <Link
-          href="/farmer/chat"
-          style={{
-            background: 'linear-gradient(135deg, #ffffff, #fdfbf7)',
-            border: '1.5px solid #ecdca8',
-            borderRadius: 20,
-            padding: '18px 20px',
-            textDecoration: 'none',
-            color: 'var(--ink)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 16px rgba(212,160,23,0.08)',
-            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-          className="hover:scale-102 hover:border-amber-500"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, #b45309, #d97706)',
-                color: '#ffffff',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow: '0 4px 12px rgba(180,83,9,0.25)',
-              }}
-            >
-              <Bot size={22} />
-            </div>
-            <span style={{ background: '#fef3c7', color: '#92400e', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-              11 LANGUAGES
-            </span>
-          </div>
-          <div>
-            <strong style={{ fontSize: 16, color: '#92400e', display: 'block' }}>
-              {t('askAi')}
-            </strong>
-            <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, display: 'block' }}>
-              Voice & text agronomy consultation in your mother tongue
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#b45309', fontSize: 12, fontWeight: 750, marginTop: 14 }}>
-            <span>Start Regional Consultation</span>
-            <ArrowRight size={14} />
-          </div>
-        </Link>
-
-        {/* Action 3: Spray Dosage Calculator */}
+      {/* ── 2. PRIMARY ACTIONS (Scan Crop & Ask Krishi AI) ── */}
+      <section aria-label="Primary Actions" style={{ marginTop: 14 }}>
         <div
-          onClick={() => setSprayCalcOpen(true)}
           style={{
-            background: 'linear-gradient(135deg, #ffffff, #f0fdf4)',
-            border: '1.5px solid #bbf7d0',
-            borderRadius: 20,
-            padding: '18px 20px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 16px rgba(46,125,50,0.08)',
-            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 14,
           }}
-          className="hover:scale-102 hover:border-emerald-600"
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, #15803d, #22c55e)',
-                color: '#ffffff',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow: '0 4px 12px rgba(22,163,74,0.25)',
-              }}
-            >
-              <FlaskConical size={22} />
-            </div>
-            <span style={{ background: '#dcfce7', color: '#166534', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-              ICAR DOSAGE
-            </span>
-          </div>
-          <div>
-            <strong style={{ fontSize: 16, color: '#166534', display: 'block' }}>
-              {isHindi ? 'स्प्रे खुराक कैलकुलेटर' : 'Spray Dosage Tool'}
-            </strong>
-            <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, display: 'block' }}>
-              Exact knapsack tank mixing ratios & water measurements
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#15803d', fontSize: 12, fontWeight: 750, marginTop: 14 }}>
-            <span>Calculate Tank Ratios</span>
-            <ArrowRight size={14} />
-          </div>
-        </div>
-
-        {/* Action 4: Interactive Demo Video Guide */}
-        <div
-          onClick={() => setTourOpen(true)}
-          style={{
-            background: 'linear-gradient(135deg, #ffffff, #f5f3ff)',
-            border: '1.5px solid #ddd6fe',
-            borderRadius: 20,
-            padding: '18px 20px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 16px rgba(109,40,217,0.07)',
-            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-          className="hover:scale-102 hover:border-violet-500"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)',
-                color: '#ffffff',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow: '0 4px 12px rgba(109,40,217,0.25)',
-              }}
-            >
-              <Video size={22} />
-            </div>
-            <span style={{ background: '#ede9fe', color: '#5b21b6', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-              {isHindi ? '5 भाषाओं में' : '5 VOICES DEMO'}
-            </span>
-          </div>
-          <div>
-            <strong style={{ fontSize: 16, color: '#5b21b6', display: 'block' }}>
-              {isHindi ? 'डेमो वीडियो गाइड' : 'Demo Video Guide'}
-            </strong>
-            <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, display: 'block' }}>
-              {isHindi ? 'पत्ती स्कैन व वेबसाइट की संपूर्ण वीडियो व ऑडियो गाइड' : 'Step-by-step leaf scanning & platform walkthrough'}
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#6d28d9', fontSize: 12, fontWeight: 750, marginTop: 14 }}>
-            <span>{isHindi ? 'डेमो वीडियो चलाएं' : 'Watch Demo Video'}</span>
-            <ArrowRight size={14} />
-          </div>
-        </div>
-
-        {/* Action 5: Outbreak Map Radar */}
-        <div
-          onClick={() => {
-            const mapEl = document.getElementById('outbreak-map-section')
-            if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth' })
-          }}
-          style={{
-            background: 'linear-gradient(135deg, #ffffff, #fdf4f4)',
-            border: '1.5px solid #fecaca',
-            borderRadius: 20,
-            padding: '18px 20px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 16px rgba(239,68,68,0.06)',
-            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-          className="hover:scale-102 hover:border-rose-500"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, #b91c1c, #ef4444)',
-                color: '#ffffff',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow: '0 4px 12px rgba(220,38,38,0.25)',
-              }}
-            >
-              <Compass size={22} />
-            </div>
-            <span style={{ background: '#fee2e2', color: '#991b1b', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-              15 KM RADIUS
-            </span>
-          </div>
-          <div>
-            <strong style={{ fontSize: 16, color: '#991b1b', display: 'block' }}>
-              {isHindi ? 'भू-स्थानिक प्रकोप रडार' : 'Outbreak Hotspot Radar'}
-            </strong>
-            <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, display: 'block' }}>
-              Cluster density & neighboring farm pathogen telemetry
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#b91c1c', fontSize: 12, fontWeight: 750, marginTop: 14 }}>
-            <span>View Cluster Map</span>
-            <ArrowRight size={14} />
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Interactive Video Tour & Help Guide Banner */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, rgba(27, 67, 42, 0.95), rgba(13, 40, 24, 0.95))',
-          borderRadius: 20,
-          border: '1px solid rgba(232, 200, 104, 0.35)',
-          padding: '14px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
+          {/* Primary Action 1: Scan Crop */}
+          <Link
+            href="/farmer/scan"
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #e8c868, #2e7d32)',
-              display: 'grid',
-              placeItems: 'center',
-              color: '#0d2216',
-              flexShrink: 0,
+              background: 'linear-gradient(135deg, #1b4d2e 0%, #2b7a4d 100%)',
+              borderRadius: 22,
+              padding: '22px 24px',
+              textDecoration: 'none',
+              color: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              boxShadow: '0 8px 24px rgba(27, 77, 46, 0.22)',
+              position: 'relative',
+              overflow: 'hidden',
+              minHeight: 160,
             }}
+            className="hover:scale-101 transition-transform"
           >
-            <Play size={18} fill="#0d2216" />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <strong style={{ color: '#fff', fontSize: 14 }}>
-                {isHindi ? 'वेबसाइट और स्कैन कैसे करें? वीडियो गाइड देखें' : 'How to use website & scan crop? Watch Video Tour'}
-              </strong>
-              <span style={{ background: 'rgba(232, 200, 104, 0.2)', color: '#e8c868', fontSize: 10, padding: '1px 7px', borderRadius: 99, fontWeight: 700 }}>
-                5 VOICES
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  background: 'rgba(255, 255, 255, 0.18)',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                <Camera size={26} style={{ color: '#ffffff' }} />
+              </div>
+              <span
+                style={{
+                  background: 'rgba(232, 200, 104, 0.22)',
+                  border: '1px solid rgba(232, 200, 104, 0.45)',
+                  color: '#f6df94',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                }}
+              >
+                98.4% AI ACCURACY
               </span>
             </div>
-            <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>
-              {isHindi
-                ? 'हिन्दी, मराठी, पंजाबी, बांग्ला और अंग्रेजी आवाज में पूरी जानकारी'
-                : 'Guided walkthrough with regional audio narration in Hindi, Marathi, Punjabi & English'}
-            </p>
-          </div>
+            <div>
+              <strong style={{ fontSize: 20, color: '#ffffff', display: 'block', fontWeight: 800 }}>
+                {t('scanCrop')}
+              </strong>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                Instant leaf pathogen diagnosis & Grad-CAM visualizer
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#f6df94', fontSize: 13, fontWeight: 750, marginTop: 14 }}>
+              <span>Open Scanner & Camera</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
+
+          {/* Primary Action 2: Ask Krishi AI */}
+          <Link
+            href="/farmer/chat"
+            style={{
+              background: 'linear-gradient(135deg, #b45309 0%, #d97706 100%)',
+              borderRadius: 22,
+              padding: '22px 24px',
+              textDecoration: 'none',
+              color: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              boxShadow: '0 8px 24px rgba(180, 83, 9, 0.22)',
+              position: 'relative',
+              overflow: 'hidden',
+              minHeight: 160,
+            }}
+            className="hover:scale-101 transition-transform"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  background: 'rgba(255, 255, 255, 0.18)',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                <Bot size={26} style={{ color: '#ffffff' }} />
+              </div>
+              <span
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                }}
+              >
+                11 LANGUAGES
+              </span>
+            </div>
+            <div>
+              <strong style={{ fontSize: 20, color: '#ffffff', display: 'block', fontWeight: 800 }}>
+                {t('askAi')}
+              </strong>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                Voice & text agronomy consultation in your mother tongue
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ffffff', fontSize: 13, fontWeight: 750, marginTop: 14 }}>
+              <span>Start Regional Agronomist Consultation</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Secondary Quick Utilities Toolbar */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 10,
+            marginTop: 10,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setSprayCalcOpen(true)}
+            className="ghost"
+            style={{
+              background: '#ffffff',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: 'var(--ink)',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            }}
+          >
+            <FlaskConical size={16} className="text-emerald-700" />
+            <span>{isHindi ? 'स्प्रे खुराक कैलकुलेटर' : 'Spray Calculator'}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setTourOpen(true)}
+            className="ghost"
             style={{
-              background: 'linear-gradient(135deg, #e8c868, #d4a017)',
-              color: '#122c1d',
-              border: 0,
-              borderRadius: 99,
-              padding: '8px 18px',
-              fontSize: 13,
-              fontWeight: 750,
-              display: 'inline-flex',
+              background: '#ffffff',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              padding: '10px 14px',
+              display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 8,
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: 'var(--ink)',
               cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(212, 160, 23, 0.3)',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
             }}
           >
-            <Play size={14} fill="#122c1d" />
-            <span>{isHindi ? 'वीडियो चलाएं' : 'Play Tour'}</span>
+            <Video size={16} className="text-violet-700" />
+            <span>{isHindi ? 'डेमो वीडियो गाइड' : 'Demo Video Guide'}</span>
           </button>
+
+          <Link
+            href="/farmer/crop-health-passport"
+            className="ghost"
+            style={{
+              background: '#ffffff',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: 'var(--ink)',
+              textDecoration: 'none',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            }}
+          >
+            <ShieldCheck size={16} className="text-amber-700" />
+            <span>{isHindi ? 'फसल हेल्थ पासपोर्ट' : 'Crop Health Passport'}</span>
+          </Link>
+
           <Link
             href="/farmer/help"
+            className="ghost"
             style={{
-              color: '#e8c868',
-              fontSize: 12,
-              fontWeight: 650,
+              background: '#ffffff',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: 'var(--ink)',
               textDecoration: 'none',
-              padding: '8px 12px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
             }}
           >
-            {isHindi ? 'मदद केंद्र →' : 'Help Center →'}
+            <MapPin size={16} className="text-sky-700" />
+            <span>{isHindi ? 'नजदीकी कृषि केंद्र (KVK)' : 'Nearby KVK & Stores'}</span>
           </Link>
         </div>
-      </div>
+      </section>
 
-      {/* 5. WhatsApp Fallback Entry Banner */}
-      <WhatsAppBanner />
+      {/* ── 3. CURRENT CROP-HEALTH SUMMARY ── */}
 
       {/* 6. Dynamic Stats Cards with Interactive Drill-Down */}
       <div className="stats">
@@ -1514,15 +1396,149 @@ export default function FarmerDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Nearby Agricultural Help & KVK Quick Assist */}
+        <div
+          style={{
+            marginTop: 16,
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+            border: '1.5px solid #a7f3d0',
+            borderRadius: 18,
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 14,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: '#10b981',
+                color: '#ffffff',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <MapPin size={22} />
+            </div>
+            <div>
+              <strong style={{ fontSize: 15, color: '#065f46', display: 'block' }}>
+                {isHindi ? 'नजदीकी कृषि विज्ञान केंद्र (KVK) व सेवा केंद्र' : 'Nearby KVK & Agricultural Support'}
+              </strong>
+              <span style={{ fontSize: 12.5, color: '#047857' }}>
+                {isHindi
+                  ? '3 प्रमाणित केंद्र आपके 10 किमी दायरे में उपलब्ध हैं - बीज, खाद व विशेषज्ञ सलाह।'
+                  : '3 verified KVK & Krishi Seva Kendras within 10 km for soil tests and certified fungicides.'}
+              </span>
+            </div>
+          </div>
+          <Link
+            href="/farmer/help"
+            style={{
+              background: '#059669',
+              color: '#ffffff',
+              borderRadius: 10,
+              padding: '8px 16px',
+              fontSize: 12.5,
+              fontWeight: 700,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span>{isHindi ? 'केंद्र सूची व दिशा देखें' : 'View Centers & Directions'}</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
       </section>
 
       {/* 12. Weather & Outbreak Risk Fusion Telemetry */}
       <WeatherRiskWidget />
 
-      {/* 13. Geospatial Outbreak Clusters & Hotspots Map */}
-      <div id="outbreak-map-section">
-        <OutbreakMap />
-      </div>
+      {/* ── 7. SECONDARY INFORMATION (Maps & Guides with Progressive Disclosure) ── */}
+      {/* Geospatial Outbreak Clusters & Hotspots Map with Progressive Disclosure */}
+      <section
+        id="outbreak-map-section"
+        style={{
+          marginTop: 18,
+          background: '#ffffff',
+          borderRadius: 20,
+          border: '1.5px solid var(--line)',
+          padding: '18px 22px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.02)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Radio size={14} className="text-emerald-700 animate-pulse" />
+              <span style={{ fontSize: 11, fontWeight: 750, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Regional Surveillance
+              </span>
+            </div>
+            <h3 style={{ margin: '2px 0 0', fontSize: 17, fontWeight: 800, color: 'var(--ink)' }}>
+              Geospatial Outbreak Clusters & Hotspots Map
+            </h3>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--muted)' }}>
+              Live ICAR and village-level disease density clustering across your district.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowOutbreakMap((prev) => !prev)}
+            aria-expanded={showOutbreakMap}
+            aria-controls="outbreak-map-wrapper"
+            style={{
+              background: showOutbreakMap ? '#f3f4f6' : '#1b4d2e',
+              color: showOutbreakMap ? 'var(--ink)' : '#ffffff',
+              border: showOutbreakMap ? '1px solid var(--line)' : 0,
+              borderRadius: 10,
+              padding: '8px 16px',
+              fontSize: 12.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{showOutbreakMap ? 'Collapse Map' : 'Explore Interactive Map'}</span>
+            {showOutbreakMap ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        </div>
+
+        {showOutbreakMap ? (
+          <div id="outbreak-map-wrapper" style={{ marginTop: 16 }}>
+            <OutbreakMap />
+          </div>
+        ) : (
+          <div
+            onClick={() => setShowOutbreakMap(true)}
+            style={{
+              marginTop: 12,
+              padding: '16px',
+              background: '#faf9f5',
+              borderRadius: 14,
+              border: '1px dashed var(--line)',
+              textAlign: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>
+              Map collapsed to save data and keep page light. Click to view 4 active village hotspots.
+            </span>
+          </div>
+        )}
+      </section>
 
       {/* 14. Interactive 5-Step Story Pipeline (Krishi Darpan Workflow) */}
       <section

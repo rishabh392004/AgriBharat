@@ -468,7 +468,7 @@ export default function KrishiDarpanPosterLanding() {
 
                     {/* 🧮 1. DOSAGE CALCULATOR BUTTON */}
                     <button
-                        onClick={() => setDosageModalOpen(true)}
+                        onClick={() => router.push('/farmer')}
                         className="hover-lift"
                         style={{
                             backgroundColor: 'rgba(245, 197, 24, 0.15)',
@@ -486,7 +486,7 @@ export default function KrishiDarpanPosterLanding() {
 
                     {/* 🛡️ 2. PMFBY INSURANCE BUTTON */}
                     <button
-                        onClick={() => setInsuranceModalOpen(true)}
+                        onClick={() => router.push('/farmer/crop-health-passport')}
                         className="hover-lift"
                         style={{
                             backgroundColor: 'rgba(255, 46, 136, 0.15)',
@@ -504,7 +504,7 @@ export default function KrishiDarpanPosterLanding() {
 
                     {/* 🌤️ 3. SPRAY WEATHER BUTTON */}
                     <button
-                        onClick={() => setWeatherModalOpen(true)}
+                        onClick={() => router.push('/farmer')}
                         className="hover-lift"
                         style={{
                             backgroundColor: 'rgba(5, 31, 23, 0.8)',
@@ -522,7 +522,7 @@ export default function KrishiDarpanPosterLanding() {
 
                     {/* 🛒 4. STORE PRICES BUTTON */}
                     <button
-                        onClick={() => setMandiModalOpen(true)}
+                        onClick={() => router.push('/farmer/help')}
                         className="hover-lift"
                         style={{
                             backgroundColor: '#FF2E88',

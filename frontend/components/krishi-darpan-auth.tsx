@@ -771,9 +771,10 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
   const [activeRole, setActiveRole] = useState<'farmer' | 'officer'>('farmer')
 
   // Signin fields
-  const [loginPhone, setLoginPhone] = useState('9876543210')
-  const [loginPassword, setLoginPassword] = useState('kisan123')
+  const [loginPhone, setLoginPhone] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
   const [showLoginPass, setShowLoginPass] = useState(false)
+  const [loginError, setLoginError] = useState('')
 
   // Signup fields
   const [regName, setRegName] = useState('')
@@ -782,6 +783,7 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
   const [regPassword, setRegPassword] = useState('')
   const [regPassword2, setRegPassword2] = useState('')
   const [showRegPass, setShowRegPass] = useState(false)
+  const [regError, setRegError] = useState('')
 
   const [busy, setBusy] = useState(false)
   const [signedIn, setSignedIn] = useState(false)
@@ -818,13 +820,7 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
 
   const handleRoleSwitch = (role: 'farmer' | 'officer') => {
     setActiveRole(role)
-    if (role === 'farmer') {
-      setLoginPhone('9876543210')
-      setLoginPassword('kisan123')
-    } else {
-      setLoginPhone('9811122233')
-      setLoginPassword('officer123')
-    }
+    setLoginError('')
   }
 
   const completeAuth = async (user: Awaited<ReturnType<typeof authService.login>>) => {
@@ -836,8 +832,19 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoginError('')
     if (!loginPhone.trim()) {
-      toast('Please enter your mobile number or email')
+      const msg = 'Please enter your mobile number or email'
+      setLoginError(msg)
+      toast(msg)
+      document.getElementById('login-phone')?.focus()
+      return
+    }
+    if (!loginPassword) {
+      const msg = 'Please enter your password'
+      setLoginError(msg)
+      toast(msg)
+      document.getElementById('login-password')?.focus()
       return
     }
     setBusy(true)
@@ -845,7 +852,8 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
       const user = await authService.login(loginPhone.trim(), loginPassword)
       await completeAuth(user)
     } catch {
-      toast('Sign in failed. Using demo profile.')
+      setLoginError('Authentication failed. Please check your credentials or try Demo Access.')
+      toast('Sign in failed. You can explore using Demo Access below.')
     } finally {
       setBusy(false)
     }
@@ -853,13 +861,27 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setRegError('')
     const cleanPhone = regPhone.trim()
-    if (!cleanPhone) {
-      toast('Please enter a valid mobile number')
+    if (!cleanPhone || cleanPhone.length < 10) {
+      const msg = 'Please enter a valid 10-digit mobile number'
+      setRegError(msg)
+      toast(msg)
+      document.getElementById('signup-phone')?.focus()
       return
     }
-    if (regPassword && regPassword2 && regPassword !== regPassword2) {
-      toast('Passwords do not match')
+    if (!regPassword || regPassword.length < 8) {
+      const msg = 'Use at least 8 characters with a mix of letters and numbers.'
+      setRegError(msg)
+      toast(msg)
+      document.getElementById('signup-password')?.focus()
+      return
+    }
+    if (regPassword !== regPassword2) {
+      const msg = 'Passwords do not match'
+      setRegError(msg)
+      toast(msg)
+      document.getElementById('signup-password-confirm')?.focus()
       return
     }
     setBusy(true)
@@ -871,12 +893,13 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
       const user = await authService.register(
         cleanName,
         cleanPhone,
-        regPassword || 'kisan123',
+        regPassword,
         resolvedFarmName
       )
       toast(`Welcome, ${user.name}! Account created.`)
       await completeAuth(user)
     } catch {
+      setRegError('Registration could not be completed. Please try again.')
       toast('Registration failed. Please try again.')
     } finally {
       setBusy(false)
@@ -1140,72 +1163,99 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
 
           {/* SIGN IN FORM */}
           {activeTab === 'signin' && (
-            <form className="kd-form" onSubmit={handleLoginSubmit}>
+            <form className="kd-form" onSubmit={handleLoginSubmit} noValidate>
               {/* Portal/Role Selection */}
-              <div className="kd-role-switch">
+              <div className="kd-role-switch" role="radiogroup" aria-label="Portal selection">
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={activeRole === 'farmer'}
                   className={`kd-role-btn ${activeRole === 'farmer' ? 'active-farmer' : ''}`}
                   onClick={() => handleRoleSwitch('farmer')}
                 >
-                  <Sprout size={14} />
+                  <Sprout size={14} aria-hidden="true" />
                   <span>Farmer Portal</span>
                 </button>
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={activeRole === 'officer'}
                   className={`kd-role-btn ${activeRole === 'officer' ? 'active-officer' : ''}`}
                   onClick={() => handleRoleSwitch('officer')}
                 >
-                  <ShieldCheck size={14} />
+                  <ShieldCheck size={14} aria-hidden="true" />
                   <span>Officer Desk</span>
                 </button>
               </div>
 
+              {loginError && (
+                <div
+                  id="login-error-msg"
+                  role="alert"
+                  className="p-2.5 rounded-lg bg-rose-950/80 border border-rose-500/60 text-rose-200 text-xs font-semibold flex items-center gap-2"
+                >
+                  <span aria-hidden="true">⚠️</span>
+                  <span>{loginError}</span>
+                </div>
+              )}
+
               {/* Mobile / Identifier */}
               <div className="kd-field-group">
-                <label>Mobile Number or Email</label>
+                <label htmlFor="login-phone">Mobile Number or Email</label>
                 <div className="kd-input-wrap">
-                  <div className="kd-input-prefix">
+                  <div className="kd-input-prefix" aria-hidden="true">
                     <span>🇮🇳</span>
                     <span>+91</span>
                   </div>
                   <input
+                    id="login-phone"
+                    name="identifier"
                     type="text"
                     value={loginPhone}
                     onChange={(e) => setLoginPhone(e.target.value)}
-                    placeholder="9876543210"
+                    placeholder="Enter mobile or email"
+                    aria-required="true"
+                    aria-invalid={Boolean(loginError)}
+                    aria-describedby={loginError ? 'login-error-msg' : undefined}
+                    autoComplete="username"
                     required
                   />
-                  <Phone size={16} className="kd-input-icon" />
+                  <Phone size={16} className="kd-input-icon" aria-hidden="true" />
                 </div>
               </div>
 
               {/* Password */}
               <div className="kd-field-group">
-                <label>Password</label>
+                <label htmlFor="login-password">Password</label>
                 <div className="kd-input-wrap">
                   <input
+                    id="login-password"
+                    name="password"
                     type={showLoginPass ? 'text' : 'password'}
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
+                    aria-required="true"
+                    aria-invalid={Boolean(loginError)}
+                    aria-describedby={loginError ? 'login-error-msg' : undefined}
+                    autoComplete="current-password"
                     required
                   />
                   <button
                     type="button"
                     className="kd-input-icon-btn"
                     onClick={() => setShowLoginPass(!showLoginPass)}
-                    aria-label="Toggle password visibility"
+                    aria-label={showLoginPass ? 'Hide password' : 'Show password'}
                   >
-                    {showLoginPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showLoginPass ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
                   </button>
                 </div>
               </div>
 
               {/* Remember Me & Forgot Password */}
               <div className="kd-row-between">
-                <label className="kd-remember">
-                  <input type="checkbox" defaultChecked />
+                <label className="kd-remember" htmlFor="login-remember">
+                  <input id="login-remember" type="checkbox" defaultChecked />
                   <span>Remember me</span>
                 </label>
                 <button
@@ -1218,23 +1268,28 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
               </div>
 
               {/* Submit Button */}
-              <button type="submit" className="kd-btn-primary" disabled={busy}>
+              <button
+                type="submit"
+                className="kd-btn-primary"
+                disabled={busy}
+                aria-busy={busy}
+              >
                 {busy ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
                     <span>Signing in...</span>
                   </>
                 ) : (
                   <>
                     <span>Sign In to {activeRole === 'farmer' ? 'Farmer Portal' : 'Officer Desk'}</span>
-                    <ArrowRight size={16} />
+                    <ArrowRight size={16} aria-hidden="true" />
                   </>
                 )}
               </button>
 
-              <div className="kd-divider">or quick 1-tap demo credentials</div>
+              <div className="kd-divider">or explore with instant demo access</div>
 
-              {/* 1-Tap Demo Credentials */}
+              {/* 1-Tap Demo Access */}
               <div className="kd-demo-row">
                 <button
                   type="button"
@@ -1247,8 +1302,8 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
                   }}
                 >
                   <div className="kd-demo-title">
-                    <Sprout size={14} />
-                    <span>Farmer Demo</span>
+                    <Sprout size={14} aria-hidden="true" />
+                    <span>Farmer Demo Access</span>
                   </div>
                   <div className="kd-demo-sub">Rameshwar Patil (Nashik)</div>
                 </button>
@@ -1264,8 +1319,8 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
                   }}
                 >
                   <div className="kd-demo-title">
-                    <ShieldCheck size={14} />
-                    <span>Officer Demo</span>
+                    <ShieldCheck size={14} aria-hidden="true" />
+                    <span>Officer Demo Access</span>
                   </div>
                   <div className="kd-demo-sub">Sanjay Deshmukh (Agri Hub)</div>
                 </button>
@@ -1275,106 +1330,144 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
 
           {/* SIGN UP FORM */}
           {activeTab === 'signup' && (
-            <form className="kd-form" onSubmit={handleSignupSubmit}>
+            <form className="kd-form" onSubmit={handleSignupSubmit} noValidate>
+              {regError && (
+                <div
+                  id="signup-error-msg"
+                  role="alert"
+                  className="p-2.5 rounded-lg bg-rose-950/80 border border-rose-500/60 text-rose-200 text-xs font-semibold flex items-center gap-2"
+                >
+                  <span aria-hidden="true">⚠️</span>
+                  <span>{regError}</span>
+                </div>
+              )}
+
               {/* Full Name */}
               <div className="kd-field-group">
-                <label>Full Name</label>
+                <label htmlFor="signup-name">Full Name</label>
                 <div className="kd-input-wrap">
                   <input
+                    id="signup-name"
+                    name="name"
                     type="text"
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
                     placeholder="e.g. Ramesh Patel"
+                    aria-required="true"
+                    autoComplete="name"
                     required
                   />
-                  <User size={16} className="kd-input-icon" />
+                  <User size={16} className="kd-input-icon" aria-hidden="true" />
                 </div>
               </div>
 
               {/* Farm Name (Optional) */}
               <div className="kd-field-group">
-                <label>
+                <label htmlFor="signup-farm">
                   Farm Name <span style={{ opacity: 0.6, fontSize: 11, fontWeight: 'normal' }}>(Optional)</span>
                 </label>
                 <div className="kd-input-wrap">
                   <input
+                    id="signup-farm"
+                    name="farmName"
                     type="text"
                     value={regFarmName}
                     onChange={(e) => setRegFarmName(e.target.value)}
                     placeholder={regName.trim() ? `${regName.trim().split(/\s+/)[0]}'s Farm` : 'e.g. Green Valley Farm'}
                   />
-                  <Building2 size={16} className="kd-input-icon" />
+                  <Building2 size={16} className="kd-input-icon" aria-hidden="true" />
                 </div>
               </div>
 
               {/* Mobile Phone */}
               <div className="kd-field-group">
-                <label>Mobile Number</label>
+                <label htmlFor="signup-phone">Mobile Number</label>
                 <div className="kd-input-wrap">
-                  <div className="kd-input-prefix">
+                  <div className="kd-input-prefix" aria-hidden="true">
                     <span>🇮🇳</span>
                     <span>+91</span>
                   </div>
                   <input
+                    id="signup-phone"
+                    name="tel"
                     type="tel"
                     value={regPhone}
                     onChange={(e) => setRegPhone(e.target.value)}
                     placeholder="10-digit mobile number"
                     inputMode="tel"
+                    aria-required="true"
+                    autoComplete="tel"
                     required
                   />
-                  <Phone size={16} className="kd-input-icon" />
+                  <Phone size={16} className="kd-input-icon" aria-hidden="true" />
                 </div>
               </div>
 
               {/* Password */}
               <div className="kd-field-group">
-                <label>Password</label>
+                <label htmlFor="signup-password">Password</label>
                 <div className="kd-input-wrap">
                   <input
+                    id="signup-password"
+                    name="new-password"
                     type={showRegPass ? 'text' : 'password'}
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="Min 4 characters (default: kisan123)"
+                    placeholder="Create a secure password"
+                    aria-describedby="password-policy-hint signup-error-msg"
+                    aria-required="true"
+                    autoComplete="new-password"
                     required
                   />
                   <button
                     type="button"
                     className="kd-input-icon-btn"
                     onClick={() => setShowRegPass(!showRegPass)}
-                    aria-label="Toggle password visibility"
+                    aria-label={showRegPass ? 'Hide password' : 'Show password'}
                   >
-                    {showRegPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showRegPass ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
                   </button>
                 </div>
+                <p id="password-policy-hint" className="text-[11px] text-emerald-200/90 mt-1 m-0">
+                  Use at least 8 characters with a mix of letters and numbers.
+                </p>
               </div>
 
               {/* Confirm Password */}
               <div className="kd-field-group">
-                <label>Confirm Password</label>
+                <label htmlFor="signup-password-confirm">Confirm Password</label>
                 <div className="kd-input-wrap">
                   <input
+                    id="signup-password-confirm"
+                    name="confirm-password"
                     type={showRegPass ? 'text' : 'password'}
                     value={regPassword2}
                     onChange={(e) => setRegPassword2(e.target.value)}
                     placeholder="Re-enter password"
+                    aria-required="true"
+                    autoComplete="new-password"
                     required
                   />
-                  <Lock size={16} className="kd-input-icon" />
+                  <Lock size={16} className="kd-input-icon" aria-hidden="true" />
                 </div>
               </div>
 
               {/* Submit Button */}
-              <button type="submit" className="kd-btn-primary" disabled={busy}>
+              <button
+                type="submit"
+                className="kd-btn-primary"
+                disabled={busy}
+                aria-busy={busy}
+              >
                 {busy ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
                     <span>Creating Account...</span>
                   </>
                 ) : (
                   <>
                     <span>Create Farmer Account</span>
-                    <ArrowRight size={16} />
+                    <ArrowRight size={16} aria-hidden="true" />
                   </>
                 )}
               </button>

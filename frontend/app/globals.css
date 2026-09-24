@@ -25,6 +25,39 @@
 
 * { box-sizing: border-box; }
 html, body { min-height: 100%; }
+
+/* WCAG AA Visible Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(43, 122, 77, 0.25);
+}
+
+/* Accessibility: Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 body {
   margin: 0;
   color: var(--ink);
@@ -1904,8 +1937,20 @@ img { max-width: 100%; }
   .passport-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .passport-hero-card { flex-direction: column; align-items: stretch; }
   .passport-hero-actions { flex-direction: column; width: 100%; }
-  .passport-hero-actions button { width: 100% !important; justify-content: center; }
+  .passport-hero-actions button { width: 100% !important; justify-content: center; min-height: 44px; }
   .passport-id-header { flex-direction: column; align-items: flex-start; }
   .passport-number-badge { width: 100%; text-align: left; }
+}
+
+@media (max-width: 480px) {
+  .page { padding: 12px 10px 100px; }
+  .passport-summary-grid { grid-template-columns: 1fr; }
+  .passport-timeline-card { min-width: 0; padding: 14px; overflow-wrap: break-word; }
+  .passport-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .passport-conf-box { text-align: left; width: 100%; }
+  .passport-conf-box > div { justify-content: flex-start !important; }
+  .weather-grid-metrics { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: 1fr; }
+  .dock a, .dock button { min-width: 44px; min-height: 44px; }
 }
 

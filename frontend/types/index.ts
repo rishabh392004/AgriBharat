@@ -99,6 +99,8 @@ export interface Prediction {
   attentionPoints?: AttentionPoint[]
   voiceAdvisoryUrl?: string
   voiceAdvisoryDuration?: string
+  isDemo?: boolean
+  serviceUnavailable?: boolean
 }
 
 export interface NearbyPlace {
@@ -151,7 +153,7 @@ export interface RegionalTrend {
   farms: number
 }
 
-export type ReviewStatus = 'Pending' | 'Selected' | 'Rejected'
+export type ReviewStatus = 'Pending' | 'Selected' | 'Rejected' | 'RescanRequested'
 export type RiskLabel = 'Low' | 'Medium' | 'High' | 'Critical'
 
 export interface ReviewRecord {
@@ -171,6 +173,7 @@ export interface ReviewRecord {
   recommendations: string[]
   weatherContext: string
   rejectionReason?: string
+  rescanReason?: string
 }
 
 export interface ForecastDay {
@@ -207,7 +210,7 @@ export interface PassportRecord {
   aiConfidence: number
   severity: Severity
   riskLevel: RiskLevel
-  verificationStatus: 'Officer Verified' | 'Awaiting Verification' | 'Rejected'
+  verificationStatus: 'Officer Verified' | 'Awaiting Verification' | 'Rejected' | 'Re-scan Requested'
   locationName: string
   latitude: number
   longitude: number
@@ -218,6 +221,7 @@ export interface PassportRecord {
   recommendedAction: string
   symptoms: string[]
   verifiedAt: string
+  dateVerified?: string
 }
 
 export interface CropHealthPassport {

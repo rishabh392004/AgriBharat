@@ -35,7 +35,7 @@ export function NearbyMap({
 }) {
   const target = focus ?? { lat: center.lat, lng: center.lng }
   return (
-    <MapContainer className="leaflet-host" center={[center.lat, center.lng]} zoom={13} scrollWheelZoom>
+    <MapContainer className="leaflet-host" center={[center.lat, center.lng]} zoom={13} scrollWheelZoom={false}>
       <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FlyTo lat={target.lat} lng={target.lng} />
       {places.map((place) => (

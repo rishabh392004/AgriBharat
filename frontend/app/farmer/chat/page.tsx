@@ -415,7 +415,7 @@ function ChatInner() {
           )}
 
           {/* Messages */}
-          <div className="cma">
+          <div className="cma" role="log" aria-live="polite" aria-label="Agronomist consultation dialogue">
             {qCount>0&&(
               <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:7, fontSize:11, color:'#8aac98', fontWeight:600 }}>
                 <Sparkles size={10}/><span>{qCount} question{qCount!==1?'s':''} this session</span>
@@ -455,9 +455,12 @@ function ChatInner() {
             })}
 
             {typing&&(
-              <div className="mai">
+              <div className="mai" role="status" aria-live="polite">
                 <div className="ama"><Bot size={15} color="#fff"/></div>
-                <div className="bai"><Dots/></div>
+                <div className="bai">
+                  <span className="sr-only">Agronomist consultant is thinking...</span>
+                  <Dots/>
+                </div>
               </div>
             )}
 
@@ -474,15 +477,26 @@ function ChatInner() {
 
           {/* Composer */}
           <div className="ccw">
-            <form onSubmit={e=>{e.preventDefault();send(input)}}>
+            <form onSubmit={e=>{e.preventDefault();if(typing||!input.trim())return;send(input)}}>
               <div className="cin">
-                <button type="button" className="ib" onClick={()=>fileRef.current?.click()} title="Attach crop photo"><ImagePlus size={17}/></button>
-                <input ref={fileRef} hidden type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f)return;send('📷 Please analyze this crop leaf photo.',URL.createObjectURL(f))}}/>
-                <textarea ref={inputRef} className="cta" value={input} onChange={resize} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(input)}}} placeholder={locale==='mr'?'मराठीत प्रश्न विचारा किंवा माइक दाबून बोला...':locale==='hi'?'हिन्दी में सवाल पूछें या माइक दबाकर बोलें...':`Ask in ${localeLabels[locale]} or press mic...`} rows={1}/>
-                <button type="button" className="ib" onClick={startVoice} title={listening?'Stop':'Speak'} style={listening?{background:'#fef2f2',color:'#dc2626',border:'1.5px solid rgba(220,38,38,.4)',animation:'listenAnim 1s ease-in-out infinite'}:undefined}>
+                <label htmlFor="crop-photo-input" className="sr-only">Attach crop leaf photo</label>
+                <button type="button" className="ib" onClick={()=>fileRef.current?.click()} title="Attach crop photo" aria-label="Attach crop photo"><ImagePlus size={17}/></button>
+                <input id="crop-photo-input" ref={fileRef} hidden type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f)return;send('📷 Please analyze this crop leaf photo.',URL.createObjectURL(f))}}/>
+                <label htmlFor="chat-message-input" className="sr-only">Type agronomy question</label>
+                <textarea id="chat-message-input" ref={inputRef} className="cta" value={input} onChange={resize} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!typing&&input.trim())send(input)}}} placeholder={locale==='mr'?'मराठीत प्रश्न विचारा किंवा माइक दाबून बोला...':locale==='hi'?'हिन्दी में सवाल पूछें या माइक दबाकर बोलें...':`Ask in ${localeLabels[locale]} or press mic...`} rows={1}/>
+                <button type="button" className="ib" onClick={startVoice} title={listening?'Stop voice input':'Speak query'} aria-label={listening?'Stop voice input':'Speak query'} style={listening?{background:'#fef2f2',color:'#dc2626',border:'1.5px solid rgba(220,38,38,.4)',animation:'listenAnim 1s ease-in-out infinite'}:undefined}>
                   {listening?<MicOff size={17}/>:<Mic size={17}/>}
                 </button>
-                <button type="submit" className="sb" disabled={!input.trim()} aria-label="Send"><Send size={15}/></button>
+                <button
+                  type="submit"
+                  className="sb"
+                  disabled={!input.trim() || typing}
+                  aria-busy={typing}
+                  aria-label={typing ? "Agronomist consultant is thinking..." : "Send consultation question"}
+                  title={typing ? "Consultant is thinking..." : "Send question"}
+                >
+                  <Send size={15}/>
+                </button>
               </div>
               <p style={{ margin:'8px 0 0', textAlign:'center', fontSize:10.5, color:'#8aac98', display:'flex', alignItems:'center', justifyContent:'center', gap:5 }}>
                 <Sparkles size={10}/>Kisan Salahkar · {localeLabels[locale]} ({BCP47[locale]}) · Enter to send · Shift+Enter for new line

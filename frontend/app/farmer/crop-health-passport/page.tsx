@@ -29,6 +29,13 @@ import { SeasonReportModal } from '@/components/season-report-modal'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 import type { CropHealthPassport, PassportRecord } from '@/types'
+import {
+  AccessibleModal,
+  StatusBadge,
+  RiskBadge,
+  SecondaryButton,
+  PrimaryButton,
+} from '@/components/ui/design-system'
 
 export default function CropHealthPassportPage() {
   const { t, locale } = useI18n()
@@ -266,9 +273,17 @@ export default function CropHealthPassportPage() {
                       <span className="passport-date-badge">
                         <Calendar size={13} /> {record.date}
                       </span>
-                      <span className="passport-status-tag verified">
-                        <ShieldCheck size={14} /> ✓ {t('verifiedByOfficer')}
-                      </span>
+                      <StatusBadge
+                        status={
+                          record.verificationStatus === 'Officer Verified'
+                            ? 'Officer Verified'
+                            : record.verificationStatus === 'Rejected'
+                            ? 'Rejected'
+                            : record.verificationStatus === 'Re-scan Requested'
+                            ? 'Re-scan Requested'
+                            : 'Awaiting Officer Verification'
+                        }
+                      />
                     </div>
                     <h3 style={{ margin: '6px 0 2px', fontSize: 20, color: 'var(--ink)' }}>
                       {record.crop} — <span style={{ color: record.disease === 'Healthy' ? '#2b7a4d' : 'var(--ink)' }}>{record.disease}</span>
@@ -303,6 +318,29 @@ export default function CropHealthPassportPage() {
                   </div>
                 </div>
 
+                {/* Unverified AI Notice vs Officer Certified Sign-off */}
+                {record.verificationStatus !== 'Officer Verified' && (
+                  <div
+                    style={{
+                      marginTop: 12,
+                      padding: '10px 14px',
+                      background: '#fffbeb',
+                      border: '1px solid #fde68a',
+                      borderRadius: 12,
+                      fontSize: 12,
+                      color: '#92400e',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <AlertTriangle size={15} style={{ flexShrink: 0, color: '#d97706' }} />
+                    <span>
+                      <strong>Preliminary AI Scan:</strong> Awaiting district agricultural officer field review. This entry is not yet certified for official crop insurance submissions.
+                    </span>
+                  </div>
+                )}
+
                 {/* Symptoms */}
                 {record.symptoms && record.symptoms.length > 0 && (
                   <div style={{ marginTop: 12 }}>
@@ -319,28 +357,30 @@ export default function CropHealthPassportPage() {
                   </div>
                 )}
 
-                {/* Officer Sign-off & Notes */}
-                <div className="passport-officer-box">
-                  <div className="passport-officer-info">
-                    <UserCheck size={18} className="text-[#2b7a4d]" />
-                    <div>
-                      <strong style={{ fontSize: 13, color: 'var(--forest)' }}>
-                        {record.officerName}
-                      </strong>
-                      <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)' }}>
-                        {record.officerDesignation} • {t('verified')} {record.verifiedAt}
-                      </span>
+                {/* Officer Sign-off & Notes (Rendered when officer verified) */}
+                {record.verificationStatus === 'Officer Verified' && (
+                  <div className="passport-officer-box">
+                    <div className="passport-officer-info">
+                      <UserCheck size={18} className="text-[#2b7a4d]" />
+                      <div>
+                        <strong style={{ fontSize: 13, color: 'var(--forest)' }}>
+                          {record.officerName}
+                        </strong>
+                        <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)' }}>
+                          {record.officerDesignation} • {t('verified')} {record.verifiedAt}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="passport-notes-content">
+                      <p style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--ink)' }}>
+                        <strong>{t('officerNote')}:</strong> {record.officerNotes}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#1b3d2a' }}>
+                        <strong>{t('prescribedTreatment')}:</strong> {record.recommendedAction}
+                      </p>
                     </div>
                   </div>
-                  <div className="passport-notes-content">
-                    <p style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--ink)' }}>
-                      <strong>{t('officerNote')}:</strong> {record.officerNotes}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 13, color: '#1b3d2a' }}>
-                      <strong>{t('prescribedTreatment')}:</strong> {record.recommendedAction}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           ))
@@ -404,63 +444,69 @@ export default function CropHealthPassportPage() {
       </section>
 
       {/* QR Code Verification Modal */}
-      {qrModalOpen && (
-        <div className="rq-modal-overlay" onClick={() => setQrModalOpen(false)}>
-          <div className="rq-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440, textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span className="kicker" style={{ color: '#2b7a4d', margin: 0 }}>PUBLIC VERIFICATION QR</span>
+      <AccessibleModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        title="Scan to Verify Passport"
+        description={`Public verification reference for Passport ID: ${passport.passportId}`}
+        maxWidth="sm"
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              background: '#ffffff',
+              padding: 16,
+              borderRadius: 20,
+              border: '2px solid #2b7a4d',
+              display: 'inline-block',
+              boxShadow: '0 8px 24px rgba(43,122,77,0.12)',
+            }}
+          >
+            <QRCodeSVG value={publicVerifyUrl} size={180} fgColor="#1b3d2a" />
+          </div>
+
+          <div
+            style={{
+              marginTop: 14,
+              background: '#f5faf7',
+              border: '1px solid #dcebd8',
+              borderRadius: 12,
+              padding: '10px 14px',
+              textAlign: 'left',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: 'var(--muted)', wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                {publicVerifyUrl}
+              </span>
               <button
                 type="button"
-                onClick={() => setQrModalOpen(false)}
-                style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--muted)' }}
+                className="ghost"
+                onClick={copyVerificationLink}
+                style={{ padding: '4px 8px', fontSize: 11, flexShrink: 0 }}
               >
-                <X size={18} />
+                {copied ? <Check size={12} className="text-[#2b7a4d]" /> : <Copy size={12} />}
+                {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
+          </div>
 
-            <h2 style={{ margin: '0 0 6px', fontSize: 20 }}>Scan to Verify Passport</h2>
-            <p className="muted" style={{ margin: '0 0 16px', fontSize: 13 }}>
-              Public verification reference for Passport ID: <strong>{passport.passportId}</strong>
-            </p>
+          <p className="muted" style={{ fontSize: 11, margin: '14px 0 0', lineHeight: 1.4 }}>
+            🔒 <strong>Safe Public Reference:</strong> This QR code encodes only the public verification URL. It does not expose private phone numbers, Aadhaar, or sensitive credentials.
+          </p>
 
-            <div style={{ background: '#ffffff', padding: 20, borderRadius: 20, border: '2px solid #2b7a4d', display: 'inline-block', boxShadow: '0 8px 24px rgba(43,122,77,0.12)' }}>
-              <QRCodeSVG value={publicVerifyUrl} size={200} fgColor="#1b3d2a" />
-            </div>
-
-            <div style={{ marginTop: 14, background: '#f5faf7', border: '1px solid #dcebd8', borderRadius: 12, padding: '10px 14px', textAlign: 'left' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11, color: 'var(--muted)', wordBreak: 'break-all', fontFamily: 'monospace' }}>
-                  {publicVerifyUrl}
-                </span>
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={copyVerificationLink}
-                  style={{ padding: '4px 8px', fontSize: 11, flexShrink: 0 }}
-                >
-                  {copied ? <Check size={12} className="text-[#2b7a4d]" /> : <Copy size={12} />}
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-            </div>
-
-            <p className="muted" style={{ fontSize: 11, margin: '14px 0 0', lineHeight: 1.4 }}>
-              🔒 <strong>Safe Public Reference:</strong> This QR code encodes only the public verification URL. It does not expose private phone numbers, Aadhaar, or sensitive credentials.
-            </p>
-
-            <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <Link
-                href={`/verify/passport/${passport.passportId}`}
-                target="_blank"
-                className="btn btn-primary"
-                style={{ width: 'auto', fontSize: 13, gap: 6 }}
-              >
-                <ExternalLink size={14} /> Open Public Page
-              </Link>
-            </div>
+          <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Link
+              href={`/verify/passport/${passport.passportId}`}
+              target="_blank"
+              className="btn btn-primary"
+              style={{ width: 'auto', fontSize: 13, gap: 6 }}
+            >
+              <ExternalLink size={14} /> Open Public Page
+            </Link>
           </div>
         </div>
-      )}
+      </AccessibleModal>
 
       {/* PMFBY Seasonal Health Passport & Insurance Report Modal */}
       <SeasonReportModal

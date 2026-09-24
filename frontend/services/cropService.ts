@@ -176,7 +176,7 @@ async function fileToDataUrl(fileOrBlob: Blob): Promise<string> {
 export async function predictCrop(
   image: File | Blob | string | null,
   crop = 'Wheat',
-  options: { latitude?: number; longitude?: number } = {}
+  options: { latitude?: number; longitude?: number; isDemoSimulation?: boolean } = {}
 ): Promise<Prediction> {
   let customImageUrl: string | undefined
   let payloadImageUrl: string | undefined
@@ -265,6 +265,7 @@ export async function predictCrop(
           actions,
           expertHelp: base.expertHelp,
           attentionPoints: base.attentionPoints,
+          isDemo: false,
         }
       }
     } catch (err: any) {
@@ -276,23 +277,31 @@ export async function predictCrop(
       ) {
         throw new Error('INVALID_FOLIAGE_DETECTED: No genuine crop leaf detected in this image. Please re-capture a clear photo of the crop leaf.')
       }
-      console.warn('[CropService] Backend /scans/analyze unavailable, using resilient fallback:', err)
+      console.warn('[CropService] Backend /scans/analyze unavailable:', err)
+
+      // Strict production safety: Do not present fake diagnosis as real when ML/backend fails!
+      if (!options.isDemoSimulation) {
+        throw new Error('SERVICE_UNAVAILABLE: We could not complete the crop analysis. Please try again.')
+      }
     }
+  } else if (!options.isDemoSimulation) {
+    throw new Error('SERVICE_UNAVAILABLE: No image provided for diagnosis.')
   }
 
-  // 2. Resilient local fallback
+  // Explicit demo simulation path (clearly badged as demo)
   await new Promise((resolve) => setTimeout(resolve, 800))
   
   return {
     ...base,
-    scanId: `SCAN-${randomSuffix}`,
-    confidence: base.confidence || Math.floor(89 + Math.random() * 9),
+    scanId: `DEMO-${randomSuffix}`,
+    confidence: base.confidence || 91,
     imageUrl: customImageUrl || base.imageUrl,
-    explanation: base.explanation || `AI detected disease patterns on your ${crop} leaf consistent with ${base.disease}.`,
+    explanation: base.explanation || `[Demo Simulation] AI detected disease patterns on your ${crop} leaf consistent with ${base.disease}.`,
     attentionPoints: base.attentionPoints || [
       { x: 45, y: 45, radius: 48, intensity: 0.94, label: 'Primary Pathogen Lesion' },
       { x: 60, y: 55, radius: 36, intensity: 0.82, label: 'Secondary Symptom Zone' },
     ],
+    isDemo: true,
   }
 }
 

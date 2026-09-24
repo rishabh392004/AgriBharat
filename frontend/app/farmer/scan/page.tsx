@@ -30,6 +30,7 @@ import { useAuth } from '@/lib/auth'
 import { toast } from '@/components/toast'
 import { detectLiveLocation } from '@/lib/location'
 import { FarmerTourVideoModal } from '@/components/farmer-tour-video-modal'
+import { ErrorState, StatusBadge } from '@/components/ui/design-system'
 
 const steps = ['stepQuality', 'stepSymptoms', 'stepDisease', 'stepSeverity', 'stepRisk'] as const
 
@@ -65,6 +66,7 @@ export default function ScanPage() {
   const [videoHelpOpen, setVideoHelpOpen] = useState(false)
   const [showRecaptureModal, setShowRecaptureModal] = useState(false)
   const [recaptureReason, setRecaptureReason] = useState('')
+  const [serviceUnavailable, setServiceUnavailable] = useState(false)
 
   // Live Camera Viewfinder State
   const [cameraActive, setCameraActive] = useState(false)
@@ -91,12 +93,26 @@ export default function ScanPage() {
   const pick = (next?: File | null) => {
     if (!next) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(next.type)) {
-      setError(t('jpegHint'))
+      setError('Invalid file type. Please upload a JPG, PNG, or WEBP image.')
+      return
+    }
+    if (next.size > 10 * 1024 * 1024) {
+      setError('File too large (limit is 10 MB). Please choose a smaller photo.')
       return
     }
     setError('')
+    setServiceUnavailable(false)
     setFile(next)
     setPreview(URL.createObjectURL(next))
+  }
+
+  const handleRemoveImage = () => {
+    setFile(null)
+    setPreview('')
+    setError('')
+    setServiceUnavailable(false)
+    if (galleryRef.current) galleryRef.current.value = ''
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
   }
 
   // Open Live Camera Viewfinder
@@ -223,12 +239,14 @@ export default function ScanPage() {
     )
   }
 
-  const analyze = async () => {
+  const analyze = async (isDemo = false) => {
     if (!file) {
       setError(t('noImage'))
       return
     }
     setRunning(true)
+    setError('')
+    setServiceUnavailable(false)
     setDoneSteps(0)
     const timers = steps.map((_, i) => setTimeout(() => setDoneSteps(i + 1), 400 * (i + 1)))
 
@@ -236,6 +254,7 @@ export default function ScanPage() {
       const result = await predictCrop(file, selectedCrop, {
         latitude: farmer.latitude,
         longitude: farmer.longitude,
+        isDemoSimulation: isDemo,
       })
       if (preview) {
         result.imageUrl = preview
@@ -275,6 +294,14 @@ export default function ScanPage() {
             : 'No genuine crop leaf detected in this photo (e.g. registration form, document, or non-plant object). Please re-capture a clear photo of your crop leaf.'
         )
         setShowRecaptureModal(true)
+      } else if (
+        msg.includes('SERVICE_UNAVAILABLE') ||
+        msg.includes('Failed to fetch') ||
+        msg.includes('NetworkError') ||
+        msg.includes('unavailable')
+      ) {
+        setServiceUnavailable(true)
+        setError('We could not complete the crop analysis. Please try again.')
       } else {
         setError(msg)
       }
@@ -553,17 +580,25 @@ export default function ScanPage() {
         </button>
       </div>
 
-      {/* Hidden Inputs */}
+      {/* Hidden Accessible Inputs */}
+      <label htmlFor="gallery-file-input" className="sr-only">
+        Upload crop leaf photo from gallery
+      </label>
       <input
+        id="gallery-file-input"
         ref={galleryRef}
-        hidden
+        className="sr-only"
         type="file"
         accept="image/jpeg,image/png,image/webp"
         onChange={(e) => pick(e.target.files?.[0])}
       />
+      <label htmlFor="camera-file-input" className="sr-only">
+        Capture crop leaf photo from camera
+      </label>
       <input
+        id="camera-file-input"
         ref={cameraInputRef}
-        hidden
+        className="sr-only"
         type="file"
         accept="image/*"
         capture="environment"
@@ -571,7 +606,11 @@ export default function ScanPage() {
       />
       <canvas ref={canvasRef} hidden />
 
-      {error && <p className="err" style={{ marginTop: 10, textAlign: 'center' }}>{error}</p>}
+      {error && !serviceUnavailable && (
+        <div role="alert" className="p-3 my-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs font-semibold text-center max-w-lg mx-auto">
+          {error}
+        </div>
+      )}
 
       {/* Live Interactive Camera Modal */}
       {cameraActive && (
@@ -742,6 +781,7 @@ export default function ScanPage() {
               Ready for {selectedCrop} Diagnosis
             </div>
             <button
+              type="button"
               className="iconish"
               style={{
                 position: 'absolute',
@@ -751,49 +791,87 @@ export default function ScanPage() {
                 color: 'white',
                 cursor: 'pointer',
               }}
-              onClick={() => {
-                setFile(null)
-                setPreview('')
-              }}
-              aria-label={t('remove')}
+              onClick={handleRemoveImage}
+              aria-label="Remove uploaded image"
+              title="Remove image"
             >
-              <X size={18} />
+              <X size={18} aria-hidden="true" />
             </button>
           </div>
 
-          {/* Running Step Status */}
+          {/* Running Step Status with Accessible Live Region */}
           {running && (
-            <ul className="steps">
-              <p className="kicker" style={{ margin: '0 0 6px' }}>
-                {t('analyzing')}
-              </p>
-              {steps.map((key, i) => (
-                <li key={key} className={i < doneSteps ? 'done' : ''}>
-                  <Check size={18} /> {t(key)}
-                </li>
-              ))}
-            </ul>
+            <div role="status" aria-live="polite" className="mt-4">
+              <ul className="steps">
+                <p className="kicker" style={{ margin: '0 0 6px' }}>
+                  {t('analyzing')}
+                </p>
+                {steps.map((key, i) => (
+                  <li key={key} className={i < doneSteps ? 'done' : ''}>
+                    <Check size={18} aria-hidden="true" /> {t(key)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Service Unavailable Truthful Error State */}
+          {serviceUnavailable && (
+            <div style={{ marginTop: 20 }}>
+              <ErrorState
+                title="Diagnosis unavailable"
+                message="We could not complete the crop analysis because the AI diagnostic service is currently unavailable. Please try again."
+                onRetry={() => analyze(false)}
+                retryLabel="Retry Diagnosis"
+                onSecondary={handleRemoveImage}
+                secondaryLabel="Upload Another Image"
+                secondaryHref="/farmer"
+              />
+              <div style={{ textAlign: 'center', marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => analyze(true)}
+                  className="ghost"
+                  style={{
+                    fontSize: 12,
+                    textDecoration: 'underline',
+                    color: 'var(--forest)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: 'none',
+                    border: 'none',
+                  }}
+                >
+                  Explore with simulated preview diagnosis (Demo Simulation Mode)
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Action Trigger Buttons */}
-          <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-start' }}>
-            <button
-              className="btn btn-ghost"
-              type="button"
-              onClick={() => galleryRef.current?.click()}
-              disabled={running}
-            >
-              {t('change')} Image
-            </button>
-            <button
-              className="btn btn-primary"
-              style={{ width: 'auto', minWidth: 240, fontSize: 15 }}
-              disabled={running}
-              onClick={analyze}
-            >
-              <ScanLine size={18} /> {running ? t('analyzing') : `⚡ ${t('analyze')} ${selectedCrop}`}
-            </button>
-          </div>
+          {!serviceUnavailable && (
+            <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-start' }}>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={() => galleryRef.current?.click()}
+                disabled={running}
+              >
+                {t('change')} Image
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                style={{ width: 'auto', minWidth: 240, fontSize: 15 }}
+                disabled={running}
+                aria-busy={running}
+                onClick={() => analyze(false)}
+              >
+                <ScanLine size={18} aria-hidden="true" />
+                <span>{running ? t('analyzing') : `⚡ ${t('analyze')} ${selectedCrop}`}</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
