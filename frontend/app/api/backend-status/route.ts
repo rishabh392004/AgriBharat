@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
+  const nodeBase = (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/+$/, '').replace(/\/api\/v1$/, '')
+  const pyBase = (process.env.PYTHON_ML_URL || process.env.NEXT_PUBLIC_ML_URL || 'http://localhost:8001').replace(/\/+$/, '')
+
   const status = {
     frontend: 'healthy',
     timestamp: new Date().toISOString(),
     nodeBackend: {
       status: 'offline',
-      url: 'http://localhost:5000',
+      url: nodeBase,
       latencyMs: 0,
     },
     chatbotAi: {
       status: 'offline',
-      url: 'http://localhost:8001',
+      url: pyBase,
       latencyMs: 0,
     },
   }
@@ -21,7 +24,7 @@ export async function GET() {
     const start = Date.now()
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 2000)
-    const res = await fetch('http://localhost:5000/health', { signal: controller.signal })
+    const res = await fetch(`${nodeBase}/health`, { signal: controller.signal })
     clearTimeout(timeout)
     status.nodeBackend.latencyMs = Date.now() - start
     status.nodeBackend.status = res.ok ? 'connected' : 'error'
@@ -31,7 +34,7 @@ export async function GET() {
       const start = Date.now()
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 2000)
-      const res = await fetch('http://localhost:5000/api/v1/auth/login', {
+      const res = await fetch(`${nodeBase}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'ping@ping.com', password: 'ping' }),
@@ -51,7 +54,7 @@ export async function GET() {
     const start = Date.now()
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 2000)
-    const res = await fetch('http://localhost:8001/health', { signal: controller.signal })
+    const res = await fetch(`${pyBase}/health`, { signal: controller.signal })
     clearTimeout(timeout)
     status.chatbotAi.latencyMs = Date.now() - start
     status.chatbotAi.status = res.ok ? 'connected' : 'offline'
@@ -61,3 +64,4 @@ export async function GET() {
 
   return NextResponse.json(status)
 }
+

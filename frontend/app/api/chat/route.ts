@@ -98,12 +98,15 @@ export async function POST(req: Request) {
       ? `[Crop Context: ${contextDisease}, Language: ${locale}] ${question}`
       : `[Language: ${locale}] ${question}`
 
-    // 1. Attempt Node Express Backend Gateway on Port 5000
+    // 1. Attempt Node Express Backend Gateway
     try {
       const nodeController = new AbortController()
       const nodeTimeout = setTimeout(() => nodeController.abort(), 6000)
 
-      const nodeRes = await fetch('http://localhost:5000/api/v1/chatbot/ask', {
+      const apiBaseUrl = (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/+$/, '')
+      const nodeChatEndpoint = apiBaseUrl.endsWith('/api/v1') ? `${apiBaseUrl}/chatbot/ask` : `${apiBaseUrl}/api/v1/chatbot/ask`
+
+      const nodeRes = await fetch(nodeChatEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,7 +127,7 @@ export async function POST(req: Request) {
             return NextResponse.json({
               status: 'success',
               answer: nodeData.answer,
-              source: 'node-backend:5000',
+              source: 'node-backend',
             })
           }
         }
@@ -133,12 +136,15 @@ export async function POST(req: Request) {
       // Proceed to direct Python Chatbot fallback
     }
 
-    // 2. Direct Python Chatbot Server on Port 8001
+    // 2. Direct Python Chatbot Server
     try {
       const pyController = new AbortController()
       const pyTimeout = setTimeout(() => pyController.abort(), 8000)
 
-      const pyRes = await fetch('http://localhost:8001/ask', {
+      const pyBaseUrl = (process.env.PYTHON_ML_URL || process.env.NEXT_PUBLIC_ML_URL || 'http://localhost:8001').replace(/\/+$/, '')
+      const pyChatEndpoint = `${pyBaseUrl}/ask`
+
+      const pyRes = await fetch(pyChatEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
