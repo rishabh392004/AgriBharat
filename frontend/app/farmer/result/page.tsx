@@ -8,11 +8,11 @@ import { checkDiagnosisVerification } from '@/services/passportService'
 import type { Prediction, PassportRecord } from '@/types'
 
 export default function ResultPage() {
-  const [result, setResult] = useState<Prediction>(predictionsByCrop.Wheat)
+  const [result, setResult] = useState<Prediction>(predictionsByCrop.Tomato)
   const [verifiedRecord, setVerifiedRecord] = useState<PassportRecord | null>(null)
 
   useEffect(() => {
-    const last = readLastPrediction() ?? predictionsByCrop.Wheat
+    const last = readLastPrediction() ?? predictionsByCrop.Tomato
     setResult(last)
     const record = checkDiagnosisVerification(last.scanId)
     setVerifiedRecord(record)

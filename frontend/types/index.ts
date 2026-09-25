@@ -90,6 +90,13 @@ export interface Prediction {
   precautions: string[]
   actions: string[]
   expertHelp: string
+  whatHappened?: string
+  howToReduce?: string
+  biologicalControl?: string
+  chemicalControl?: string
+  mechanicalControl?: string
+  audioScript?: string
+  vernacularName?: string
   // Explainable AI / Grad-CAM extensions
   imageUrl?: string
   gradCamImage?: string

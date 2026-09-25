@@ -13,18 +13,11 @@ import {
   Sparkles,
   Share2,
   Printer,
-  Layers,
-  Flame,
   Volume2,
   VolumeX,
-  PhoneCall,
   ExternalLink,
   CheckCircle2,
-  AlertTriangle,
-  FileText,
-  Calendar,
-  Thermometer,
-  Droplets,
+  Leaf,
   MessageSquare,
   RotateCcw,
 } from 'lucide-react'
@@ -33,6 +26,7 @@ import { GradCamViewer } from './GradCamViewer'
 import { WhyThisDiagnosis } from './WhyThisDiagnosis'
 import { getWhatsAppDeepLink, WHATSAPP_CONFIG } from '@/config/whatsapp'
 import { useI18n } from '@/lib/i18n'
+import { CROP_ADVISORIES } from '@/data/crop-translations'
 
 interface DiagnosisResultViewProps {
   prediction: Prediction
@@ -44,17 +38,58 @@ interface DiagnosisResultViewProps {
 export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
   prediction,
   verifiedRecord,
-  onAskChat,
   className = '',
 }) => {
-  const { t, locale } = useI18n()
-  const [activeTreatmentTab, setActiveTreatmentTab] = useState<'actions' | 'precautions' | 'expert'>('actions')
+  const { t, locale, setLocale } = useI18n()
   const [copiedLink, setCopiedLink] = useState<boolean>(false)
   const [isPlayingVoice, setIsPlayingVoice] = useState<boolean>(false)
 
   const isHealthy = prediction.disease === 'Healthy'
-  const cropImage = prediction.imageUrl || 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&auto=format&fit=crop&q=80'
+  const cropImage = prediction.imageUrl || '/images/crops/tomato.jpg'
   const gradCamImage = prediction.gradCamImage || prediction.heatmapUrl || prediction.explanationImage
+
+  // Retrieve rich agronomic translations for current crop & active language
+  const advisory = CROP_ADVISORIES[prediction.crop]
+  const currentLang = ['hi', 'mr', 'pa'].includes(locale) ? locale : 'en'
+
+  const localizedDisease =
+    prediction.vernacularName ||
+    advisory?.localName?.[currentLang] ||
+    prediction.disease
+
+  const localizedWhatHappened =
+    prediction.whatHappened ||
+    advisory?.whatHappened?.[currentLang] ||
+    advisory?.whatHappened?.en ||
+    prediction.explanation ||
+    'AI inspected foliar chlorophyll and identified pathogen lesion margins consistent with infection.'
+
+  const localizedHowToReduce =
+    prediction.howToReduce ||
+    advisory?.howToReduce?.[currentLang] ||
+    advisory?.howToReduce?.en ||
+    '1. Prune and destroy diseased foliage. 2. Apply recommended systemic fungicide in the evening. 3. Avoid overhead watering.'
+
+  const localizedChemical =
+    prediction.chemicalControl ||
+    advisory?.chemicalControl?.[currentLang] ||
+    advisory?.chemicalControl?.en ||
+    'Mancozeb 75% WP @ 2.5 g/L or Copper Oxychloride 50% WP @ 3 g/L'
+
+  const localizedBiological =
+    prediction.biologicalControl ||
+    advisory?.biologicalControl?.[currentLang] ||
+    advisory?.biologicalControl?.en ||
+    '5% Neem Seed Kernel Extract (NSKE) or Trichoderma viride @ 5 g/L'
+
+  const localizedPrecautions =
+    advisory?.precautions?.[currentLang] ||
+    prediction.precautions
+
+  const audioText =
+    prediction.audioScript ||
+    advisory?.audioScript?.[currentLang] ||
+    advisory?.audioScript?.en
 
   const query = new URLSearchParams({
     disease: prediction.disease,
@@ -64,7 +99,7 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
 
   // Share result
   const handleShare = () => {
-    const shareText = `Krishi Darpan AI Diagnosis: ${prediction.crop} - ${prediction.disease} (${prediction.confidence}% confidence, ${prediction.severity} severity). View explainable Grad-CAM heatmap.`
+    const shareText = `Krishi Darpan AI Diagnosis: ${prediction.crop} - ${localizedDisease} (${prediction.confidence}% confidence, ${prediction.severity} severity). View explainable Grad-CAM heatmap.`
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
         title: 'Krishi Darpan AI Diagnosis',
@@ -80,7 +115,7 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
 
   // Voice advisory speech synthesis (Web Speech in user's active language)
   const handleToggleVoiceAdvisory = () => {
-    if (!('speechSynthesis' in window)) return
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
 
     if (isPlayingVoice) {
       window.speechSynthesis.cancel()
@@ -90,13 +125,26 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
 
     window.speechSynthesis.cancel()
 
-    const advisoryText = isHealthy
-      ? `Namaste. Your ${prediction.crop} crop appears healthy with no active pathogen detected.`
-      : `Namaste. Krishi Darpan AI detected ${prediction.disease} in your ${prediction.crop} leaf with ${prediction.confidence} percent confidence. ${prediction.explanation || ''} Recommended precautions: ${prediction.precautions.slice(0, 2).join('. ')}.`
+    const textToSpeak = isHealthy
+      ? (locale === 'hi'
+          ? `नमस्ते किसान भाई। आपका ${prediction.crop} का पौधा पूरी तरह स्वस्थ है और इसमें कोई सक्रिय बीमारी नहीं पाई गई है।`
+          : locale === 'mr'
+          ? `नमस्कार शेतकरी मित्र. तुमचे ${prediction.crop} पीक पूर्णपणे निरोगी असून यात कोणताही रोग आढळलेला नाही.`
+          : `Namaste Kisan friend. Your ${prediction.crop} crop appears healthy with no active pathogen detected.`)
+      : (audioText ||
+          (locale === 'hi'
+            ? `नमस्ते किसान भाई। आपके ${prediction.crop} में ${localizedDisease} के लक्षण मिले हैं। ${localizedWhatHappened}। रोग कम करने के उपाय: ${localizedHowToReduce}।`
+            : locale === 'mr'
+            ? `नमस्कार शेतकरी मित्र. तुमच्या ${prediction.crop} पिकात ${localizedDisease} चा प्रादुर्भाव आढळला आहे. ${localizedWhatHappened}। रोग नियंत्रणासाठी: ${localizedHowToReduce}।`
+            : `Namaste Kisan friend. In your ${prediction.crop} crop, ${prediction.disease} was detected. What happened: ${localizedWhatHappened}. How to reduce it: ${localizedHowToReduce}.`))
 
-    const utterance = new SpeechSynthesisUtterance(advisoryText)
-    utterance.lang = locale === 'hi' ? 'hi-IN' : locale === 'mr' ? 'mr-IN' : locale === 'ta' ? 'ta-IN' : locale === 'te' ? 'te-IN' : locale === 'bn' ? 'bn-IN' : 'en-IN'
-    utterance.rate = 0.95
+    const utterance = new SpeechSynthesisUtterance(textToSpeak)
+    utterance.lang =
+      locale === 'hi' ? 'hi-IN' :
+      locale === 'mr' ? 'mr-IN' :
+      locale === 'pa' ? 'pa-IN' :
+      'en-IN'
+    utterance.rate = 0.92
 
     utterance.onstart = () => setIsPlayingVoice(true)
     utterance.onend = () => setIsPlayingVoice(false)
@@ -105,11 +153,11 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
     window.speechSynthesis.speak(utterance)
   }
 
-  const whatsappDeepLink = getWhatsAppDeepLink(undefined, `${prediction.crop} (${prediction.disease})`)
+  const whatsappDeepLink = getWhatsAppDeepLink(undefined, `${prediction.crop} (${localizedDisease})`)
 
   return (
     <div className={`diagnosis-result-root space-y-5 animate-fadeIn ${className}`}>
-      {/* ── 1. Top Action & Print / Share Bar ── */}
+      {/* ── 1. Top Bar: Language Switcher, Share & Print ── */}
       <div
         style={{
           display: 'flex',
@@ -117,19 +165,53 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 10,
-          marginBottom: 4,
+          background: 'rgba(255,255,255,0.95)',
+          border: '1px solid var(--line)',
+          borderRadius: 16,
+          padding: '8px 14px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="chip low" style={{ fontSize: 11, padding: '3px 10px' }}>
-            <Sparkles size={13} style={{ marginRight: 4 }} />
-            {t('explainAiTitle')}
+        {/* Language Selection Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 750, color: 'var(--ink)', marginRight: 2 }}>
+            🌐 {t('language') || 'Language'}:
           </span>
-          <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>
-            ID: {prediction.scanId}
-          </span>
+          {[
+            { code: 'en', label: 'English' },
+            { code: 'hi', label: 'हिन्दी' },
+            { code: 'mr', label: 'मराठी' },
+            { code: 'pa', label: 'ਪੰਜਾਬੀ' },
+          ].map((l) => {
+            const isSel = locale === l.code
+            return (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => {
+                  if (isPlayingVoice && typeof window !== 'undefined') window.speechSynthesis.cancel()
+                  setIsPlayingVoice(false)
+                  setLocale(l.code as any)
+                }}
+                style={{
+                  border: isSel ? '1.5px solid #2b7a4d' : '1px solid #d4e6d7',
+                  background: isSel ? '#2b7a4d' : '#ffffff',
+                  color: isSel ? '#ffffff' : '#1b3d2a',
+                  borderRadius: 99,
+                  padding: '4px 12px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {l.label}
+              </button>
+            )
+          })}
         </div>
 
+        {/* Share & Print Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             type="button"
@@ -153,7 +235,98 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         </div>
       </div>
 
-      {/* ── 2. Visual Demarcation: AI Detection vs Officer Verification ── */}
+      {/* ── 2. Prominent Spoken Audio Narration Card ── */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #1b3d2a 0%, #122c1d 100%)',
+          borderRadius: 20,
+          padding: '16px 20px',
+          color: '#ffffff',
+          boxShadow: '0 6px 22px rgba(18, 44, 29, 0.2)',
+          border: '1.5px solid rgba(232, 200, 104, 0.4)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <button
+              type="button"
+              onClick={handleToggleVoiceAdvisory}
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: '50%',
+                background: isPlayingVoice ? '#ef4444' : 'linear-gradient(135deg, #e8c868, #d4a017)',
+                color: isPlayingVoice ? '#ffffff' : '#122c1d',
+                border: 0,
+                display: 'grid',
+                placeItems: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(232, 200, 104, 0.4)',
+                flexShrink: 0,
+                transition: 'transform 0.15s ease',
+              }}
+              title={isPlayingVoice ? 'Pause Audio' : 'Play Audio'}
+            >
+              {isPlayingVoice ? <VolumeX size={24} /> : <Volume2 size={24} />}
+            </button>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <strong style={{ fontSize: 15, color: '#ffffff' }}>
+                  {locale === 'hi'
+                    ? '🔊 बोलकर सलाह सुनें (AI किसान वाणी)'
+                    : locale === 'mr'
+                    ? '🔊 ऑडिओ सल्ला ऐका (AI वाणी)'
+                    : '🔊 Spoken Audio Advisory (Voice Doctor)'}
+                </strong>
+                {isPlayingVoice && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      background: '#ef4444',
+                      color: '#fff',
+                      padding: '2px 8px',
+                      borderRadius: 99,
+                      fontWeight: 800,
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    PLAYING
+                  </span>
+                )}
+              </div>
+              <p style={{ margin: '3px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>
+                {isPlayingVoice
+                  ? (locale === 'hi'
+                      ? 'आवाज़ चल रही है... रोकने के लिए बटन दबाएं।'
+                      : locale === 'mr'
+                      ? 'ऑडिओ सुरू आहे... थांबवण्यासाठी बटन दाबा.'
+                      : 'Speaking now... click button to stop.')
+                  : (locale === 'hi'
+                      ? 'अपनी भाषा में पूरी जांच, फसल को क्या हुआ और दवाई की खुराक बोलकर सुनें।'
+                      : locale === 'mr'
+                      ? 'तुमच्या भाषेत संपूर्ण निदान, पिकाला काय झाले व औषध मात्रा ऐका.'
+                      : 'Listen to diagnosis, root cause, and chemical spray dosages read aloud in your language.')}
+              </p>
+            </div>
+          </div>
+
+          <span
+            style={{
+              fontSize: 11,
+              color: '#e8c868',
+              fontWeight: 750,
+              background: 'rgba(255,255,255,0.1)',
+              padding: '4px 12px',
+              borderRadius: 10,
+              border: '1px solid rgba(255,255,255,0.15)',
+            }}
+          >
+            🗣️ {locale === 'hi' ? 'हिन्दी आवाज़' : locale === 'mr' ? 'मराठी आवाज' : locale === 'pa' ? 'ਪੰਜਾਬੀ ਆਵਾਜ਼' : 'English Voice'}
+          </span>
+        </div>
+      </section>
+
+      {/* ── 3. Officer Verification vs AI Advisory Status ── */}
       {verifiedRecord ? (
         <div
           role="status"
@@ -302,7 +475,7 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         </div>
       )}
 
-      {/* ── 3. Diagnosis Summary & Confidence Banner ── */}
+      {/* ── 4. Diagnosis Summary & Confidence Banner ── */}
       <section className="banner">
         <div className="ring">
           <div>
@@ -330,8 +503,8 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
             </span>
           </div>
 
-          <h1 style={{ margin: '4px 0 6px', fontSize: 'clamp(24px, 4vw, 34px)', letterSpacing: '-0.02em' }}>
-            {prediction.disease}
+          <h1 style={{ margin: '4px 0 6px', fontSize: 'clamp(22px, 4vw, 32px)', letterSpacing: '-0.02em' }}>
+            {localizedDisease}
           </h1>
 
           <p style={{ margin: 0, fontSize: 13, color: '#d8eedf', opacity: 0.95 }}>
@@ -340,12 +513,183 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         </div>
       </section>
 
-      {/* ── 3. Explainable AI (Grad-CAM Visual Heatmap & Leaf Inspection) ── */}
+      {/* ── 5. What Happened to Your Crop (Root Cause & Foliar Infection Analysis) ── */}
+      <section
+        className="card"
+        style={{
+          background: '#ffffff',
+          borderRadius: 20,
+          border: '1.5px solid #d4e6d7',
+          padding: 22,
+          boxShadow: '0 4px 16px rgba(27, 61, 42, 0.05)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              background: '#eef7ec',
+              color: '#2b7a4d',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            <Leaf size={22} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#1b3d2a' }}>
+              {locale === 'hi'
+                ? '🌾 फसल को क्या हुआ? (कारण व संक्रमण)'
+                : locale === 'mr'
+                ? '🌾 पिकाला काय झाले? (कारण व संसर्ग)'
+                : '🌾 What Happened To Your Crop? (Root Cause)'}
+            </h3>
+            <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>
+              Pathogen infection analysis & foliar damage explanation
+            </span>
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #fbfcfb 0%, #f4f8f4 100%)',
+            border: '1px solid #dcebde',
+            borderRadius: 14,
+            padding: '16px 18px',
+            fontSize: 14,
+            lineHeight: 1.65,
+            color: '#22442b',
+          }}
+        >
+          {localizedWhatHappened}
+        </div>
+      </section>
+
+      {/* ── 6. How to Reduce & Cure the Disease (Chemical, Bio & Cultural Steps) ── */}
+      <section
+        className="card"
+        style={{
+          background: '#ffffff',
+          borderRadius: 20,
+          border: '1.5px solid #d4e6d7',
+          padding: 22,
+          boxShadow: '0 4px 16px rgba(27, 61, 42, 0.05)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              background: '#fff7ed',
+              color: '#c2410c',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            <ShieldCheck size={22} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#1b3d2a' }}>
+              {locale === 'hi'
+                ? '🛠️ रोग कैसे रोकें व उपचार (Immediate Treatment Guide)'
+                : locale === 'mr'
+                ? '🛠️ रोग कसा कमी करावा व उपाय'
+                : '🛠️ How To Reduce & Cure The Disease'}
+            </h3>
+            <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>
+              ICAR-approved chemical dosages & organic bio-remedies
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Chemical Control */}
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: 14,
+              padding: '14px 16px',
+            }}
+          >
+            <strong style={{ fontSize: 13, color: '#991b1b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              🧪 {locale === 'hi' ? 'रासायनिक उपचार (Chemical Spray Dosage):' : locale === 'mr' ? 'रासायनिक फवारणी मात्रा:' : 'Recommended Chemical Spray Dosage:'}
+            </strong>
+            <p style={{ margin: 0, fontSize: 13.5, color: '#7f1d1d', lineHeight: 1.55 }}>
+              {localizedChemical}
+            </p>
+          </div>
+
+          {/* Biological / Organic Control */}
+          <div
+            style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: 14,
+              padding: '14px 16px',
+            }}
+          >
+            <strong style={{ fontSize: 13, color: '#166534', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              🌿 {locale === 'hi' ? 'जैविक व देसी उपाय (Organic / Bio-Control):' : locale === 'mr' ? 'सेंद्रिय व जैविक उपाय:' : 'Biological & Organic Control:'}
+            </strong>
+            <p style={{ margin: 0, fontSize: 13.5, color: '#14532d', lineHeight: 1.55 }}>
+              {localizedBiological}
+            </p>
+          </div>
+
+          {/* Practical Step Guide */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 14,
+              padding: '14px 16px',
+            }}
+          >
+            <strong style={{ fontSize: 13, color: '#334155', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              📋 {locale === 'hi' ? 'रोग कम करने की चरणबद्ध विधि:' : locale === 'mr' ? 'रोग कमी करण्याची कृती:' : 'Step-by-Step Reduction Protocol:'}
+            </strong>
+            <p style={{ margin: 0, fontSize: 13.5, color: '#1e293b', lineHeight: 1.6 }}>
+              {localizedHowToReduce}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. Essential Precautions (Checklist) ── */}
+      <section
+        className="card"
+        style={{
+          background: '#ffffff',
+          borderRadius: 20,
+          border: '1.5px solid #d4e6d7',
+          padding: 22,
+          boxShadow: '0 4px 16px rgba(27, 61, 42, 0.05)',
+        }}
+      >
+        <p className="kicker" style={{ marginBottom: 12 }}>
+          🛡️ {locale === 'hi' ? 'आवश्यक सावधानियां' : locale === 'mr' ? 'महत्त्वाची खबरदारी' : t('precautions')}
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {localizedPrecautions.map((item, idx) => (
+            <div className="list-row" key={`${item}-${idx}`} style={{ padding: '8px 12px', background: '#fcfdfc', borderRadius: 10, border: '1px solid #eef4ee' }}>
+              <Check size={18} className="text-emerald-700" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 13.5, color: 'var(--ink)' }}>{item}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 8. Explainable AI (Grad-CAM Visual Heatmap & Leaf Inspection) ── */}
       <section style={{ marginTop: 12 }}>
         <GradCamViewer
           imageUrl={cropImage}
           cropName={prediction.crop}
-          diseaseName={prediction.disease}
+          diseaseName={localizedDisease}
           confidence={prediction.confidence}
           backendGradCamUrl={gradCamImage}
           attentionPoints={prediction.attentionPoints}
@@ -353,18 +697,18 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         />
       </section>
 
-      {/* ── 4. Why AI Thinks This (Farmer-Friendly Visual Reasoning) ── */}
+      {/* ── 9. Why AI Thinks This (Farmer-Friendly Visual Reasoning) ── */}
       <section>
         <WhyThisDiagnosis
           cropName={prediction.crop}
-          diseaseName={prediction.disease}
+          diseaseName={localizedDisease}
           confidence={prediction.confidence}
-          explanationText={prediction.explanation}
+          explanationText={localizedWhatHappened}
           symptoms={prediction.symptoms}
         />
       </section>
 
-      {/* ── 5. WhatsApp Fallback Integration Bar ── */}
+      {/* ── 10. WhatsApp Fallback Integration Bar ── */}
       <section
         style={{
           background: 'linear-gradient(135deg, #e8f9ed 0%, #daf4e2 100%)',
@@ -421,29 +765,6 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {/* Voice Advisory Quick Trigger */}
-          <button
-            type="button"
-            onClick={handleToggleVoiceAdvisory}
-            className="ghost"
-            style={{
-              fontSize: 12,
-              background: '#ffffff',
-              border: '1px solid #b7e4c7',
-              color: '#075e54',
-              fontWeight: 700,
-              padding: '8px 14px',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-            title="Listen spoken advisory in your active language"
-          >
-            {isPlayingVoice ? <VolumeX size={15} className="text-rose-600" /> : <Volume2 size={15} className="text-emerald-700" />}
-            <span>{isPlayingVoice ? t('pauseVoice') : t('voiceAdvisory')}</span>
-          </button>
-
           <a
             href={whatsappDeepLink}
             target="_blank"
@@ -470,90 +791,10 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
         </div>
       </section>
 
-      {/* ── 6. Digital Crop Health Passport Verification Card ── */}
-      <section
-        className="card"
-        style={{
-          background: verifiedRecord ? 'linear-gradient(135deg, #f0faf4 0%, #e3f5ea 100%)' : '#fcfbf7',
-          border: verifiedRecord ? '1.5px solid #2b7a4d' : '1.5px dashed #cfc2a8',
-          padding: 20,
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                background: verifiedRecord ? '#2b7a4d' : '#ede5d4',
-                color: verifiedRecord ? 'white' : '#8a6410',
-                display: 'grid',
-                placeItems: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {verifiedRecord ? <ShieldCheck size={24} /> : <Clock size={22} />}
-            </div>
-            <div>
-              <span className="kicker" style={{ color: verifiedRecord ? '#2b7a4d' : '#8a6410', margin: 0 }}>
-                DIGITAL CROP HEALTH PASSPORT
-              </span>
-              <h3 style={{ margin: '2px 0 2px', fontSize: 16 }}>
-                {verifiedRecord ? '✓ Verified in Crop Health Passport' : 'Waiting for Officer Verification'}
-              </h3>
-              <p className="muted" style={{ margin: 0, fontSize: 12, maxWidth: 620 }}>
-                {verifiedRecord
-                  ? `Officer ${verifiedRecord.officerName} certified this record with GPS geotag (${verifiedRecord.locationName}).`
-                  : 'This diagnosis has been submitted to the Agriculture Officer Review Queue. Once confirmed, it becomes an official timestamped & geotagged passport record.'}
-              </p>
-            </div>
-          </div>
-
-          <Link
-            href="/farmer/crop-health-passport"
-            className={`btn ${verifiedRecord ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ width: 'auto', fontSize: 13, gap: 6 }}
-          >
-            <FileCheck size={15} />
-            <span>{verifiedRecord ? 'View in Passport' : 'Open Crop Passport'}</span>
-            <ChevronRight size={14} />
-          </Link>
-        </div>
-      </section>
-
-      {/* ── 7. Recommendations & Treatment Protocols ── */}
-      <div className="grid-2">
-        <section className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <p className="kicker" style={{ margin: 0 }}>{t('actions')}</p>
-            <span style={{ fontSize: 11, color: '#2b7a4d', fontWeight: 700 }}>{t('icarProtocol')}</span>
-          </div>
-
-          {prediction.actions.map((item, i) => (
-            <div className="list-row" key={`${item}-${i}`}>
-              <b>0{i + 1}</b>
-              <span style={{ fontSize: 13 }}>{item}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className="card">
-          <p className="kicker">{t('precautions')}</p>
-          {prediction.precautions.map((item, idx) => (
-            <div className="list-row" key={`${item}-${idx}`}>
-              <Check size={16} className="text-emerald-700" />
-              <span style={{ fontSize: 13 }}>{item}</span>
-            </div>
-          ))}
-        </section>
-      </div>
-
-      {/* ── 8. Expert Agronomist & Agri-Mitra Assistance & Next Steps ── */}
-      <section className="card">
-        <p className="kicker">{t('expertWhen')}</p>
-        <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.6 }}>{prediction.expertHelp}</p>
-        <div className="actions" style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+      {/* ── 11. Next Action Buttons ── */}
+      <section className="card" style={{ padding: 18 }}>
+        <p className="kicker">{t('nextSteps') || 'Next Steps'}</p>
+        <div className="actions" style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           <Link className="btn btn-primary" style={{ width: 'auto' }} href={`/farmer/chat?${query}`}>
             <MessageCircle size={16} /> {t('askAi')}
           </Link>
@@ -563,10 +804,44 @@ export const DiagnosisResultView: React.FC<DiagnosisResultViewProps> = ({
           <Link className="btn btn-secondary" style={{ width: 'auto' }} href="/farmer/crop-health-passport">
             <ShieldCheck size={16} /> Add to Crop Health Passport
           </Link>
-          <Link className="ghost" style={{ width: 'auto', border: '1px solid var(--line)', background: '#ffffff', textDecoration: 'none', padding: '8px 14px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 650, color: 'var(--ink)' }} href="/farmer/scan">
+          <Link
+            className="ghost"
+            style={{
+              width: 'auto',
+              border: '1px solid var(--line)',
+              background: '#ffffff',
+              textDecoration: 'none',
+              padding: '8px 14px',
+              borderRadius: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 13,
+              fontWeight: 650,
+              color: 'var(--ink)',
+            }}
+            href="/farmer/scan"
+          >
             <RotateCcw size={15} /> Retry Scan / New Photo
           </Link>
-          <Link className="ghost" style={{ width: 'auto', border: '1px solid var(--line)', background: '#ffffff', textDecoration: 'none', padding: '8px 14px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 650, color: 'var(--ink)' }} href="/farmer/history">
+          <Link
+            className="ghost"
+            style={{
+              width: 'auto',
+              border: '1px solid var(--line)',
+              background: '#ffffff',
+              textDecoration: 'none',
+              padding: '8px 14px',
+              borderRadius: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 13,
+              fontWeight: 650,
+              color: 'var(--ink)',
+            }}
+            href="/farmer/history"
+          >
             <Clock size={15} /> View History
           </Link>
         </div>

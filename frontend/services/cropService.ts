@@ -105,7 +105,7 @@ async function fileToDataUrl(fileOrBlob: Blob): Promise<string> {
 export async function predictCrop(
   image: File | Blob | string | null,
   crop = 'Tomato',
-  options: { latitude?: number; longitude?: number; isDemoSimulation?: boolean } = {}
+  options: { latitude?: number; longitude?: number; isDemoSimulation?: boolean; language?: string } = {}
 ): Promise<Prediction> {
   let customImageUrl: string | undefined
   let payloadImageUrl: string | undefined
@@ -145,6 +145,7 @@ export async function predictCrop(
           latitude: options.latitude ?? 19.9975,
           longitude: options.longitude ?? 73.7898,
           isFoliageValidated: true,
+          language: options.language || 'en',
         }),
       })
 
@@ -182,7 +183,14 @@ export async function predictCrop(
             imageUrl: customImageUrl || base.imageUrl,
             gradCamImage: gradCamImage || base.gradCamImage,
             heatmapUrl: gradCamImage || base.heatmapUrl,
-            explanation: `AI detected ${d.disease} with ${rawConfidence}% confidence.${etlNotice}${outbreakNotice}`,
+            explanation: d.whatHappened || base.explanation || `AI detected ${d.disease} with ${rawConfidence}% confidence.${etlNotice}${outbreakNotice}`,
+            whatHappened: d.whatHappened || base.whatHappened,
+            howToReduce: d.howToReduce || base.howToReduce,
+            chemicalControl: d.chemicalControl || base.chemicalControl,
+            biologicalControl: d.biologicalControl || base.biologicalControl,
+            mechanicalControl: d.mechanicalControl || base.mechanicalControl,
+            audioScript: d.audioScript || base.audioScript,
+            vernacularName: d.vernacularName || base.vernacularName,
             symptoms: base.symptoms,
             precautions,
             actions,

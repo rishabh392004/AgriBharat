@@ -331,38 +331,59 @@ def evaluate_weather_risk(lat: float, lon: float, api_key: str = "demo_key"):
     }
 
 
-def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_risk: str) -> dict:
+def generate_gemini_advisory(pred_disease: str, severity_stage: str, weather_risk: str, lang: str = "en") -> dict:
+    lang_map = {
+        "hi": "Hindi (हिन्दी)",
+        "mr": "Marathi (मराठी)",
+        "pa": "Punjabi (ਪੰਜਾਬੀ)",
+        "ta": "Tamil (தமிழ்)",
+        "te": "Telugu (తెలుగు)",
+        "bn": "Bengali (বাংলা)",
+        "en": "English"
+    }
+    target_lang = lang_map.get(lang.lower(), "English")
+
+    clean_disease = pred_disease.replace("___", " - ").replace("_", " ")
+
     prompt = f"""
-    You are an expert agricultural entomologist.
-    Diagnosed condition: '{pred_disease}'.
+    You are an expert Indian plant pathologist, ICAR agronomist, and entomologist.
+    Diagnosed crop condition: '{clean_disease}'.
     Infestation status: '{severity_stage}'.
     Weather risk: '{weather_risk}'.
+    Target Farmer Language: {target_lang}.
 
-    Return an IPM advisory strictly as JSON with this exact key structure:
+    Generate a complete, authoritative, and practical agronomic report for an Indian farmer written in {target_lang}.
+    Return strictly JSON with this exact key structure:
     {{
-      "vernacular_name": "Local Indian common name",
-      "pest_vector": "Primary pest or insect vector causing/spreading this (e.g. Whiteflies, Fruit Borer, Aphids)",
-      "biological_control": "Organic or biological measure (e.g. Neem oil 10,000 PPM, Trichoderma, pheromone traps)",
-      "chemical_control": "Commercial active ingredient with exact water dilution dosage (e.g. Imidacloprid 17.8% SL @ 0.5 ml/L)",
-      "mechanical_control": "Field cultural practices (e.g. sticky cards, pruning infected branches)",
+      "vernacular_name": "Local common crop disease name in {target_lang}",
+      "pest_vector": "Primary insect vector, fungus, or bacterial pathogen causing this",
+      "what_happened": "Detailed explanation in {target_lang} describing what happened to the crop, why the leaf shows these spots/lesions, and how the pathogen entered (e.g. rain splash, high humidity, insect puncture, poor air circulation).",
+      "how_to_reduce_it": "Practical step-by-step cure guide in {target_lang} on how to reduce and stop the disease immediately (timing, spray technique, dosage).",
+      "biological_control": "Organic or biological measure in {target_lang} (e.g. 5% Neem seed kernel extract, Trichoderma viride, pheromone traps)",
+      "chemical_control": "Commercial active fungicide/pesticide with exact water dilution dosage in {target_lang} (e.g. Mancozeb 75% WP @ 2.5 g/L, Azoxystrobin @ 1 ml/L)",
+      "mechanical_control": "Field cultural sanitation practices in {target_lang} (e.g. rogueing infected leaves, staking, drip irrigation)",
       "precautions": [
-        "Specific immediate precaution 1 (e.g. sanitation, water management, spacing)",
-        "Specific immediate precaution 2 (e.g. PPE gear, spray timing, wind check)",
-        "Specific immediate precaution 3 (e.g. leaf disposal, tool sterilization)"
-      ]
+        "Specific immediate precaution 1 in {target_lang}",
+        "Specific immediate precaution 2 in {target_lang}",
+        "Specific immediate precaution 3 in {target_lang}"
+      ],
+      "audio_script": "Warm, reassuring 2-3 sentence spoken narration in {target_lang} addressing the farmer directly (e.g. 'किसान भाई, आपके पौधे में ...' or 'शेतकरी मित्र, तुमच्या पिकात ...') explaining what happened and the immediate spray cure."
     }}
     """
     fallback_advisory = {
-        "vernacular_name": pred_disease.replace("_", " "),
-        "pest_vector": "Insect puncture vector / Foliar feeding pests",
-        "biological_control": "Neem seed extract 5% or Neem oil 10,000 PPM @ 3ml/L.",
-        "chemical_control": "Consult local KVK for verified active pesticide formulation.",
-        "mechanical_control": "Deploy yellow sticky traps (15 traps/acre) and rogue infected leaves.",
+        "vernacular_name": clean_disease,
+        "pest_vector": "Foliar pathogen / climate humidity spore dispersal",
+        "what_happened": f"High ambient humidity and pathogen spores infected the leaf epidermis, causing foliar tissue chlorosis and lesions consistent with {clean_disease}.",
+        "how_to_reduce_it": "1. Remove and destroy heavily infected lower canopy leaves. 2. Spray recommended contact fungicide in the evening. 3. Switch to morning drip irrigation to keep leaf surfaces dry.",
+        "biological_control": "Deploy 5% Neem Seed Kernel Extract (NSKE) or Trichoderma viride @ 5g/L foliar spray.",
+        "chemical_control": "Apply Mancozeb 75% WP @ 2.5 g/L or Copper Oxychloride 50% WP @ 3 g/L.",
+        "mechanical_control": "Prune lower leaves touching soil, improve field drainage, and sanitize pruning shears.",
         "precautions": [
             "Inspect leaf undersides and perimeter border rows every 3-4 days.",
             "Avoid overhead sprinkler irrigation to keep crop foliage dry during humidity spikes.",
             "Sanitize cutting tools and knapsack sprayers before and after use.",
         ],
+        "audio_script": f"Namaste Kisan Bhai. Your crop shows symptoms of {clean_disease}. Please spray recommended protective fungicide in the evening and avoid overhead watering to prevent spore spread.",
     }
 
     if not ai_client:
@@ -512,7 +533,8 @@ async def predict(
     image: UploadFile = File(...),
     crop_name: str = Form("Auto"),  # <-- NEW: e.g. "Potato", "Tomato", "Sugarcane", "Auto"
     latitude: float = Form(19.9975),
-    longitude: float = Form(73.7898)
+    longitude: float = Form(73.7898),
+    language: str = Form("en")
 ):
     contents = await image.read()
     if not contents or len(contents) == 0:
@@ -592,7 +614,8 @@ async def predict(
     recommended_solution = generate_gemini_advisory(
         pred_disease=pred_class,
         severity_stage=severity.get("economic_threshold_status", "Approaching ETL"),
-        weather_risk=weather.get("pest_outbreak_risk", "LOW_MONITORING_RISK")
+        weather_risk=weather.get("pest_outbreak_risk", "LOW_MONITORING_RISK"),
+        lang=language
     )
 
     top_3 = [

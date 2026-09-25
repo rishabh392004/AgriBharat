@@ -254,6 +254,7 @@ export default function ScanPage() {
         latitude: farmer.latitude,
         longitude: farmer.longitude,
         isDemoSimulation: isDemo,
+        language: locale,
       })
       if (preview) {
         result.imageUrl = preview

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { CROP_ADVISORIES } from '@/data/crop-translations'
 
 interface ScanAnalyzeRequestBody {
   imageUrl: string
@@ -6,6 +7,7 @@ interface ScanAnalyzeRequestBody {
   latitude?: number
   longitude?: number
   isFoliageValidated?: boolean
+  language?: string
 }
 
 // 8 ML-trained crops aligned exactly with crop-disease/classes.json
@@ -18,6 +20,9 @@ const CROP_FALLBACKS: Record<string, {
   etlBadgeColor: string
   actions: string[]
   precautions: string[]
+  whatHappened: string
+  howToReduce: string
+  audioScript: string
 }> = {
   Tomato: {
     disease: 'Tomato - Early Blight (Alternaria solani)',
@@ -26,6 +31,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 22.0,
     economicThresholdStatus: 'Approaching ETL (20% canopy affected)',
     etlBadgeColor: 'amber',
+    whatHappened: 'Alternaria solani fungal spores infected the lower leaves during humid weather. Concentric bullseye target rings have formed, reducing photosynthetic capacity.',
+    howToReduce: '1. Prune lower infected leaves touching soil. 2. Spray Chlorothalonil 75% WP @ 2g/L or Azoxystrobin @ 1ml/L in the evening. 3. Water only at the roots via drip.',
+    audioScript: 'Namaste Kisan friend. In your tomato crop, Early Blight fungus has infected the lower leaves. Please prune diseased leaves and spray Chlorothalonil @ 2g per liter in the evening.',
     actions: [
       'Apply Chlorothalonil 75% WP @ 2 g/L or Azoxystrobin 23% SC @ 1 ml/L at first appearance of target spots.',
       'Spray Copper Oxychloride 50% WP @ 3 g/L as protective canopy barrier.',
@@ -44,6 +52,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 32.0,
     economicThresholdStatus: 'ETL Breached - Immediate Spray Mandated',
     etlBadgeColor: 'red',
+    whatHappened: 'Phytophthora infestans oospores germinated in cool, humid conditions. Dark water-soaked lesions formed on leaf margins with white downy growth on the underside.',
+    howToReduce: '1. Emergency spray: Cymoxanil 8% + Mancozeb 64% WP @ 2.5 g/L. 2. Earth up potato ridges to cover tubers. 3. Cut off haulms 10 days before harvest.',
+    audioScript: 'Attention Kisan brother! Late blight detected in your potato crop. Spray Cymoxanil plus Mancozeb @ 2.5g per liter immediately and earth up the ridges to protect tubers.',
     actions: [
       'Emergency spray: Cymoxanil 8% + Mancozeb 64% WP (Curzate) @ 2.5 g/L.',
       'Alternate with Dimethomorph 50% WP @ 1 g/L after 7 days.',
@@ -61,6 +72,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 17.5,
     economicThresholdStatus: 'Approaching ETL (15-20% leaf coverage)',
     etlBadgeColor: 'amber',
+    whatHappened: 'Puccinia sorghi fungal urediniospores settled on leaf blades. Cinnamon-brown powdery pustules have erupted across both leaf surfaces, stealing plant carbohydrates.',
+    howToReduce: '1. Spray Mancozeb 75% WP @ 2.5 g/L or Azoxystrobin @ 1 ml/L. 2. Remove volunteer corn plants. 3. Avoid excessive nitrogen fertilizer.',
+    audioScript: 'Kisan brother, Common Rust detected on your corn foliage. Spray Mancozeb @ 2.5g per liter or Propiconazole @ 1ml per liter before silking to stop spore spread.',
     actions: [
       'Apply Mancozeb 75% WP @ 2.5 g/L or Azoxystrobin 23% SC @ 1 ml/L in evening.',
       'Destroy volunteer corn plants and crop stubble harboring Puccinia spores.',
@@ -79,6 +93,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 19.0,
     economicThresholdStatus: 'Approaching ETL (Spindle lesion count rising)',
     etlBadgeColor: 'amber',
+    whatHappened: 'Magnaporthe oryzae fungus attacked tender leaf blades during humid, overcast weather. Spindle-shaped eye lesions with grey centers and dark borders formed.',
+    howToReduce: '1. Spray Tricyclazole 75% WP @ 0.6 g/L or Isoprothiolane @ 1.5 ml/L. 2. Maintain 2-3 cm standing water in paddy. 3. Pause urea application.',
+    audioScript: 'Kisan brother, Rice Blast detected in your paddy field. Spray Tricyclazole @ 0.6 grams per liter immediately, maintain 2 centimeters water level, and pause urea application.',
     actions: [
       'Apply Tricyclazole 75% WP (Baan) @ 0.6 g/L or Isoprothiolane 40% EC @ 1.5 ml/L.',
       'Ensure slow, uniform water drainage if nitrogen levels are excessively high.',
@@ -96,6 +113,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 16.0,
     economicThresholdStatus: 'Approaching ETL (Foliar water-soaked spots)',
     etlBadgeColor: 'amber',
+    whatHappened: 'Xanthomonas bacteria entered leaf stomata after rainstorms. Dark angular water-soaked spots bounded by leaf veins formed on foliage, risking boll loss.',
+    howToReduce: '1. Spray Copper Oxychloride 50% WP @ 2.5 g/L + Streptocycline @ 100 mg/L. 2. Rogue heavily blighted twigs. 3. Avoid night sprinkler irrigation.',
+    audioScript: 'Kisan brother, Bacterial Blight detected in your cotton field. Spray Copper Oxychloride 2.5 grams with Streptocycline in the evening to protect developing bolls.',
     actions: [
       'Spray Copper Oxychloride 50% WP @ 2.5 g/L + Streptocycline @ 100 mg/L.',
       'Apply bio-agent Pseudomonas fluorescens foliar spray @ 5 g/L.',
@@ -113,6 +133,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 18.0,
     economicThresholdStatus: 'Approaching ETL (15% canopy lesions)',
     etlBadgeColor: 'amber',
+    whatHappened: 'Rain splash drove Xanthomonas bacteria onto leaves. Small dark spots with yellow halos developed on leaves and fruit stalks, causing defoliation.',
+    howToReduce: '1. Spray Copper Oxychloride @ 2.5 g/L + Streptocycline @ 100 mg/L. 2. Remove infected lower leaves. 3. Never work in fields when leaves are wet.',
+    audioScript: 'Kisan brother, Bacterial Spot detected on your chilli crop. Spray Copper Oxychloride with Streptocycline in the evening and avoid handling plants while leaves are wet.',
     actions: [
       'Apply Copper Oxychloride 50% WP @ 2.5 g/L + Streptocycline @ 100 mg/L.',
       'Spray Mancozeb 75% WP @ 2 g/L as secondary fungal barrier.',
@@ -130,6 +153,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 19.5,
     economicThresholdStatus: 'Approaching ETL (Pycnidia spots active)',
     etlBadgeColor: 'amber',
+    whatHappened: 'Guignardia fungal spores infected leaves and berry clusters during rain. Circular reddish-brown spots with black pycnidia formed on leaves.',
+    howToReduce: '1. Spray Mancozeb 75% WP @ 2.5 g/L or Myclobutanil @ 0.5 g/L. 2. Prune mummified berry bunches. 3. Open vine canopy for sunlight.',
+    audioScript: 'Namaste Kisan friend. Black Rot detected in your vineyard. Spray Mancozeb @ 2.5 grams per liter immediately and prune infected shoots to protect grapes.',
     actions: [
       'Spray Mancozeb 75% WP @ 2.5 g/L or Myclobutanil 10% WP @ 0.5 g/L.',
       'Apply systemic Triazole fungicide (Difenoconazole 25% EC @ 0.5 ml/L).',
@@ -147,6 +173,9 @@ const CROP_FALLBACKS: Record<string, {
     foliarDamagePercent: 28.0,
     economicThresholdStatus: 'ETL Breached - Immediate Sanitation Required',
     etlBadgeColor: 'red',
+    whatHappened: 'Colletotrichum fungus invaded the inner vascular bundles. Leaf midribs have turned blood red and inner cane tissue is fermenting.',
+    howToReduce: '1. Uproot and burn diseased clumps immediately with roots. 2. Dip setts in Carbendazim @ 1 g/L before planting. 3. Apply Trichoderma with manure.',
+    audioScript: 'Urgent Kisan friend! Red Rot detected in your sugarcane crop. Uproot and burn diseased clumps immediately and treat setts with Carbendazim before replanting.',
     actions: [
       'Uproot and burn diseased clumps immediately with complete root system.',
       'Dip setts in Carbendazim 50% WP @ 1 g/L solution prior to planting.',
@@ -162,7 +191,13 @@ const CROP_FALLBACKS: Record<string, {
 export async function POST(req: Request) {
   try {
     const body: ScanAnalyzeRequestBody = await req.json()
-    const { imageUrl, cropName = 'Tomato', latitude = 19.9975, longitude = 73.7898 } = body
+    const {
+      imageUrl,
+      cropName = 'Tomato',
+      latitude = 19.9975,
+      longitude = 73.7898,
+      language = 'en',
+    } = body
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
@@ -195,6 +230,7 @@ export async function POST(req: Request) {
             cropName: cleanCrop,
             latitude,
             longitude,
+            language,
           }),
           signal: controller.signal,
         })
@@ -247,6 +283,7 @@ export async function POST(req: Request) {
         formData.append('crop_name', cleanCrop)
         formData.append('latitude', String(latitude))
         formData.append('longitude', String(longitude))
+        formData.append('language', language || 'en')
 
         const mlRes = await fetch(`${mlBase}/predict`, {
           method: 'POST',
@@ -274,6 +311,13 @@ export async function POST(req: Request) {
                   method: 'ResNet34-Grad-CAM',
                   heatmap_base64: mlData.explainability?.heatmap_base64,
                 },
+                whatHappened: mlData.recommended_solution?.what_happened,
+                howToReduce: mlData.recommended_solution?.how_to_reduce_it,
+                audioScript: mlData.recommended_solution?.audio_script,
+                chemicalControl: mlData.recommended_solution?.chemical_control,
+                biologicalControl: mlData.recommended_solution?.biological_control,
+                mechanicalControl: mlData.recommended_solution?.mechanical_control,
+                vernacularName: mlData.recommended_solution?.vernacular_name,
                 recommendation: {
                   actions: [
                     mlData.recommended_solution?.chemical_control,
@@ -317,6 +361,8 @@ export async function POST(req: Request) {
         const mimeMatch = imageUrl.match(/data:([^;]+);/)
         const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg'
 
+        const langName = language === 'hi' ? 'Hindi (हिन्दी)' : language === 'mr' ? 'Marathi (मराठी)' : language === 'pa' ? 'Punjabi (ਪੰਜਾਬੀ)' : 'English'
+
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
           {
@@ -330,17 +376,22 @@ export async function POST(req: Request) {
                     {
                       text: `You are an expert plant pathologist and agronomist diagnosing a ${cleanCrop} crop leaf for an Indian farmer.
 Inspect the attached image carefully.
+Target Farmer Language: ${langName}.
 If this image is a human face, selfie, person, document, clothing, wall, furniture, or non-plant object, set "is_leaf": false.
 Respond strictly in valid JSON with these exact fields:
 {
   "is_leaf": true or false,
   "disease": "Exact Disease Name or Healthy",
+  "vernacular_name": "Disease name in ${langName}",
   "confidence": 0.85 to 0.98,
   "severity": "Mild", "Moderate", or "Severe",
   "foliarDamagePercent": 15.0,
   "economicThresholdStatus": "Normal" or "Approaching ETL" or "ETL Breached",
-  "actions": ["chemical action 1", "organic action 2", "field sanitation 3"],
-  "precautions": ["precaution 1", "precaution 2"]
+  "what_happened": "Detailed explanation in ${langName} describing what happened to the crop, root cause, and visible damage.",
+  "how_to_reduce_it": "Practical step-by-step cure guide in ${langName} on how to reduce and stop the disease immediately (timing, spray technique, dosage).",
+  "actions": ["chemical action with dosage in ${langName}", "organic biological action", "field sanitation"],
+  "precautions": ["precaution 1 in ${langName}", "precaution 2", "precaution 3"],
+  "audio_script": "Warm, reassuring 2-3 sentence spoken narration in ${langName} addressing the Kisan explaining what happened and the immediate cure."
 }`,
                     },
                     {
@@ -382,6 +433,7 @@ Respond strictly in valid JSON with these exact fields:
               diagnosis: {
                 scanId,
                 disease: parsed.disease || `${cleanCrop} - Foliar Infection`,
+                vernacularName: parsed.vernacular_name,
                 confidence: Math.round((parsed.confidence || 0.92) * 100),
                 severity: parsed.severity || 'Moderate',
                 foliarDamagePercent: parsed.foliarDamagePercent || 18.0,
@@ -390,6 +442,9 @@ Respond strictly in valid JSON with these exact fields:
                 explainability: {
                   method: 'Gemini-Vision-Foliar-Attribution',
                 },
+                whatHappened: parsed.what_happened,
+                howToReduce: parsed.how_to_reduce_it,
+                audioScript: parsed.audio_script,
                 recommendation: {
                   actions: parsed.actions || ['Apply recommended fungicide spray', 'Sanitize tools'],
                   precautions: parsed.precautions || ['Avoid evening overhead watering', 'Inspect weekly'],
@@ -406,12 +461,23 @@ Respond strictly in valid JSON with these exact fields:
 
     // 3. Fallback High-Fidelity Agronomic Expert Engine for Trained ML Crops
     const cropData = CROP_FALLBACKS[cleanCrop] || CROP_FALLBACKS.Tomato
+    const adv = CROP_ADVISORIES[cleanCrop]
+    const curLang = ['hi', 'mr', 'pa'].includes(language) ? language : 'en'
+
+    const localizedWhatHappened = adv?.whatHappened?.[curLang] || cropData.whatHappened
+    const localizedHowToReduce = adv?.howToReduce?.[curLang] || cropData.howToReduce
+    const localizedAudioScript = adv?.audioScript?.[curLang] || cropData.audioScript
+    const localizedActions = adv?.chemicalControl?.[curLang]
+      ? [adv.chemicalControl[curLang], adv.biologicalControl?.[curLang] || '', adv.howToReduce?.[curLang] || ''].filter(Boolean)
+      : cropData.actions
+    const localizedPrecautions = adv?.precautions?.[curLang] || cropData.precautions
+    const localizedDisease = adv?.localName?.[curLang] || cropData.disease
 
     return NextResponse.json({
       status: 'success',
       diagnosis: {
         scanId,
-        disease: cropData.disease,
+        disease: localizedDisease,
         confidence: cropData.confidence,
         severity: cropData.severity,
         foliarDamagePercent: cropData.foliarDamagePercent,
@@ -420,9 +486,14 @@ Respond strictly in valid JSON with these exact fields:
         explainability: {
           method: 'Grad-CAM-ResNet34-Integrated',
         },
+        whatHappened: localizedWhatHappened,
+        howToReduce: localizedHowToReduce,
+        audioScript: localizedAudioScript,
+        chemicalControl: adv?.chemicalControl?.[curLang],
+        biologicalControl: adv?.biologicalControl?.[curLang],
         recommendation: {
-          actions: cropData.actions,
-          precautions: cropData.precautions,
+          actions: localizedActions,
+          precautions: localizedPrecautions,
         },
         pestOutbreakRisk: 'Moderate Risk (72-hour humidity window)',
         provider: 'krishi-expert-engine',
