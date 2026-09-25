@@ -98,6 +98,75 @@ export async function POST(req: Request) {
       ? `[Crop Context: ${contextDisease}, Language: ${locale}] ${question}`
       : `[Language: ${locale}] ${question}`
 
+    // 0. Direct Google Gemini 1.5 Flash API (Cloud Serverless)
+    const geminiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '').trim()
+    if (geminiKey && geminiKey.length > 10) {
+      try {
+        const geminiController = new AbortController()
+        const geminiTimeout = setTimeout(() => geminiController.abort(), 9000)
+
+        const contents = []
+        if (Array.isArray(chat_history)) {
+          for (const item of chat_history.slice(-6)) {
+            contents.push({
+              role: item.role === 'model' ? 'model' : 'user',
+              parts: [{ text: item.content }],
+            })
+          }
+        }
+        contents.push({
+          role: 'user',
+          parts: [{ text: contextualQuestion }],
+        })
+
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents,
+              systemInstruction: {
+                parts: [
+                  {
+                    text: `You are 'Kisan Salahkar' (किसान सलाहकार / कृषी सल्लागार), an expert empathetic agricultural AI agronomist for Indian farmers by AgriBharat / Krishi Darpan.
+CRITICAL INSTRUCTIONS:
+- You MUST reply in ${locale} (e.g. Hindi, Marathi, English, Gujarati).
+- Keep advice practical, actionable, and formatted in clear bullet points:
+  1. Disease/Issue identification and severity.
+  2. Organic/Natural remedy (e.g., neem oil 5ml/L, bio-fungicides).
+  3. Precise chemical dosage (e.g., Mancozeb 2.5g/L, Tilt 1ml/L) and safe application time.
+  4. Irrigation and weather advice.
+- Conclude with a warm, encouraging closing for the farmer.`,
+                  },
+                ],
+              },
+              generationConfig: {
+                temperature: 0.35,
+                maxOutputTokens: 750,
+              },
+            }),
+            signal: geminiController.signal,
+          }
+        )
+        clearTimeout(geminiTimeout)
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json()
+          const answer = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
+          if (answer && answer.trim().length > 15) {
+            return NextResponse.json({
+              status: 'success',
+              answer,
+              source: 'gemini-1.5-flash-live',
+            })
+          }
+        }
+      } catch (geminiErr) {
+        console.warn('[ChatRoute] Direct Gemini call failed or timed out:', geminiErr)
+      }
+    }
+
     // 1. Attempt Node Express Backend Gateway
     try {
       const nodeController = new AbortController()

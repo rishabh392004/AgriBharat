@@ -23,7 +23,7 @@ if GEMINI_API_KEY and len(GEMINI_API_KEY.strip()) > 10:
     except Exception as e:
         print(f"Warning: Could not initialize Gemini client: {e}")
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
 app = FastAPI(title="AgriFAQ Chat Service", version="1.0.0")
 
@@ -180,7 +180,7 @@ def get_native_fallback(q: str, lang: str = "en") -> str:
 
 @app.get("/health")
 def health():
-    return {"status": "online", "service": "Kisan Salahkar", "model": "gemini-2.5-flash"}
+    return {"status": "online", "service": "Kisan Salahkar", "model": "gemini-1.5-flash"}
 
 @app.post("/ask", response_model=FAQAnswer)
 async def ask_farmer_faq(payload: FAQQuery):

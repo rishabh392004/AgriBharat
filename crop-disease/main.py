@@ -37,7 +37,7 @@ if GEMINI_API_KEY and len(GEMINI_API_KEY) > 10:
         ai_client = None
 else:
     print("Notice: GEMINI_API_KEY not set or invalid in main.py. Running with built-in advisory fallback.")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 # --- YOLO UPSTREAM DETECTOR ---
 print("Initializing YOLO upstream validator...")
 yolo_detector = YOLO("yolov8n.pt")
