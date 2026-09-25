@@ -5,9 +5,10 @@ import type { SessionUser } from '@/types'
 const KEY = 'kr-session'
 
 export const authService = {
-  async login(identifier: string, password = ''): Promise<SessionUser> {
+  async login(identifier: string, password = '', preferredRole?: 'farmer' | 'officer'): Promise<SessionUser> {
     const isEmail = identifier.includes('@')
-    const email = isEmail ? identifier.trim() : `${identifier.replace(/\D/g, '')}@agribharat.com`
+    const cleanId = identifier.trim().replace(/\s+/g, '')
+    const email = isEmail ? identifier.trim() : `${cleanId.toLowerCase()}@agribharat.com`
     const safePassword = password ? password.trim() : ''
 
     // Attempt real backend authentication
@@ -19,7 +20,9 @@ export const authService = {
 
       if (res && res.token && res.user) {
         setStoredToken(res.token)
-        const role = res.user.role?.toLowerCase() === 'officer' ? 'officer' : 'farmer'
+        const backendRole = res.user.role?.toLowerCase()
+        const role: 'farmer' | 'officer' =
+          preferredRole === 'officer' || backendRole === 'officer' ? 'officer' : 'farmer'
         return {
           name: res.user.name || (role === 'officer' ? DEMO_OFFICER.name : DEMO_FARMER.name),
           role,
@@ -31,17 +34,23 @@ export const authService = {
     }
 
     await wait(250)
-    const officer = identifier.replace(/\s/g, '').endsWith('0000') || identifier.replace(/\s/g, '').endsWith('99')
-    return officer
+    const isOfficer =
+      preferredRole === 'officer' ||
+      cleanId.endsWith('0000') ||
+      cleanId.endsWith('99') ||
+      cleanId.toLowerCase().includes('officer')
+
+    return isOfficer
       ? { name: DEMO_OFFICER.name, role: 'officer', phone: identifier || DEMO_OFFICER.mobile }
       : { name: DEMO_FARMER.name, role: 'farmer', phone: identifier || DEMO_FARMER.mobile }
   },
 
-  async register(name: string, identifier: string, password = '', farmName?: string): Promise<SessionUser> {
+  async register(name: string, identifier: string, password = '', farmName?: string, preferredRole?: 'farmer' | 'officer'): Promise<SessionUser> {
     const isEmail = identifier.includes('@')
-    const email = isEmail ? identifier.trim() : `${identifier.replace(/\D/g, '')}@agribharat.com`
+    const cleanId = identifier.trim().replace(/\s+/g, '')
+    const email = isEmail ? identifier.trim() : `${cleanId.toLowerCase()}@agribharat.com`
     const safePassword = password ? password.trim() : ''
-    const safeName = name?.trim() || 'Kisan User'
+    const safeName = name?.trim() || (preferredRole === 'officer' ? DEMO_OFFICER.name : 'Kisan User')
 
     try {
       const res = await apiHttp.post<{
@@ -51,7 +60,9 @@ export const authService = {
 
       if (res && res.token && res.user) {
         setStoredToken(res.token)
-        const role = res.user.role?.toLowerCase() === 'officer' ? 'officer' : 'farmer'
+        const backendRole = res.user.role?.toLowerCase()
+        const role: 'farmer' | 'officer' =
+          preferredRole === 'officer' || backendRole === 'officer' ? 'officer' : 'farmer'
         return {
           name: res.user.name || safeName,
           role,
@@ -69,7 +80,9 @@ export const authService = {
 
         if (loginRes && loginRes.token && loginRes.user) {
           setStoredToken(loginRes.token)
-          const role = loginRes.user.role?.toLowerCase() === 'officer' ? 'officer' : 'farmer'
+          const backendRole = loginRes.user.role?.toLowerCase()
+          const role: 'farmer' | 'officer' =
+            preferredRole === 'officer' || backendRole === 'officer' ? 'officer' : 'farmer'
           return {
             name: loginRes.user.name || safeName,
             role,
@@ -84,7 +97,8 @@ export const authService = {
     }
 
     await wait(250)
-    return { name: safeName, role: 'farmer', phone: identifier, ...(farmName ? { farmName } : {}) }
+    const role: 'farmer' | 'officer' = preferredRole === 'officer' ? 'officer' : 'farmer'
+    return { name: safeName, role, phone: identifier, ...(farmName ? { farmName } : {}) }
   },
 
   async demoFarmer(): Promise<SessionUser> {

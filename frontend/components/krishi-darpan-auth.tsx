@@ -788,7 +788,7 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
   const [busy, setBusy] = useState(false)
   const [signedIn, setSignedIn] = useState(false)
 
-  // Sync tab with URL query parameter or initialTab prop
+  // Sync tab and role with URL query parameter or initialTab prop
   useEffect(() => {
     const tabParam = searchParams?.get('tab')
     if (tabParam === 'signup') {
@@ -797,6 +797,13 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
       setActiveTab('signin')
     } else {
       setActiveTab(initialTab)
+    }
+
+    const roleParam = searchParams?.get('role')
+    if (roleParam === 'officer') {
+      setActiveRole('officer')
+    } else if (roleParam === 'farmer') {
+      setActiveRole('farmer')
     }
   }, [searchParams, initialTab])
 
@@ -823,18 +830,29 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
     setLoginError('')
   }
 
-  const completeAuth = async (user: Awaited<ReturnType<typeof authService.login>>) => {
+  const completeAuth = async (user: SessionUser, targetRoleOverride?: 'farmer' | 'officer') => {
+    // If logging in from Officer Desk or role is officer, guarantee role: 'officer' and route to /officer
+    const finalRole: 'farmer' | 'officer' =
+      targetRoleOverride || (activeRole === 'officer' || user.role === 'officer' ? 'officer' : 'farmer')
+    const finalUser: SessionUser = {
+      ...user,
+      role: finalRole,
+    }
+
     setSignedIn(true)
-    signIn(user)
-    await new Promise((r) => setTimeout(r, 900))
-    router.replace(user.role === 'officer' ? '/officer' : '/farmer')
+    signIn(finalUser)
+    await new Promise((r) => setTimeout(r, 600))
+    router.replace(finalRole === 'officer' ? '/officer' : '/farmer')
   }
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoginError('')
     if (!loginPhone.trim()) {
-      const msg = 'Please enter your mobile number or email'
+      const msg =
+        activeRole === 'officer'
+          ? 'Please enter your Officer ID, mobile number, or email'
+          : 'Please enter your mobile number or email'
       setLoginError(msg)
       toast(msg)
       document.getElementById('login-phone')?.focus()
@@ -849,8 +867,8 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
     }
     setBusy(true)
     try {
-      const user = await authService.login(loginPhone.trim(), loginPassword)
-      await completeAuth(user)
+      const user = await authService.login(loginPhone.trim(), loginPassword, activeRole)
+      await completeAuth(user, activeRole)
     } catch {
       setLoginError('Authentication failed. Please check your credentials or try Demo Access.')
       toast('Sign in failed. You can explore using Demo Access below.')
@@ -886,7 +904,7 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
     }
     setBusy(true)
     try {
-      const cleanName = regName.trim() || 'Kisan User'
+      const cleanName = regName.trim() || (activeRole === 'officer' ? 'Extension Officer' : 'Kisan User')
       const firstName = cleanName.split(/\s+/)[0] || cleanName
       const resolvedFarmName = regFarmName.trim() || `${firstName}'s Farm`
 
@@ -894,10 +912,11 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
         cleanName,
         cleanPhone,
         regPassword,
-        resolvedFarmName
+        resolvedFarmName,
+        activeRole
       )
       toast(`Welcome, ${user.name}! Account created.`)
-      await completeAuth(user)
+      await completeAuth(user, activeRole)
     } catch {
       setRegError('Registration could not be completed. Please try again.')
       toast('Registration failed. Please try again.')
@@ -1201,11 +1220,13 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
 
               {/* Mobile / Identifier */}
               <div className="kd-field-group">
-                <label htmlFor="login-phone">Mobile Number or Email</label>
+                <label htmlFor="login-phone">
+                  {activeRole === 'officer' ? 'Officer Mobile / Email / Govt ID' : 'Mobile Number or Email'}
+                </label>
                 <div className="kd-input-wrap">
                   <div className="kd-input-prefix" aria-hidden="true">
-                    <span>🇮🇳</span>
-                    <span>+91</span>
+                    <span>{activeRole === 'officer' ? '🏛️' : '🇮🇳'}</span>
+                    <span>{activeRole === 'officer' ? 'GOV' : '+91'}</span>
                   </div>
                   <input
                     id="login-phone"
@@ -1213,7 +1234,7 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
                     type="text"
                     value={loginPhone}
                     onChange={(e) => setLoginPhone(e.target.value)}
-                    placeholder="Enter mobile or email"
+                    placeholder={activeRole === 'officer' ? 'Enter Officer ID, mobile, or email' : 'Enter mobile or email'}
                     aria-required="true"
                     aria-invalid={Boolean(loginError)}
                     aria-describedby={loginError ? 'login-error-msg' : undefined}
@@ -1297,7 +1318,7 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
                   onClick={async () => {
                     setBusy(true)
                     const u = await authService.demoFarmer()
-                    await completeAuth(u)
+                    await completeAuth(u, 'farmer')
                     setBusy(false)
                   }}
                 >
@@ -1314,7 +1335,7 @@ export function KrishiDarpanAuth({ initialTab = 'signin' }: Props) {
                   onClick={async () => {
                     setBusy(true)
                     const u = await authService.demoOfficer()
-                    await completeAuth(u)
+                    await completeAuth(u, 'officer')
                     setBusy(false)
                   }}
                 >
