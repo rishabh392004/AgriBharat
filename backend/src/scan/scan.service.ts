@@ -19,6 +19,12 @@ async function callMlModel(imageUrl: string): Promise<{
   };
   top_3_predictions: { class: string; confidence: number }[];
   flag_officer_review: boolean;
+  recommended_solution?: {
+    precautions?: string[];
+  };
+  pest_vector_profile?: {
+    precautions?: string[];
+  };
 } | null> {
   try {
     // Download the image from its URL (e.g. from cloud storage)
@@ -51,7 +57,9 @@ export async function createScan(
   userId: number,
   farmId: number | undefined,
   imageUrl: string,
-  cropName?: string
+  cropName?: string | undefined,
+  latitude?: number | undefined,
+  longitude?: number | undefined
 ) {
   let targetFarmId = farmId;
   if (!targetFarmId) {
@@ -85,6 +93,9 @@ export async function createScan(
   const scan = await db.orm.public.Scan.create({
     farmId: targetFarmId,
     imageUrl,
+    cropName: cropName || "Auto",
+    latitude: latitude ?? null,
+    longitude: longitude ?? null,
   });
 
   // 2. Call ML service asynchronously — don't block the response

@@ -68,6 +68,17 @@ export const mockDiagnosisProvider: DiagnosisProvider = {
       severity,
       recommendation,
       provider: MOCK_PROVIDER_NAME,
+      flagOfficerReview: false,
+      foliarDamagePercent: 0,
+      urgency: "LOW",
+      etlStatus: "NORMAL",
+      top3Predictions: [{ class: disease, confidence }],
+      weatherContext: {
+        temperature_celsius: 28,
+        humidity_percent: 65,
+        pest_outbreak_risk: "LOW",
+        climate_pest_forecast: "Normal conditions",
+      },
     };
   },
 };
@@ -230,11 +241,18 @@ export const realMlDiagnosisProvider: DiagnosisProvider = {
         severity,
         recommendation: rec,
         provider: "resnet34-fastapi",
-        foliarDamagePercent: data.foliar_damage_percent,
-        economicThresholdStatus: data.economic_threshold_status,
-        etlBadgeColor: data.etl_badge_color,
-        explainability: data.explainability,
-        pestOutbreakRisk: data.pest_outbreak_risk,
+        flagOfficerReview: Boolean(confidence < 0.65 || severity === "severe"),
+        foliarDamagePercent: data.foliar_damage_percent ?? 0,
+        urgency: severity === "severe" ? "CRITICAL" : "STANDARD",
+        etlStatus: data.economic_threshold_status || "NORMAL",
+        top3Predictions: [{ class: cleanDisease, confidence }],
+        weatherContext: {
+          temperature_celsius: 28,
+          humidity_percent: 65,
+          pest_outbreak_risk: data.pest_outbreak_risk || "LOW",
+          climate_pest_forecast: "Normal seasonal conditions",
+        },
+        gradCamBase64: data.explainability?.heatmap_base64,
       };
     } catch (err: any) {
       if (err instanceof AppError && err.statusCode === 400) {

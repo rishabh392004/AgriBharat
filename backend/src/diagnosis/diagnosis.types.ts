@@ -5,9 +5,9 @@ export type Severity = "none" | "mild" | "moderate" | "severe";
 export interface DiagnosisRequest {
   scanId: number;
   imageUrl: string;
-  cropName?: string;
-  latitude?: number;
-  longitude?: number;
+  cropName?: string | undefined;
+  latitude?: number | undefined;
+  longitude?: number | undefined;
 }
 
 /** Structured weather context returned by ML service */
@@ -41,7 +41,7 @@ export interface DiagnosisResult {
    * Transient — returned to the client but NOT stored in PostgreSQL
    * (too large for a DB column; use object storage for persistence).
    */
-  gradCamBase64?: string;
+  gradCamBase64?: string | undefined;
 }
 
 export interface DiagnosisProvider {
