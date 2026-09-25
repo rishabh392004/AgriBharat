@@ -19,8 +19,8 @@ export interface WhatsAppConfig {
 
 export const WHATSAPP_CONFIG: WhatsAppConfig = {
   // Configured WhatsApp Business phone number (E.164 format without '+')
-  phoneNumber: process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '14155238886',
-  displayNumber: process.env.NEXT_PUBLIC_WHATSAPP_DISPLAY || '+1 (415) 523-8886 (Twilio WhatsApp Helpline)',
+  phoneNumber: process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '17372212163',
+  displayNumber: process.env.NEXT_PUBLIC_WHATSAPP_DISPLAY || '+1 (737) 221-2163 (Twilio WhatsApp Helpline)',
   ivrTollFreeNumber: '1800-180-1551',
   defaultMessage: 'Namaste Krishi Darpan! I want to diagnose my crop disease and receive precautions in my language.',
   apiBaseUrl: process.env.NEXT_PUBLIC_WHATSAPP_API_URL || '/api/whatsapp',
