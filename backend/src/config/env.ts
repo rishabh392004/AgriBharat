@@ -13,6 +13,24 @@ try {
   // Ignore path resolve errors
 }
 
+// Auto-sanitize common copy-paste issues in DATABASE_URL
+if (process.env.DATABASE_URL) {
+  let url = process.env.DATABASE_URL.trim();
+  if (url.startsWith("DATABASE_URL=")) {
+    url = url.slice("DATABASE_URL=".length).trim();
+  }
+  if (url.startsWith("psql ")) {
+    url = url.slice(5).trim();
+  }
+  if (
+    (url.startsWith('"') && url.endsWith('"')) ||
+    (url.startsWith("'") && url.endsWith("'"))
+  ) {
+    url = url.slice(1, -1).trim();
+  }
+  process.env.DATABASE_URL = url;
+}
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1).default("postgresql://postgres:392004@localhost:5432/postgres"),
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL").default("http://localhost:3000"),
