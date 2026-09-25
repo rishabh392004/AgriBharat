@@ -172,7 +172,14 @@ CRITICAL INSTRUCTIONS:
       const nodeController = new AbortController()
       const nodeTimeout = setTimeout(() => nodeController.abort(), 6000)
 
-      const apiBaseUrl = (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/+$/, '')
+      const apiBaseUrl = (
+        process.env.BACKEND_URL ||
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        process.env.BACKEND_API_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        process.env.API_URL ||
+        'http://localhost:5000/api/v1'
+      ).replace(/\/+$/, '')
       const nodeChatEndpoint = apiBaseUrl.endsWith('/api/v1') ? `${apiBaseUrl}/chatbot/ask` : `${apiBaseUrl}/api/v1/chatbot/ask`
 
       const nodeRes = await fetch(nodeChatEndpoint, {
@@ -210,7 +217,15 @@ CRITICAL INSTRUCTIONS:
       const pyController = new AbortController()
       const pyTimeout = setTimeout(() => pyController.abort(), 8000)
 
-      const pyBaseUrl = (process.env.PYTHON_ML_URL || process.env.NEXT_PUBLIC_ML_URL || 'http://localhost:8001').replace(/\/+$/, '')
+      const pyBaseUrl = (
+        process.env.NEXT_ML_UTL ||
+        process.env.NEXT_ML_URL ||
+        process.env.NEXT_PUBLIC_ML_URL ||
+        process.env.PYTHON_ML_URL ||
+        process.env.ML_SERVICE_URL ||
+        process.env.ML_URL ||
+        'http://localhost:8001'
+      ).replace(/\/+$/, '')
       const pyChatEndpoint = `${pyBaseUrl}/ask`
 
       const pyRes = await fetch(pyChatEndpoint, {

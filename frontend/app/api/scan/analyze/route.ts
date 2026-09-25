@@ -120,7 +120,15 @@ export async function POST(req: Request) {
     const scanId = Math.floor(10000 + Math.random() * 90000)
 
     // 1. Try Live Render / Node Backend if configured
-    const nodeBase = (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/+$/, '')
+    const nodeBase = (
+      process.env.BACKEND_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      process.env.BACKEND_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.API_URL ||
+      ''
+    ).trim().replace(/\/+$/, '')
+
     if (nodeBase && !nodeBase.includes('localhost')) {
       try {
         const controller = new AbortController()

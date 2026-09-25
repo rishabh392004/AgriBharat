@@ -31,6 +31,18 @@ if (process.env.DATABASE_URL) {
   process.env.DATABASE_URL = url;
 }
 
+// Normalize ML service URL aliases
+if (!process.env.ML_SERVICE_URL) {
+  const mlCandidate =
+    process.env.NEXT_ML_UL ||
+    process.env.NEXT_ML_URL ||
+    process.env.ML_URL ||
+    process.env.NEXT_PUBLIC_ML_URL;
+  if (mlCandidate) {
+    process.env.ML_SERVICE_URL = mlCandidate.trim();
+  }
+}
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1).default("postgresql://postgres:392004@localhost:5432/postgres"),
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL").default("http://localhost:3000"),

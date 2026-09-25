@@ -3,7 +3,23 @@
  * Handles base URLs, token authentication, and unified error handling.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
+function resolveBackendBaseUrl(): string {
+  const raw = (
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    process.env.BACKEND_API_URL ||
+    process.env.API_URL ||
+    'http://localhost:5000/api/v1'
+  ).trim().replace(/\/+$/, '')
+
+  if (!raw.endsWith('/api/v1')) {
+    return `${raw}/api/v1`
+  }
+  return raw
+}
+
+const BASE_URL = resolveBackendBaseUrl()
 
 const TOKEN_KEY = 'agribharat-token'
 

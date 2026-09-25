@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const nodeBase = (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/+$/, '').replace(/\/api\/v1$/, '')
-  const pyBase = (process.env.PYTHON_ML_URL || process.env.NEXT_PUBLIC_ML_URL || 'http://localhost:8001').replace(/\/+$/, '')
+  const nodeBase = (
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.BACKEND_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.API_URL ||
+    'http://localhost:5000/api/v1'
+  ).replace(/\/+$/, '').replace(/\/api\/v1$/, '')
+
+  const pyBase = (
+    process.env.NEXT_ML_UTL ||
+    process.env.NEXT_ML_URL ||
+    process.env.NEXT_PUBLIC_ML_URL ||
+    process.env.PYTHON_ML_URL ||
+    process.env.ML_SERVICE_URL ||
+    process.env.ML_URL ||
+    'http://localhost:8001'
+  ).replace(/\/+$/, '')
 
   const status = {
     frontend: 'healthy',
