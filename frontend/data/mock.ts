@@ -333,7 +333,44 @@ export const predictionsByCrop: Record<string, Prediction> = {
     actions: ['Spray bio-pesticide Bacillus thuringiensis (Bt)', 'Apply Spinosad 45% SC on fruits at threshold level', 'Harvest and discard damaged fruits immediately'],
     expertHelp: 'Report to local horticulturist if shoot wilt exceeds 15% across plot.',
   },
+  Corn: {
+    scanId: 'SCAN-PRED-CORN',
+    crop: 'Corn',
+    disease: 'Common Rust',
+    confidence: 93,
+    severity: 'Moderate',
+    riskLevel: 'Medium',
+    imageUrl: '/images/crops/maize.jpg',
+    explanation: 'AI detected prominent golden-brown to cinnamon-brown powdery pustules erupting across upper and lower foliar surfaces, characteristic of Puccinia sorghi (Corn Common Rust).',
+    attentionPoints: [
+      { x: 42, y: 44, radius: 46, intensity: 0.94, label: 'Elongated Rust Pustule Cluster' },
+      { x: 60, y: 38, radius: 36, intensity: 0.85, label: 'Secondary Chlorotic Halo' },
+    ],
+    symptoms: ['Cinnamon-brown elongated powdery pustules on both leaf surfaces', 'Pustules rupture epidermal tissue releasing reddish spores', 'Premature leaf firing and chlorosis in dense infections'],
+    precautions: ['Plant rust-resistant hybrids', 'Avoid planting late in the season during humid weather windows', 'Ensure optimal plant spacing to maximize airflow'],
+    actions: ['Foliar spray of Mancozeb 75% WP @ 2.5 g/L or Azoxystrobin @ 1 ml/L', 'Destroy volunteer corn plants between seasons', 'Re-scan canopy in 5-7 days'],
+    expertHelp: 'Consult local extension specialist if pustules spread to ear leaves prior to silking.',
+  },
+  Grape: {
+    scanId: 'SCAN-PRED-GRAPE',
+    crop: 'Grape',
+    disease: 'Black Rot',
+    confidence: 94,
+    severity: 'Moderate',
+    riskLevel: 'High',
+    imageUrl: '/images/crops/grape.jpg',
+    explanation: 'AI identified circular reddish-brown necrotic spots with distinct dark borders and black pycnidia speckling in the highlighted zones, diagnostic of Guignardia bidwellii (Grape Black Rot).',
+    attentionPoints: [
+      { x: 46, y: 45, radius: 48, intensity: 0.95, label: 'Black Rot Necrotic Spot with Pycnidia' },
+      { x: 62, y: 55, radius: 35, intensity: 0.84, label: 'Chlorotic Margin Boundary' },
+    ],
+    symptoms: ['Small circular reddish-brown leaf spots with dark margins', 'Tiny black pimple-like fruiting bodies (pycnidia) inside spots', 'Shriveled, hard, mummified black berries later in season'],
+    precautions: ['Prune vines to facilitate rapid foliar drying after rain', 'Destroy or bury mummified berry clusters from prior season', 'Maintain weed-free ground beneath grape trellises'],
+    actions: ['Apply Mancozeb 75% WP @ 2.5 g/L or Myclobutanil 10% WP @ 0.5 g/L at early shoot emergence', 'Spray protective copper formulations prior to rainfall events', 'Prune infected canopy shoots promptly'],
+    expertHelp: 'Consult vineyard viticulturist immediately if berry clusters show sunken brown lesions.',
+  },
 }
+
 
 export const scans: ScanRecord[] = [
   {

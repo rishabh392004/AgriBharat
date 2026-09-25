@@ -112,8 +112,8 @@ export default function HomePage() {
     let step = 0
     const interval = setInterval(() => {
       step += 1
-      setCropsCount(Math.min(CROPS.length || 16, Math.floor((step / 20) * 16)))
-      setDiseaseCount(Math.min(38, Math.floor((step / 20) * 38)))
+      setCropsCount(Math.min(CROPS.length || 8, Math.floor((step / 20) * (CROPS.length || 8))))
+      setDiseaseCount(Math.min(18, Math.floor((step / 20) * 18)))
       setSpeedCount(Math.min(3, Math.floor((step / 20) * 3)))
       if (step >= 20) clearInterval(interval)
     }, 45)
@@ -148,11 +148,11 @@ export default function HomePage() {
     },
     {
       q: 'How accurate is the AI disease detection?',
-      a: 'The deep learning neural network is trained on over 50,000+ plant leaf pathology samples across 16 major crops, reaching 95%+ diagnostic accuracy. Each scan includes confidence metrics and prevention protocols.',
+      a: 'The deep learning neural network is trained on plant leaf pathology samples across 8 key crops, reaching 95%+ diagnostic accuracy. Each scan includes confidence metrics and prevention protocols.',
     },
     {
       q: 'Which crops are currently covered?',
-      a: `We currently support ${CROPS.length || 16} key Indian crops including Wheat (गेहूं), Rice/Paddy (धान), Tomato (टमाटर), Potato (आलू), Cotton (कपास), Onion, Sugarcane, Soybean, Mustard, Maize, Chilli, Banana, Mango, Groundnut, and Chickpea.`,
+      a: `We currently support all ${CROPS.length || 8} ML-trained crops: Tomato (टमाटर), Potato (आलू), Corn (मक्का), Rice (धान), Cotton (कपास), Chilli (हरी मिर्च), Grape (अंगूर), and Sugarcane (गन्ना).`,
     },
     {
       q: 'Can I get advice in Hindi, Punjabi, or Marathi?',
@@ -357,7 +357,7 @@ export default function HomePage() {
               Popular Crops for Quick Test:
             </span>
             <div className="flex flex-wrap justify-center gap-2">
-              {['Wheat (गेहूं)', 'Paddy / Rice (धान)', 'Tomato (टमाटर)', 'Cotton (कपास)', 'Potato (आलू)'].map(
+              {['Tomato (टमाटर)', 'Potato (आलू)', 'Corn (मक्का)', 'Rice (धान)', 'Cotton (कपास)', 'Chilli (मिर्च)'].map(
                 (crop) => (
                   <button
                     key={crop}

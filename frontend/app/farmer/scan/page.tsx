@@ -34,14 +34,13 @@ import { ErrorState, StatusBadge } from '@/components/ui/design-system'
 
 const steps = ['stepQuality', 'stepSymptoms', 'stepDisease', 'stepSeverity', 'stepRisk'] as const
 
-type CropCategory = 'all' | 'cereals' | 'vegetables' | 'cash' | 'fruits_pulses'
+type CropCategory = 'all' | 'vegetables' | 'cereals' | 'cash_fruits'
 
 const CROP_CATEGORIES: Record<CropCategory, { label: string; icon: string; crops: CropName[] }> = {
-  all: { label: 'All Crops (16)', icon: '🌱', crops: [...CROPS] },
-  cereals: { label: 'Cereals & Grains', icon: '🌾', crops: ['Wheat', 'Rice', 'Maize'] },
-  vegetables: { label: 'Vegetables', icon: '🍅', crops: ['Tomato', 'Potato', 'Onion', 'Brinjal', 'Chilli'] },
-  cash: { label: 'Cash & Oilseeds', icon: '☁️', crops: ['Cotton', 'Sugarcane', 'Soybean', 'Mustard', 'Groundnut'] },
-  fruits_pulses: { label: 'Fruits & Pulses', icon: '🍌', crops: ['Banana', 'Mango', 'Chickpea'] },
+  all: { label: 'All ML Crops (8)', icon: '🌱', crops: [...CROPS] },
+  vegetables: { label: 'Vegetables', icon: '🍅', crops: ['Tomato', 'Potato', 'Chilli'] },
+  cereals: { label: 'Cereals', icon: '🌾', crops: ['Corn', 'Rice'] },
+  cash_fruits: { label: 'Cash & Fruits', icon: '🍇', crops: ['Cotton', 'Grape', 'Sugarcane'] },
 }
 
 export default function ScanPage() {
@@ -54,7 +53,7 @@ export default function ScanPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
-  const [selectedCrop, setSelectedCrop] = useState<CropName>('Wheat')
+  const [selectedCrop, setSelectedCrop] = useState<CropName>('Tomato')
   const [selectedCategory, setSelectedCategory] = useState<CropCategory>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -486,7 +485,7 @@ export default function ScanPage() {
         </div>
       </div>
 
-      {/* 16 Crops Visual Grid */}
+      {/* 8 ML-Trained Crops Visual Grid */}
       <div className="crops-grid-16">
         {filteredCrops.map((item) => {
           const meta = CROP_METADATA[item]

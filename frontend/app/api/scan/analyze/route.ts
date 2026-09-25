@@ -5,9 +5,10 @@ interface ScanAnalyzeRequestBody {
   cropName?: string
   latitude?: number
   longitude?: number
+  isFoliageValidated?: boolean
 }
 
-// Comprehensive agronomic knowledge base for instant zero-latency fallback diagnosis
+// 8 ML-trained crops aligned exactly with crop-disease/classes.json
 const CROP_FALLBACKS: Record<string, {
   disease: string
   confidence: number
@@ -18,24 +19,6 @@ const CROP_FALLBACKS: Record<string, {
   actions: string[]
   precautions: string[]
 }> = {
-  Wheat: {
-    disease: 'Wheat - Leaf Rust (Puccinia triticina)',
-    confidence: 93,
-    severity: 'Moderate',
-    foliarDamagePercent: 18.5,
-    economicThresholdStatus: 'Approaching ETL (15-20% leaf coverage)',
-    etlBadgeColor: 'amber',
-    actions: [
-      'Apply systemic fungicide: Propiconazole 25% EC (Tilt) @ 1 ml/L or Tebuconazole @ 1 ml/L in evening.',
-      'Spray Mancozeb 75% WP @ 2.5 g/L if lesions are localized to lower canopy.',
-      'Deploy bio-control: 5% Neem seed kernel extract (NSKE) or Trichoderma viride foliar spray.',
-    ],
-    precautions: [
-      'Avoid high-dose nitrogen top-dressing during active humid weather.',
-      'Maintain field drainage to prevent high microclimate canopy moisture.',
-      'Sanitize footwear and knapsack sprayers between infected and healthy parcels.',
-    ],
-  },
   Tomato: {
     disease: 'Tomato - Early Blight (Alternaria solani)',
     confidence: 94,
@@ -71,21 +54,22 @@ const CROP_FALLBACKS: Record<string, {
       'Ensure high ridge earthing-up to prevent spores washing into soil tuber zone.',
     ],
   },
-  Cotton: {
-    disease: 'Cotton - Leaf Curl Virus (CLCuV)',
-    confidence: 89,
+  Corn: {
+    disease: 'Corn - Common Rust (Puccinia sorghi)',
+    confidence: 93,
     severity: 'Moderate',
-    foliarDamagePercent: 15.0,
-    economicThresholdStatus: 'Vector Threshold: Whitefly > 6 per leaf',
+    foliarDamagePercent: 17.5,
+    economicThresholdStatus: 'Approaching ETL (15-20% leaf coverage)',
     etlBadgeColor: 'amber',
     actions: [
-      'Control whitefly vector: Diafenthiuron 50% WP @ 1.2 g/L or Pyriproxyfen 10% EC @ 2 ml/L.',
-      'Install yellow sticky traps (15-20 traps/acre) at canopy height.',
-      'Foliar spray of 1% magnesium sulphate to alleviate interveinal chlorosis.',
+      'Apply Mancozeb 75% WP @ 2.5 g/L or Azoxystrobin 23% SC @ 1 ml/L in evening.',
+      'Destroy volunteer corn plants and crop stubble harboring Puccinia spores.',
+      'Deploy bio-fungicide Trichoderma harzianum foliar application.',
     ],
     precautions: [
-      'Eradicate alternative weed hosts like Kanghi and gutputia along farm bunds.',
-      'Avoid synthetic pyrethroid sprays which cause whitefly resurgence.',
+      'Avoid excessive nitrogen fertilization during high humidity periods.',
+      'Plant resistant hybrids in known rust corridor districts.',
+      'Maintain optimal inter-row spacing (60 cm x 20 cm) for canopy ventilation.',
     ],
   },
   Rice: {
@@ -105,18 +89,86 @@ const CROP_FALLBACKS: Record<string, {
       'Maintain shallow standing water layer (2-3 cm) in paddy fields during blast weather.',
     ],
   },
+  Cotton: {
+    disease: 'Cotton - Bacterial Blight (Xanthomonas citri pv. malvacearum)',
+    confidence: 91,
+    severity: 'Moderate',
+    foliarDamagePercent: 16.0,
+    economicThresholdStatus: 'Approaching ETL (Foliar water-soaked spots)',
+    etlBadgeColor: 'amber',
+    actions: [
+      'Spray Copper Oxychloride 50% WP @ 2.5 g/L + Streptocycline @ 100 mg/L.',
+      'Apply bio-agent Pseudomonas fluorescens foliar spray @ 5 g/L.',
+      'Eradicate infected volunteer plants and crop residue post-harvest.',
+    ],
+    precautions: [
+      'Avoid sprinkler irrigation; keep foliage dry during cloudy weather.',
+      'Disinfect agricultural implements before moving across field plots.',
+    ],
+  },
+  Chilli: {
+    disease: 'Chilli - Bacterial Spot (Xanthomonas campestris pv. vesicatoria)',
+    confidence: 92,
+    severity: 'Moderate',
+    foliarDamagePercent: 18.0,
+    economicThresholdStatus: 'Approaching ETL (15% canopy lesions)',
+    etlBadgeColor: 'amber',
+    actions: [
+      'Apply Copper Oxychloride 50% WP @ 2.5 g/L + Streptocycline @ 100 mg/L.',
+      'Spray Mancozeb 75% WP @ 2 g/L as secondary fungal barrier.',
+      'Deploy 5% NSKE (Neem seed kernel extract) to deter insect vectors.',
+    ],
+    precautions: [
+      'Do not work in wet fields to prevent splashing bacteria from leaf to leaf.',
+      'Use certified disease-free seedlings from reputed nurseries.',
+    ],
+  },
+  Grape: {
+    disease: 'Grape - Black Rot (Guignardia bidwellii)',
+    confidence: 94,
+    severity: 'Moderate',
+    foliarDamagePercent: 19.5,
+    economicThresholdStatus: 'Approaching ETL (Pycnidia spots active)',
+    etlBadgeColor: 'amber',
+    actions: [
+      'Spray Mancozeb 75% WP @ 2.5 g/L or Myclobutanil 10% WP @ 0.5 g/L.',
+      'Apply systemic Triazole fungicide (Difenoconazole 25% EC @ 0.5 ml/L).',
+      'Prune and destroy infected shoot tips and mummified berry bunches.',
+    ],
+    precautions: [
+      'Ensure proper trellis training for maximum canopy sunlight and airflow.',
+      'Avoid overhead sprinkler irrigation during shoot elongation and bloom.',
+    ],
+  },
+  Sugarcane: {
+    disease: 'Sugarcane - Red Rot (Colletotrichum falcatum)',
+    confidence: 91,
+    severity: 'Severe',
+    foliarDamagePercent: 28.0,
+    economicThresholdStatus: 'ETL Breached - Immediate Sanitation Required',
+    etlBadgeColor: 'red',
+    actions: [
+      'Uproot and burn diseased clumps immediately with complete root system.',
+      'Dip setts in Carbendazim 50% WP @ 1 g/L solution prior to planting.',
+      'Apply Trichoderma viride @ 5 kg/acre mixed with FYM in soil.',
+    ],
+    precautions: [
+      'Do not ratoon severely infected sugarcane fields.',
+      'Ensure proper drainage to prevent waterlogging during monsoon.',
+    ],
+  },
 }
 
 export async function POST(req: Request) {
   try {
     const body: ScanAnalyzeRequestBody = await req.json()
-    const { imageUrl, cropName = 'Wheat', latitude = 19.9975, longitude = 73.7898 } = body
+    const { imageUrl, cropName = 'Tomato', latitude = 19.9975, longitude = 73.7898 } = body
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 })
     }
 
-    const cleanCrop = cropName || 'Wheat'
+    const cleanCrop = cropName || 'Tomato'
     const scanId = Math.floor(10000 + Math.random() * 90000)
 
     // 1. Try Live Render / Node Backend if configured
@@ -152,6 +204,17 @@ export async function POST(req: Request) {
           const backendData = await backendRes.json()
           if (backendData && backendData.diagnosis) {
             return NextResponse.json(backendData)
+          }
+        } else if (backendRes.status === 400) {
+          const errData = await backendRes.json().catch(() => null)
+          if (errData?.error_code === 'INVALID_FOLIAGE_DETECTED' || errData?.message?.includes('No genuine crop leaf')) {
+            return NextResponse.json(
+              {
+                error: 'INVALID_FOLIAGE_DETECTED: No genuine crop leaf detected in this photo. Please re-capture a clear photo of your crop leaf.',
+                error_code: 'INVALID_FOLIAGE_DETECTED',
+              },
+              { status: 400 }
+            )
           }
         }
       } catch (backendErr) {
@@ -224,6 +287,18 @@ export async function POST(req: Request) {
               },
             })
           }
+        } else if (mlRes.status === 400) {
+          const mlErr = await mlRes.json().catch(() => null)
+          if (mlErr?.error_code === 'INVALID_FOLIAGE_DETECTED' || mlErr?.status === 'rejected') {
+            return NextResponse.json(
+              {
+                error: 'INVALID_FOLIAGE_DETECTED: No genuine crop leaf detected in this photo. Please re-capture a clear photo of your crop leaf.',
+                error_code: 'INVALID_FOLIAGE_DETECTED',
+                verification_details: mlErr.verification_details,
+              },
+              { status: 400 }
+            )
+          }
         }
       } catch (mlErr) {
         console.warn('[ScanRoute] Direct ML service call failed:', mlErr)
@@ -255,6 +330,7 @@ export async function POST(req: Request) {
                     {
                       text: `You are an expert plant pathologist and agronomist diagnosing a ${cleanCrop} crop leaf for an Indian farmer.
 Inspect the attached image carefully.
+If this image is a human face, selfie, person, document, clothing, wall, furniture, or non-plant object, set "is_leaf": false.
 Respond strictly in valid JSON with these exact fields:
 {
   "is_leaf": true or false,
@@ -293,7 +369,10 @@ Respond strictly in valid JSON with these exact fields:
             const parsed = JSON.parse(text)
             if (parsed.is_leaf === false) {
               return NextResponse.json(
-                { error: 'INVALID_FOLIAGE_DETECTED: No genuine crop leaf detected in the image.' },
+                {
+                  error: 'INVALID_FOLIAGE_DETECTED: No genuine crop leaf detected in the image. Please re-capture a clear photo of the crop leaf.',
+                  error_code: 'INVALID_FOLIAGE_DETECTED',
+                },
                 { status: 400 }
               )
             }
@@ -325,8 +404,8 @@ Respond strictly in valid JSON with these exact fields:
       }
     }
 
-    // 3. Fallback High-Fidelity Agronomic Expert Engine
-    const cropData = CROP_FALLBACKS[cleanCrop] || CROP_FALLBACKS.Wheat
+    // 3. Fallback High-Fidelity Agronomic Expert Engine for Trained ML Crops
+    const cropData = CROP_FALLBACKS[cleanCrop] || CROP_FALLBACKS.Tomato
 
     return NextResponse.json({
       status: 'success',

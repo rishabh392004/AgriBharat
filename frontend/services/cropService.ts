@@ -1,23 +1,16 @@
 import { predictionsByCrop } from '@/data/mock'
 import type { Prediction } from '@/types'
+import { validateFoliageInBrowser } from '@/lib/foliage-validator'
 
 export const CROPS = [
-  'Wheat',
   'Tomato',
+  'Potato',
+  'Corn',
   'Rice',
   'Cotton',
-  'Onion',
-  'Potato',
-  'Sugarcane',
-  'Soybean',
-  'Mustard',
-  'Maize',
   'Chilli',
-  'Banana',
-  'Mango',
-  'Groundnut',
-  'Chickpea',
-  'Brinjal',
+  'Grape',
+  'Sugarcane',
 ] as const
 
 export type CropName = (typeof CROPS)[number]
@@ -32,45 +25,13 @@ export interface CropInfo {
 }
 
 export const CROP_METADATA: Record<CropName, CropInfo> = {
-  Wheat: {
-    name: 'Wheat',
-    hindi: 'गेहूं',
-    marathi: 'गहू',
-    icon: '🌾',
-    image: '/images/crops/wheat.jpg',
-    commonDiseases: ['Leaf Rust', 'Powdery Mildew', 'Yellow Rust'],
-  },
   Tomato: {
     name: 'Tomato',
     hindi: 'टमाटर',
     marathi: 'टोमॅटो',
     icon: '🍅',
     image: '/images/crops/tomato.jpg',
-    commonDiseases: ['Early Blight', 'Late Blight', 'Leaf Mold'],
-  },
-  Rice: {
-    name: 'Rice',
-    hindi: 'धान / चावल',
-    marathi: 'भात / तांदूळ',
-    icon: '🌱',
-    image: '/images/crops/rice.jpg',
-    commonDiseases: ['Brown Spot', 'Bacterial Leaf Blight', 'Blast'],
-  },
-  Cotton: {
-    name: 'Cotton',
-    hindi: 'कपास',
-    marathi: 'कापूस',
-    icon: '☁️',
-    image: '/images/crops/cotton.jpg',
-    commonDiseases: ['Bacterial Blight', 'Leaf Curl Virus', 'Alternaria Leaf Spot'],
-  },
-  Onion: {
-    name: 'Onion',
-    hindi: 'प्याज',
-    marathi: 'कांदा',
-    icon: '🧅',
-    image: '/images/crops/onion.jpg',
-    commonDiseases: ['Purple Blotch', 'Stemphylium Leaf Blight', 'Downy Mildew'],
+    commonDiseases: ['Bacterial Spot', 'Early Blight', 'Late Blight'],
   },
   Potato: {
     name: 'Potato',
@@ -78,39 +39,31 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     marathi: 'बटाटा',
     icon: '🥔',
     image: '/images/crops/potato.jpg',
-    commonDiseases: ['Late Blight', 'Early Blight', 'Black Scurf'],
+    commonDiseases: ['Early Blight', 'Late Blight', 'Healthy'],
   },
-  Sugarcane: {
-    name: 'Sugarcane',
-    hindi: 'गन्ना',
-    marathi: 'ऊस',
-    icon: '🎋',
-    image: '/images/crops/sugarcane.jpg',
-    commonDiseases: ['Red Rot', 'Smut', 'Grassy Shoot'],
-  },
-  Soybean: {
-    name: 'Soybean',
-    hindi: 'सोयाबीन',
-    marathi: 'सोयाबीन',
-    icon: '🫘',
-    image: '/images/crops/soybean.jpg',
-    commonDiseases: ['Yellow Mosaic Virus', 'Anthracnose', 'Rust'],
-  },
-  Mustard: {
-    name: 'Mustard',
-    hindi: 'सरसों',
-    marathi: 'मोहरी',
-    icon: '🌼',
-    image: '/images/crops/mustard.jpg',
-    commonDiseases: ['White Rust', 'Alternaria Blight', 'Downy Mildew'],
-  },
-  Maize: {
-    name: 'Maize',
+  Corn: {
+    name: 'Corn',
     hindi: 'मक्का',
     marathi: 'मका',
     icon: '🌽',
     image: '/images/crops/maize.jpg',
-    commonDiseases: ['Fall Armyworm', 'Turcicum Leaf Blight', 'Common Rust'],
+    commonDiseases: ['Common Rust', 'Healthy'],
+  },
+  Rice: {
+    name: 'Rice',
+    hindi: 'धान / चावल',
+    marathi: 'भात / तांदूळ',
+    icon: '🌱',
+    image: '/images/crops/rice.jpg',
+    commonDiseases: ['Blast', 'Brown Spot'],
+  },
+  Cotton: {
+    name: 'Cotton',
+    hindi: 'कपास',
+    marathi: 'कापूस',
+    icon: '☁️',
+    image: '/images/crops/cotton.jpg',
+    commonDiseases: ['Bacterial Blight'],
   },
   Chilli: {
     name: 'Chilli',
@@ -118,47 +71,23 @@ export const CROP_METADATA: Record<CropName, CropInfo> = {
     marathi: 'मिरची',
     icon: '🌶️',
     image: '/images/crops/chilli.jpg',
-    commonDiseases: ['Chilli Leaf Curl', 'Anthracnose / Die Back', 'Powdery Mildew'],
+    commonDiseases: ['Bacterial Spot', 'Healthy'],
   },
-  Banana: {
-    name: 'Banana',
-    hindi: 'केला',
-    marathi: 'केळी',
-    icon: '🍌',
-    image: '/images/crops/banana.jpg',
-    commonDiseases: ['Sigatoka Leaf Spot', 'Panama Wilt', 'Banana Bunchy Top'],
+  Grape: {
+    name: 'Grape',
+    hindi: 'अंगूर',
+    marathi: 'द्राक्ष',
+    icon: '🍇',
+    image: '/images/crops/grape.jpg',
+    commonDiseases: ['Black Rot', 'Esca (Black Measles)', 'Leaf Blight'],
   },
-  Mango: {
-    name: 'Mango',
-    hindi: 'आम',
-    marathi: 'आंबा',
-    icon: '🥭',
-    image: '/images/crops/mango.jpg',
-    commonDiseases: ['Anthracnose', 'Powdery Mildew', 'Die Back'],
-  },
-  Groundnut: {
-    name: 'Groundnut',
-    hindi: 'मूंगफली',
-    marathi: 'भुईमूग',
-    icon: '🥜',
-    image: '/images/crops/groundnut.jpg',
-    commonDiseases: ['Tikka Disease (Leaf Spot)', 'Collar Rot', 'Rust'],
-  },
-  Chickpea: {
-    name: 'Chickpea',
-    hindi: 'चना',
-    marathi: 'हरभरा',
-    icon: '🥣',
-    image: '/images/crops/chickpea.jpg',
-    commonDiseases: ['Fusarium Wilt', 'Ascochyta Blight', 'Dry Root Rot'],
-  },
-  Brinjal: {
-    name: 'Brinjal',
-    hindi: 'बैंगन',
-    marathi: 'वांगी',
-    icon: '🍆',
-    image: '/images/crops/brinjal.jpg',
-    commonDiseases: ['Shoot & Fruit Borer', 'Phomopsis Blight', 'Little Leaf Disease'],
+  Sugarcane: {
+    name: 'Sugarcane',
+    hindi: 'गन्ना',
+    marathi: 'ऊस',
+    icon: '🎋',
+    image: '/images/crops/sugarcane.jpg',
+    commonDiseases: ['Red Rot', 'Healthy'],
   },
 }
 
@@ -175,7 +104,7 @@ async function fileToDataUrl(fileOrBlob: Blob): Promise<string> {
 
 export async function predictCrop(
   image: File | Blob | string | null,
-  crop = 'Wheat',
+  crop = 'Tomato',
   options: { latitude?: number; longitude?: number; isDemoSimulation?: boolean } = {}
 ): Promise<Prediction> {
   let customImageUrl: string | undefined
@@ -193,7 +122,15 @@ export async function predictCrop(
     }
   }
 
-  const base = predictionsByCrop[crop] ?? predictionsByCrop.Wheat
+  // 0. Foliage & Anti-Selfie Gate: Reject non-foliage, faces & textiles immediately
+  if (payloadImageUrl && payloadImageUrl.startsWith('data:image')) {
+    const foliageCheck = await validateFoliageInBrowser(payloadImageUrl)
+    if (!foliageCheck.isValidLeaf) {
+      throw new Error(`INVALID_FOLIAGE_DETECTED: ${foliageCheck.rejectionReason || 'No genuine crop leaf detected in this photo. Please re-capture a clear photo of your crop leaf.'}`)
+    }
+  }
+
+  const base = predictionsByCrop[crop] ?? predictionsByCrop.Tomato
   const randomSuffix = Math.floor(1000 + Math.random() * 9000)
 
   // 1. Attempt Next.js server route first (same-origin, proxies to backend or Gemini Vision)
@@ -207,6 +144,7 @@ export async function predictCrop(
           cropName: crop,
           latitude: options.latitude ?? 19.9975,
           longitude: options.longitude ?? 73.7898,
+          isFoliageValidated: true,
         }),
       })
 
