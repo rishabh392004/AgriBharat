@@ -1,0 +1,13 @@
+node_modules
+dist
+.next
+.git
+.github
+.env
+.env.*
+*.log
+*.zip
+coverage
+tmp
+crop-disease
+frontend
