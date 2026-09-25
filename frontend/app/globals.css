@@ -1067,7 +1067,7 @@ img { max-width: 100%; }
 
 .hist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
   gap: 16px;
 }
 .hist-card {
@@ -1954,3 +1954,138 @@ img { max-width: 100%; }
   .dock a, .dock button { min-width: 44px; min-height: 44px; }
 }
 
+/* ============================================================
+   Enhanced Mobile Responsiveness
+   ============================================================ */
+
+/* Ensure no horizontal overflow */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 768px) {
+  .btn, .ghost, .reco, button {
+    min-height: 44px;
+  }
+
+  /* Hide search pill on mobile (handled by hamburger/dock) */
+  .top .search-pill {
+    display: none !important;
+  }
+
+  /* Banner result card */
+  .banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 18px;
+  }
+
+  /* Farmer dashboard CTA cards */
+  .cta-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Scan page crops grid */
+  .crops-grid-16 {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+  }
+
+  /* Scan action grid */
+  .scan-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Chat bubbles - slightly wider on mobile */
+  .bubble {
+    max-width: 92%;
+  }
+
+  /* Forecast strip pills */
+  .forecast-pill {
+    flex: 0 0 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Scan header card */
+  .scan-header-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  /* Crops grid for tiny screens */
+  .crops-grid-16 {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+
+  .crop-card-img-wrap {
+    height: 65px;
+  }
+
+  /* History cards */
+  .hist-card {
+    padding: 14px;
+  }
+
+  /* Profile hero */
+  .profile-hero-card {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Metrics grid */
+  .metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Camera modal */
+  .camera-viewfinder {
+    height: 300px;
+  }
+
+  /* Review queue */
+  .rq-toolbar {
+    flex-direction: column;
+  }
+  .rq-search {
+    width: 100%;
+  }
+
+  /* Passport ID card */
+  .passport-id-card {
+    padding: 18px 16px;
+  }
+
+  /* Passport pillars grid */
+  .passport-pillars-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Improve text readability on very small phones */
+@media (max-width: 360px) {
+  .page {
+    padding: 10px 8px 100px;
+  }
+
+  .hist-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta strong {
+    font-size: 18px;
+  }
+
+  .card h2, .card h3 {
+    font-size: 15px;
+  }
+
+  .big {
+    font-size: 28px;
+  }
+}
