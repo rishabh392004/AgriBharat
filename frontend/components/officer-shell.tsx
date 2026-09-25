@@ -23,7 +23,7 @@ import { DEMO_OFFICER } from '@/data/farmer'
 import { CottonBg } from '@/components/cotton-bg'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
-import { KrishiDarphanLogo } from '@/components/krishi-darphan-logo'
+import { KrishiDarpanLogo } from '@/components/krishi-darpan-logo'
 
 const links = [
   { href: '/officer', key: 'officerDash', icon: Home, dockLabel: 'Home' },
@@ -60,7 +60,7 @@ export function OfficerShell({ children }: { children: React.ReactNode }) {
           <div className="boot-mark">
             <LeafMark />
           </div>
-          Krishi Darphan
+          Krishi Darpan
         </div>
       </div>
     )
@@ -73,7 +73,7 @@ export function OfficerShell({ children }: { children: React.ReactNode }) {
         {/* Top brand header */}
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between py-4">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <KrishiDarphanLogo size={38} showText={true} variant="light" />
+            <KrishiDarpanLogo size={38} showText={true} variant="light" />
           </Link>
           <Link
             href="/"

@@ -497,7 +497,7 @@ export default function FarmerDashboard() {
         >
           {/* Primary Action 1: Scan Crop */}
           <Link
-            href="/farmer/scan"
+            href="/farmer/scan#scanner"
             style={{
               background: 'linear-gradient(135deg, #1b4d2e 0%, #2b7a4d 100%)',
               borderRadius: 22,

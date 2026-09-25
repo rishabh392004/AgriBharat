@@ -204,7 +204,10 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const active = (href: string) => (href === '/farmer' ? pathname === '/farmer' : pathname.startsWith(href))
+  const active = (href: string) => {
+    const cleanHref = href.split('#')[0]
+    return cleanHref === '/farmer' ? pathname === '/farmer' : pathname.startsWith(cleanHref)
+  }
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
@@ -540,7 +543,16 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
             {/* Quick 1-Click Scan Button (Desktop Only) */}
             <div className="top-scan-desktop">
               <Link
-                href="/farmer/scan"
+                href="/farmer/scan#scanner"
+                onClick={(e) => {
+                  if (pathname === '/farmer/scan') {
+                    const el = document.getElementById('scanner')
+                    if (el) {
+                      e.preventDefault()
+                      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }
+                }}
                 style={{
                   background: 'linear-gradient(135deg, #1b4d2e, #2b7a4d)',
                   color: '#ffffff',
@@ -1028,8 +1040,17 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
 
         {/* Dock Item 3: Center Elevated SCAN Floating Action Button */}
         <Link
-          href="/farmer/scan"
+          href="/farmer/scan#scanner"
           aria-label="Scan crop leaf"
+          onClick={(e) => {
+            if (pathname === '/farmer/scan') {
+              const el = document.getElementById('scanner')
+              if (el) {
+                e.preventDefault()
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }
+          }}
           style={{
             display: 'flex',
             flexDirection: 'column',

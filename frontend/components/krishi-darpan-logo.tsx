@@ -7,7 +7,7 @@ interface LogoProps {
   variant?: 'light' | 'dark' | 'auto'
 }
 
-export const KrishiDarphanLogo: React.FC<LogoProps> = ({
+export const KrishiDarpanLogo: React.FC<LogoProps> = ({
   className = '',
   showText = true,
   size = 36,
@@ -83,7 +83,7 @@ export const KrishiDarphanLogo: React.FC<LogoProps> = ({
                   : 'text-inherit'
               }`}
             >
-              Krishi Darphan
+              Krishi Darpan
             </span>
           </div>
           <span className="text-[10px] md:text-[11px] font-semibold tracking-wider font-['Noto_Sans_Devanagari'] text-[#C98F1E] dark:text-[#E8B84B]">
@@ -95,4 +95,4 @@ export const KrishiDarphanLogo: React.FC<LogoProps> = ({
   )
 }
 
-export default KrishiDarphanLogo
+export default KrishiDarpanLogo

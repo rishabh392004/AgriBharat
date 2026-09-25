@@ -73,6 +73,25 @@ export default function ScanPage() {
   const [cameraError, setCameraError] = useState('')
   const [flashSimulated, setFlashSimulated] = useState(false)
 
+  const scannerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const action = urlParams.get('action')
+      if (action === 'camera') {
+        openCamera()
+      } else if (action === 'upload') {
+        galleryRef.current?.click()
+      }
+      if (window.location.hash === '#scanner' || window.location.hash === '#scan-section') {
+        setTimeout(() => {
+          scannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 60)
+      }
+    }
+  }, [])
+
   // Filtered crops list
   const filteredCrops = useMemo(() => {
     const categoryCrops = CROP_CATEGORIES[selectedCategory].crops
@@ -434,9 +453,396 @@ export default function ScanPage() {
         </div>
       </div>
 
-      {/* Category Tabs & Crop Search */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <div className="scan-cat-tabs" style={{ margin: 0 }}>
+      {/* ── 1. SCANNING INTERFACE (Immediately Visible In Viewport On Load) ── */}
+      <section id="scanner" ref={scannerRef} aria-label="Scan Crop Interface" style={{ scrollMarginTop: 80, marginTop: 14 }}>
+        {/* Action Cards: Live Camera & Upload */}
+        <div className="scan-action-grid">
+          {/* Card 1: Live Leaf Camera */}
+          <button className="scan-action-tile" type="button" onClick={openCamera}>
+            <span className="scan-action-badge">{t('recommendedLabel')}</span>
+            <div className="scan-action-icon-circle">
+              <Camera size={28} />
+            </div>
+            <div>
+              <strong style={{ fontSize: 16, display: 'block', color: 'var(--ink)', marginBottom: 3 }}>
+                {t('takePhoto')} (Live Camera)
+              </strong>
+              <span className="muted" style={{ fontSize: 12 }}>
+                Point camera at infected leaf with live framing reticle & instant capture
+              </span>
+            </div>
+            <span className="btn btn-primary" style={{ padding: '8px 18px', fontSize: 12, marginTop: 4, width: 'auto' }}>
+              <Camera size={14} /> Open Live Camera
+            </span>
+          </button>
+
+          {/* Card 2: Gallery Upload */}
+          <button className="scan-action-tile" type="button" onClick={() => galleryRef.current?.click()}>
+            <div className="scan-action-icon-circle" style={{ background: '#f6eedc', color: '#9d741c' }}>
+              <Upload size={28} />
+            </div>
+            <div>
+              <strong style={{ fontSize: 16, display: 'block', color: 'var(--ink)', marginBottom: 3 }}>
+                {t('upload')} Leaf Image
+              </strong>
+              <span className="muted" style={{ fontSize: 12 }}>
+                Choose clear leaf photo from your phone gallery or computer (JPEG, PNG, WEBP)
+              </span>
+            </div>
+            <span
+              className="btn btn-secondary"
+              style={{ padding: '8px 18px', fontSize: 12, marginTop: 4, width: 'auto' }}
+            >
+              <Upload size={14} /> Browse Photo
+            </span>
+          </button>
+        </div>
+
+        {/* Hidden Accessible Inputs */}
+        <label htmlFor="gallery-file-input" className="sr-only">
+          Upload crop leaf photo from gallery
+        </label>
+        <input
+          id="gallery-file-input"
+          ref={galleryRef}
+          className="sr-only"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(e) => pick(e.target.files?.[0])}
+        />
+        <label htmlFor="camera-file-input" className="sr-only">
+          Capture crop leaf photo from camera
+        </label>
+        <input
+          id="camera-file-input"
+          ref={cameraInputRef}
+          className="sr-only"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={(e) => pick(e.target.files?.[0])}
+        />
+        <canvas ref={canvasRef} hidden />
+
+        {error && !serviceUnavailable && (
+          <div role="alert" className="p-3 my-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs font-semibold text-center max-w-lg mx-auto">
+            {error}
+          </div>
+        )}
+
+        {/* Live Interactive Camera Modal */}
+        {cameraActive && (
+          <div className="camera-modal-overlay">
+            <div className="camera-modal-box">
+              {/* Modal Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px 20px',
+                  color: 'white',
+                  background: '#111d15',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700 }}>
+                  <span className="pulse-beacon" style={{ background: '#4ade80' }} />
+                  <span>Scanning {selectedCrop} Leaf</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeCamera}
+                  style={{
+                    background: 'rgba(255,255,255,0.12)',
+                    border: 0,
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: 34,
+                    height: 34,
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Camera Viewfinder View */}
+              <div className="camera-viewfinder">
+                <video ref={videoRef} playsInline autoPlay muted />
+                {flashSimulated && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'white', zIndex: 10 }} />
+                )}
+                <div className="camera-crop-target">
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      left: 14,
+                      color: '#e8c868',
+                      fontSize: 12,
+                      fontWeight: 750,
+                      textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Leaf size={14} /> Center infected spot inside target
+                  </div>
+                </div>
+              </div>
+
+              {/* Shutter / Control Bar */}
+              {cameraError ? (
+                <div style={{ padding: 22, textAlign: 'center', background: '#241212', color: '#ffc0b3' }}>
+                  <p style={{ margin: '0 0 12px', fontSize: 13 }}>{cameraError}</p>
+                  <button
+                    className="btn btn-gold"
+                    type="button"
+                    style={{ width: 'auto' }}
+                    onClick={() => {
+                      closeCamera()
+                      cameraInputRef.current?.click()
+                    }}
+                  >
+                    <Camera size={16} /> Open Native Device Camera
+                  </button>
+                </div>
+              ) : (
+                <div className="camera-shutter-bar">
+                  <button
+                    type="button"
+                    onClick={toggleFacingMode}
+                    style={{
+                      background: 'rgba(255,255,255,0.12)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: 'white',
+                      borderRadius: 14,
+                      padding: '10px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                    title="Switch Front / Rear Camera"
+                  >
+                    <RefreshCw size={14} /> Flip
+                  </button>
+
+                  {/* Shutter Trigger Button */}
+                  <button
+                    type="button"
+                    className="camera-shutter-btn"
+                    onClick={captureSnapshot}
+                    title="Capture Photo"
+                    aria-label="Capture crop leaf photo"
+                  >
+                    <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#2b7a4d' }} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeCamera()
+                      cameraInputRef.current?.click()
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.12)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: 'white',
+                      borderRadius: 14,
+                      padding: '10px 16px',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Native
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Selected Image Preview & Analysis Stage */}
+        {preview && (
+          <div style={{ marginTop: 24 }}>
+            <div className="preview">
+              <img src={preview} alt={t('preview')} />
+              {running && (
+                <div className="scanline">
+                  <i />
+                </div>
+              )}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  left: 14,
+                  background: 'rgba(27,61,42,0.85)',
+                  backdropFilter: 'blur(8px)',
+                  color: 'white',
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <ShieldCheck size={14} className="text-[#e8c868]" />
+                Ready for {selectedCrop} Diagnosis
+              </div>
+              <button
+                type="button"
+                className="iconish"
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  right: 14,
+                  background: 'rgba(0,0,0,0.65)',
+                  color: 'white',
+                  cursor: 'pointer',
+                }}
+                onClick={handleRemoveImage}
+                aria-label="Remove uploaded image"
+                title="Remove image"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+
+            {/* Running Step Status with Accessible Live Region */}
+            {running && (
+              <div role="status" aria-live="polite" className="mt-4">
+                <ul className="steps">
+                  <p className="kicker" style={{ margin: '0 0 6px' }}>
+                    {t('analyzing')}
+                  </p>
+                  {steps.map((key, i) => (
+                    <li key={key} className={i < doneSteps ? 'done' : ''}>
+                      <Check size={18} aria-hidden="true" /> {t(key)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Service Unavailable Truthful Error State */}
+            {serviceUnavailable && (
+              <div style={{ marginTop: 20 }}>
+                <ErrorState
+                  title="Diagnosis unavailable"
+                  message="We could not complete the crop analysis because the AI diagnostic service is currently unavailable. Please try again."
+                  onRetry={() => analyze(false)}
+                  retryLabel="Retry Diagnosis"
+                  onSecondary={handleRemoveImage}
+                  secondaryLabel="Upload Another Image"
+                  secondaryHref="/farmer"
+                />
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => analyze(true)}
+                    className="ghost"
+                    style={{
+                      fontSize: 12,
+                      textDecoration: 'underline',
+                      color: 'var(--forest)',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: 'none',
+                      border: 'none',
+                    }}
+                  >
+                    Explore with simulated preview diagnosis (Demo Simulation Mode)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Action Trigger Buttons */}
+            {!serviceUnavailable && (
+              <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-start' }}>
+                <button
+                  className="btn btn-ghost"
+                  type="button"
+                  onClick={() => galleryRef.current?.click()}
+                  disabled={running}
+                >
+                  {t('change')} Image
+                </button>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  style={{ width: 'auto', minWidth: 240, fontSize: 15 }}
+                  disabled={running}
+                  aria-busy={running}
+                  onClick={() => analyze(false)}
+                >
+                  <ScanLine size={18} aria-hidden="true" />
+                  <span>{running ? t('analyzing') : `⚡ ${t('analyze')} ${selectedCrop}`}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ── 2. CROP SELECTOR (Change Field Crop If Needed) ── */}
+      <section aria-label="Select Target Crop" style={{ marginTop: 26, paddingTop: 18, borderTop: '1px solid var(--line)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 750, color: 'var(--ink)' }}>
+              {locale === 'hi' ? 'फसल बदलें (8 समर्थित फसलें):' : locale === 'mr' ? 'पीक निवडा (8 समर्थित पिके):' : 'Select Target Crop (8 ML-Trained Crops)'}
+            </h3>
+            <p className="muted" style={{ margin: '2px 0 0', fontSize: 12 }}>
+              {locale === 'hi'
+                ? `वर्तमान चयनित: ${selectedCrop} — दूसरी फसल जांचने के लिए नीचे टैप करें`
+                : `Currently active: ${selectedCrop} — Tap any crop below to switch before scanning`}
+            </p>
+          </div>
+
+          {/* Quick Search */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'var(--card)',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              padding: '6px 12px',
+              width: 'min(240px, 100%)',
+            }}
+          >
+            <Search size={14} className="text-muted" />
+            <input
+              type="text"
+              placeholder="Search crop..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ border: 0, outline: 'none', background: 'transparent', fontSize: 12, width: '100%' }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{ border: 0, background: 'none', cursor: 'pointer', color: 'var(--muted)' }}
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="scan-cat-tabs" style={{ margin: '0 0 12px 0' }}>
           {(Object.keys(CROP_CATEGORIES) as CropCategory[]).map((catKey) => {
             const cat = CROP_CATEGORIES[catKey]
             const isCatOn = selectedCategory === catKey
@@ -453,427 +859,60 @@ export default function ScanPage() {
           })}
         </div>
 
-        {/* Quick Search */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'var(--card)',
-            border: '1px solid var(--line)',
-            borderRadius: 14,
-            padding: '6px 12px',
-            width: 'min(240px, 100%)',
-          }}
-        >
-          <Search size={14} className="text-muted" />
-          <input
-            type="text"
-            placeholder="Search crop..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ border: 0, outline: 'none', background: 'transparent', fontSize: 12, width: '100%' }}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              style={{ border: 0, background: 'none', cursor: 'pointer', color: 'var(--muted)' }}
-            >
-              <X size={12} />
-            </button>
-          )}
-        </div>
-      </div>
+        {/* 8 ML-Trained Crops Visual Grid */}
+        <div className="crops-grid-16">
+          {filteredCrops.map((item) => {
+            const meta = CROP_METADATA[item]
+            const isSelected = selectedCrop === item
+            const localName = locale === 'mr' ? meta.marathi : meta.hindi
 
-      {/* 8 ML-Trained Crops Visual Grid */}
-      <div className="crops-grid-16">
-        {filteredCrops.map((item) => {
-          const meta = CROP_METADATA[item]
-          const isSelected = selectedCrop === item
-          const localName = locale === 'mr' ? meta.marathi : meta.hindi
-
-          return (
-            <button
-              key={item}
-              className={`crop-card-item ${isSelected ? 'on' : ''}`}
-              type="button"
-              onClick={() => setSelectedCrop(item)}
-            >
-              <div className="crop-card-img-wrap">
-                <img src={meta.image} alt={item} className="crop-img-thumb" />
-                {isSelected && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 6,
-                      right: 6,
-                      background: '#2b7a4d',
-                      color: 'white',
-                      borderRadius: '50%',
-                      width: 22,
-                      height: 22,
-                      display: 'grid',
-                      placeItems: 'center',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <Check size={14} />
-                  </div>
-                )}
-              </div>
-
-              <div className="crop-card-content">
-                <div className="crop-item-name">
-                  {meta.icon} {item}
-                </div>
-                <div className="crop-item-local">{localName}</div>
-                <div className="crop-item-tag" title={meta.commonDiseases.join(', ')}>
-                  {meta.commonDiseases[0]}
-                </div>
-              </div>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Action Cards: Live Camera & Upload */}
-      <div className="scan-action-grid">
-        {/* Card 1: Live Leaf Camera */}
-        <button className="scan-action-tile" type="button" onClick={openCamera}>
-          <span className="scan-action-badge">{t('recommendedLabel')}</span>
-          <div className="scan-action-icon-circle">
-            <Camera size={28} />
-          </div>
-          <div>
-            <strong style={{ fontSize: 16, display: 'block', color: 'var(--ink)', marginBottom: 3 }}>
-              {t('takePhoto')} (Live Camera)
-            </strong>
-            <span className="muted" style={{ fontSize: 12 }}>
-              Point camera at infected leaf with live framing reticle & instant capture
-            </span>
-          </div>
-          <span className="btn btn-primary" style={{ padding: '8px 18px', fontSize: 12, marginTop: 4, width: 'auto' }}>
-            <Camera size={14} /> Open Live Camera
-          </span>
-        </button>
-
-        {/* Card 2: Gallery Upload */}
-        <button className="scan-action-tile" type="button" onClick={() => galleryRef.current?.click()}>
-          <div className="scan-action-icon-circle" style={{ background: '#f6eedc', color: '#9d741c' }}>
-            <Upload size={28} />
-          </div>
-          <div>
-            <strong style={{ fontSize: 16, display: 'block', color: 'var(--ink)', marginBottom: 3 }}>
-              {t('upload')} Leaf Image
-            </strong>
-            <span className="muted" style={{ fontSize: 12 }}>
-              Choose clear leaf photo from your phone gallery or computer (JPEG, PNG, WEBP)
-            </span>
-          </div>
-          <span
-            className="btn btn-secondary"
-            style={{ padding: '8px 18px', fontSize: 12, marginTop: 4, width: 'auto' }}
-          >
-            <Upload size={14} /> Browse Photo
-          </span>
-        </button>
-      </div>
-
-      {/* Hidden Accessible Inputs */}
-      <label htmlFor="gallery-file-input" className="sr-only">
-        Upload crop leaf photo from gallery
-      </label>
-      <input
-        id="gallery-file-input"
-        ref={galleryRef}
-        className="sr-only"
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        onChange={(e) => pick(e.target.files?.[0])}
-      />
-      <label htmlFor="camera-file-input" className="sr-only">
-        Capture crop leaf photo from camera
-      </label>
-      <input
-        id="camera-file-input"
-        ref={cameraInputRef}
-        className="sr-only"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => pick(e.target.files?.[0])}
-      />
-      <canvas ref={canvasRef} hidden />
-
-      {error && !serviceUnavailable && (
-        <div role="alert" className="p-3 my-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs font-semibold text-center max-w-lg mx-auto">
-          {error}
-        </div>
-      )}
-
-      {/* Live Interactive Camera Modal */}
-      {cameraActive && (
-        <div className="camera-modal-overlay">
-          <div className="camera-modal-box">
-            {/* Modal Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '16px 20px',
-                color: 'white',
-                background: '#111d15',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700 }}>
-                <span className="pulse-beacon" style={{ background: '#4ade80' }} />
-                <span>Scanning {selectedCrop} Leaf</span>
-              </div>
+            return (
               <button
+                key={item}
+                className={`crop-card-item ${isSelected ? 'on' : ''}`}
                 type="button"
-                onClick={closeCamera}
-                style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  border: 0,
-                  color: 'white',
-                  borderRadius: '50%',
-                  width: 34,
-                  height: 34,
-                  display: 'grid',
-                  placeItems: 'center',
-                  cursor: 'pointer',
+                onClick={() => {
+                  setSelectedCrop(item)
+                  scannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }}
               >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Camera Viewfinder View */}
-            <div className="camera-viewfinder">
-              <video ref={videoRef} playsInline autoPlay muted />
-              {flashSimulated && (
-                <div style={{ position: 'absolute', inset: 0, background: 'white', zIndex: 10 }} />
-              )}
-              <div className="camera-crop-target">
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 12,
-                    left: 14,
-                    color: '#e8c868',
-                    fontSize: 12,
-                    fontWeight: 750,
-                    textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <Leaf size={14} /> Center infected spot inside target
+                <div className="crop-card-img-wrap">
+                  <img src={meta.image} alt={item} className="crop-img-thumb" />
+                  {isSelected && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 6,
+                        background: '#2b7a4d',
+                        color: 'white',
+                        borderRadius: '50%',
+                        width: 22,
+                        height: 22,
+                        display: 'grid',
+                        placeItems: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <Check size={14} />
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
 
-            {/* Shutter / Control Bar */}
-            {cameraError ? (
-              <div style={{ padding: 22, textAlign: 'center', background: '#241212', color: '#ffc0b3' }}>
-                <p style={{ margin: '0 0 12px', fontSize: 13 }}>{cameraError}</p>
-                <button
-                  className="btn btn-gold"
-                  type="button"
-                  style={{ width: 'auto' }}
-                  onClick={() => {
-                    closeCamera()
-                    cameraInputRef.current?.click()
-                  }}
-                >
-                  <Camera size={16} /> Open Native Device Camera
-                </button>
-              </div>
-            ) : (
-              <div className="camera-shutter-bar">
-                <button
-                  type="button"
-                  onClick={toggleFacingMode}
-                  style={{
-                    background: 'rgba(255,255,255,0.12)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    color: 'white',
-                    borderRadius: 14,
-                    padding: '10px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 13,
-                    cursor: 'pointer',
-                  }}
-                  title="Switch Front / Rear Camera"
-                >
-                  <RefreshCw size={14} /> Flip
-                </button>
-
-                {/* Shutter Trigger Button */}
-                <button
-                  type="button"
-                  className="camera-shutter-btn"
-                  onClick={captureSnapshot}
-                  title="Capture Photo"
-                  aria-label="Capture crop leaf photo"
-                >
-                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#2b7a4d' }} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeCamera()
-                    cameraInputRef.current?.click()
-                  }}
-                  style={{
-                    background: 'rgba(255,255,255,0.12)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    color: 'white',
-                    borderRadius: 14,
-                    padding: '10px 16px',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Native
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Selected Image Preview & Analysis Stage */}
-      {preview && (
-        <div style={{ marginTop: 24 }}>
-          <div className="preview">
-            <img src={preview} alt={t('preview')} />
-            {running && (
-              <div className="scanline">
-                <i />
-              </div>
-            )}
-            <div
-              style={{
-                position: 'absolute',
-                top: 14,
-                left: 14,
-                background: 'rgba(27,61,42,0.85)',
-                backdropFilter: 'blur(8px)',
-                color: 'white',
-                padding: '6px 14px',
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <ShieldCheck size={14} className="text-[#e8c868]" />
-              Ready for {selectedCrop} Diagnosis
-            </div>
-            <button
-              type="button"
-              className="iconish"
-              style={{
-                position: 'absolute',
-                top: 14,
-                right: 14,
-                background: 'rgba(0,0,0,0.65)',
-                color: 'white',
-                cursor: 'pointer',
-              }}
-              onClick={handleRemoveImage}
-              aria-label="Remove uploaded image"
-              title="Remove image"
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          </div>
-
-          {/* Running Step Status with Accessible Live Region */}
-          {running && (
-            <div role="status" aria-live="polite" className="mt-4">
-              <ul className="steps">
-                <p className="kicker" style={{ margin: '0 0 6px' }}>
-                  {t('analyzing')}
-                </p>
-                {steps.map((key, i) => (
-                  <li key={key} className={i < doneSteps ? 'done' : ''}>
-                    <Check size={18} aria-hidden="true" /> {t(key)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Service Unavailable Truthful Error State */}
-          {serviceUnavailable && (
-            <div style={{ marginTop: 20 }}>
-              <ErrorState
-                title="Diagnosis unavailable"
-                message="We could not complete the crop analysis because the AI diagnostic service is currently unavailable. Please try again."
-                onRetry={() => analyze(false)}
-                retryLabel="Retry Diagnosis"
-                onSecondary={handleRemoveImage}
-                secondaryLabel="Upload Another Image"
-                secondaryHref="/farmer"
-              />
-              <div style={{ textAlign: 'center', marginTop: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => analyze(true)}
-                  className="ghost"
-                  style={{
-                    fontSize: 12,
-                    textDecoration: 'underline',
-                    color: 'var(--forest)',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    background: 'none',
-                    border: 'none',
-                  }}
-                >
-                  Explore with simulated preview diagnosis (Demo Simulation Mode)
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Action Trigger Buttons */}
-          {!serviceUnavailable && (
-            <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-start' }}>
-              <button
-                className="btn btn-ghost"
-                type="button"
-                onClick={() => galleryRef.current?.click()}
-                disabled={running}
-              >
-                {t('change')} Image
+                <div className="crop-card-content">
+                  <div className="crop-item-name">
+                    {meta.icon} {item}
+                  </div>
+                  <div className="crop-item-local">{localName}</div>
+                  <div className="crop-item-tag" title={meta.commonDiseases.join(', ')}>
+                    {meta.commonDiseases[0]}
+                  </div>
+                </div>
               </button>
-              <button
-                className="btn btn-primary"
-                type="button"
-                style={{ width: 'auto', minWidth: 240, fontSize: 15 }}
-                disabled={running}
-                aria-busy={running}
-                onClick={() => analyze(false)}
-              >
-                <ScanLine size={18} aria-hidden="true" />
-                <span>{running ? t('analyzing') : `⚡ ${t('analyze')} ${selectedCrop}`}</span>
-              </button>
-            </div>
-          )}
+            )
+          })}
         </div>
-      )}
+      </section>
 
       {/* Photography Accuracy & Best Practices Tips */}
       <div className="scan-tips-row">

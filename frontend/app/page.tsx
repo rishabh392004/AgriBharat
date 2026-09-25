@@ -20,7 +20,7 @@ import {
   MessageSquare,
   Users,
 } from 'lucide-react'
-import { KrishiDarphanLogo } from '@/components/krishi-darphan-logo'
+import { KrishiDarpanLogo } from '@/components/krishi-darpan-logo'
 import { CROPS } from '@/services/cropService'
 
 export default function HomePage() {
@@ -135,7 +135,7 @@ export default function HomePage() {
 
   const faqs = [
     {
-      q: 'Who can use Krishi Darphan?',
+      q: 'Who can use Krishi Darpan?',
       a: 'Any farmer, gardener, Kisan Call Centre worker, agriculture student, or district officer. Create a free account or start scanning right away with zero subscription fees.',
     },
     {
@@ -156,7 +156,7 @@ export default function HomePage() {
     },
     {
       q: 'Can I get advice in Hindi, Punjabi, or Marathi?',
-      a: 'Yes! Krishi Darphan includes multilingual audio narration and translation in Hindi (हिंदी), Punjabi (ਪੰਜਾਬੀ), Marathi (मराठी), and English, with direct WhatsApp dispatch to your phone.',
+      a: 'Yes! Krishi Darpan includes multilingual audio narration and translation in Hindi (हिंदी), Punjabi (ਪੰਜਾਬੀ), Marathi (मराठी), and English, with direct WhatsApp dispatch to your phone.',
     },
   ]
 
@@ -226,7 +226,7 @@ export default function HomePage() {
               GOV / SIH 2026
             </span>
             <span className="hidden sm:inline text-white/90">
-              Krishi Darphan AI: Intelligent Plant Pathology & Early Outbreak Radar
+              Krishi Darpan AI: Intelligent Plant Pathology & Early Outbreak Radar
             </span>
           </div>
 
@@ -254,7 +254,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <Link href="/" className="group flex items-center gap-2 transition-transform active:scale-98">
-            <KrishiDarphanLogo size={42} showText={true} />
+            <KrishiDarpanLogo size={42} showText={true} />
           </Link>
 
           {/* Center Links */}
@@ -283,7 +283,7 @@ export default function HomePage() {
               Log in
             </Link>
             <Link
-              href="/farmer/scan"
+              href="/farmer/scan#scanner"
               className="px-5 py-2.5 text-sm font-bold text-white bg-[#2E5339] hover:bg-[#3F7D45] rounded-full shadow-sm hover:shadow transition-all flex items-center gap-2 transform active:scale-95"
             >
               <Camera className="w-4 h-4 text-[#F5C518]" />
@@ -309,7 +309,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold tracking-tight text-[#1F3A27] font-['Outfit'] leading-[0.95]">
-            Krishi Darphan
+            Krishi Darpan
           </h1>
 
           <div
@@ -327,7 +327,7 @@ export default function HomePage() {
           {/* Action CTAs */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
             <Link
-              href="/farmer/scan"
+              href="/farmer/scan#scanner"
               className="px-8 py-4 bg-[#2E5339] hover:bg-[#1E3B27] text-white text-base sm:text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-2.5 active:scale-95 group"
             >
               <Camera className="w-5 h-5 text-[#E8B84B] group-hover:rotate-12 transition-transform" />
@@ -696,7 +696,7 @@ export default function HomePage() {
 
           <p className="mt-6 text-base sm:text-xl text-[#CFE0CE] max-w-2xl leading-relaxed">
             By the time a crop disease is visible to the naked eye, half the field can already be compromised.
-            Krishi Darphan helps you catch it while it can still be cured, using nothing more than the phone in your pocket.
+            Krishi Darpan helps you catch it while it can still be cured, using nothing more than the phone in your pocket.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
@@ -708,7 +708,7 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="/farmer/scan"
+              href="/farmer/scan#scanner"
               className="px-8 py-3.5 bg-transparent hover:bg-white/10 text-white border-2 border-white/60 text-base font-bold rounded-full transition-transform active:scale-95 flex items-center gap-2"
             >
               <Camera className="w-4 h-4 text-[#E8B84B]" />
@@ -748,7 +748,7 @@ export default function HomePage() {
       <footer className="bg-[#16281D] text-[#B7C9B8] text-xs py-8 border-t border-[#233D2D]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-wrap justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <KrishiDarphanLogo size={32} showText={true} variant="light" />
+            <KrishiDarpanLogo size={32} showText={true} variant="light" />
             <span className="text-white/60">· Free AI crop care for Indian farmers.</span>
           </div>
 
@@ -772,7 +772,7 @@ export default function HomePage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-4 pt-4 border-t border-white/5 text-[11px] text-white/40 flex justify-between">
-          <span>© 2026 Krishi Darphan AI. National Smart Agriculture Initiative.</span>
+          <span>© 2026 Krishi Darpan AI. National Smart Agriculture Initiative.</span>
           <span>Verified with ICAR, KVK & State Agriculture Universities</span>
         </div>
       </footer>
