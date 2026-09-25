@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 
@@ -15,7 +15,7 @@ const CSS = `
   70%  { margin-left: -10px; }
   100% { margin-left: 0px; }
 }
-.cotton-wrap{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.cotton-wrap{position:fixed;inset:0;width:100%;max-width:100vw;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
 .cotton{
   position:absolute;
   border-radius:50%;
@@ -38,9 +38,9 @@ export function CottonBg() {
       const d=Math.random()
       return {
         id:i,
-        s:Math.round(14+d*24+Math.random()*8),
-        t:`${6+Math.random()*86}%`,
-        l:`${2+Math.random()*95}%`,
+        s:Math.round(14+d*22+Math.random()*6),
+        t:`${6+Math.random()*84}%`,
+        l:`${3+Math.random()*84}%`,
         dur:`${7+Math.random()*8}s`,
         delay:`${-(Math.random()*10)}s`,
         op:0.1+d*0.2,

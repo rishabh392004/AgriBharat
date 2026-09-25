@@ -431,8 +431,8 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
             zIndex: 100,
           }}
         >
-          {/* Left: Farm & Active Crop Identity */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Left: Desktop Identity vs Mobile Brand Identity */}
+          <div className="desktop-identity">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: 15, fontWeight: 800, color: 'var(--ink)' }}>
@@ -468,24 +468,41 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Center: Global Command & Search Pill */}
+          {/* Left: Mobile Brand & Identity */}
+          <div className="mobile-brand-title">
+            <Link href="/farmer" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <span
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #1b4d2e, #2b7a4d)',
+                  color: '#e8c868',
+                  display: 'grid',
+                  placeItems: 'center',
+                  boxShadow: '0 2px 8px rgba(43, 122, 77, 0.25)',
+                  flexShrink: 0,
+                }}
+              >
+                <LeafMark size={20} />
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <strong style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--ink)', lineHeight: 1.2 }}>
+                  Krishi Darpan
+                </strong>
+                <span style={{ fontSize: 10.5, color: '#2b7a4d', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <span className="pulse-beacon" style={{ background: '#10b981', width: 5, height: 5 }} />
+                  {farmer.farmName}
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Center: Global Command & Search Pill (Desktop Only) */}
           <div
             onClick={() => setSearchOpen(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#f2f7f3',
-              border: '1px solid #c8decb',
-              borderRadius: 999,
-              padding: '7px 16px',
-              minWidth: 0,
-              maxWidth: 380,
-              cursor: 'pointer',
-              color: 'var(--muted)',
-              transition: 'all 0.15s ease',
-            }}
-            className="hidden md:flex hover:border-emerald-500 hover:bg-white"
+            className="top-search-pill-desktop hover:border-emerald-500 hover:bg-white"
+            title="Global search (Ctrl+K)"
           >
             <Search size={14} style={{ color: '#2b7a4d' }} />
             <span style={{ fontSize: 12.5, flex: 1, color: '#4b6352' }}>
@@ -508,29 +525,42 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Right: Quick Action Controls, Notifications, Language, Profile */}
-          <div className="top-right" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {/* Quick 1-Click Scan Button */}
-            <Link
-              href="/farmer/scan"
-              style={{
-                background: 'linear-gradient(135deg, #1b4d2e, #2b7a4d)',
-                color: '#ffffff',
-                borderRadius: 999,
-                padding: '6px 14px',
-                fontSize: 12,
-                fontWeight: 750,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 2px 8px rgba(43,122,77,0.25)',
-                transition: 'all 0.15s ease',
-              }}
-              className="hover:scale-103"
+          <div className="top-right">
+            {/* Quick Mobile Search Icon Button */}
+            <button
+              type="button"
+              className="top-search-icon-mobile"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Open search dialog"
+              title="Search"
             >
-              <Camera size={14} />
-              <span>{t('scanCrop')}</span>
-            </Link>
+              <Search size={16} />
+            </button>
+
+            {/* Quick 1-Click Scan Button (Desktop Only) */}
+            <div className="top-scan-desktop">
+              <Link
+                href="/farmer/scan"
+                style={{
+                  background: 'linear-gradient(135deg, #1b4d2e, #2b7a4d)',
+                  color: '#ffffff',
+                  borderRadius: 999,
+                  padding: '6px 14px',
+                  fontSize: 12,
+                  fontWeight: 750,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 2px 8px rgba(43,122,77,0.25)',
+                  transition: 'all 0.15s ease',
+                }}
+                className="hover:scale-103"
+              >
+                <Camera size={14} />
+                <span>{t('scanCrop')}</span>
+              </Link>
+            </div>
 
             {/* Language Dropdown */}
             <LanguageSelector />
@@ -967,40 +997,20 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* 4. Modern Mobile Bottom Dock with Elevated Central Scan Button */}
+      {/* 4. Modern Mobile Bottom Dock with Elevated Central Scan Button */}
       <nav
         className="dock"
-        style={{
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 90,
-          background: 'rgba(255, 253, 248, 0.96)',
-          backdropFilter: 'blur(16px)',
-          borderTop: '1.5px solid #dbe8df',
-          boxShadow: '0 -4px 24px rgba(27, 61, 42, 0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          padding: '6px 8px calc(6px + env(safe-area-inset-bottom))',
-        }}
+        aria-label="Mobile Navigation"
       >
         {/* Dock Item 1: Home */}
         <Link
           href="/farmer"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            textDecoration: 'none',
             color: active('/farmer') && pathname === '/farmer' ? '#1b4d2e' : 'var(--muted)',
             fontWeight: active('/farmer') && pathname === '/farmer' ? 800 : 500,
-            fontSize: 10.5,
-            minWidth: 50,
           }}
         >
-          <Home size={20} />
+          <Home size={19} />
           <span>Home</span>
         </Link>
 
@@ -1008,36 +1018,31 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
         <Link
           href="/farmer/crop-health-passport"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            textDecoration: 'none',
             color: active('/farmer/crop-health-passport') ? '#1b4d2e' : 'var(--muted)',
             fontWeight: active('/farmer/crop-health-passport') ? 800 : 500,
-            fontSize: 10.5,
-            minWidth: 50,
           }}
         >
-          <ShieldCheck size={20} />
+          <ShieldCheck size={19} />
           <span>Passport</span>
         </Link>
 
         {/* Dock Item 3: Center Elevated SCAN Floating Action Button */}
         <Link
           href="/farmer/scan"
+          aria-label="Scan crop leaf"
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             textDecoration: 'none',
-            marginTop: -22,
+            marginTop: -20,
+            flexShrink: 0,
           }}
         >
           <div
             style={{
-              width: 52,
-              height: 52,
+              width: 48,
+              height: 48,
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #1b4d2e 0%, #2b7a4d 100%)',
               color: '#ffffff',
@@ -1048,9 +1053,9 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
               transition: 'transform 0.15s ease',
             }}
           >
-            <Camera size={24} />
+            <Camera size={22} />
           </div>
-          <span style={{ fontSize: 10, fontWeight: 800, color: '#1b4d2e', marginTop: 2 }}>
+          <span style={{ fontSize: 9.5, fontWeight: 800, color: '#1b4d2e', marginTop: 2 }}>
             Scan
           </span>
         </Link>
@@ -1059,18 +1064,11 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
         <Link
           href="/farmer/chat"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            textDecoration: 'none',
             color: active('/farmer/chat') ? '#1b4d2e' : 'var(--muted)',
             fontWeight: active('/farmer/chat') ? 800 : 500,
-            fontSize: 10.5,
-            minWidth: 50,
           }}
         >
-          <Bot size={20} />
+          <Bot size={19} />
           <span>AI Chat</span>
         </Link>
 
@@ -1078,18 +1076,11 @@ export function FarmerShell({ children }: { children: React.ReactNode }) {
         <Link
           href="/farmer/whatsapp"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            textDecoration: 'none',
             color: active('/farmer/whatsapp') ? '#1b4d2e' : 'var(--muted)',
             fontWeight: active('/farmer/whatsapp') ? 800 : 500,
-            fontSize: 10.5,
-            minWidth: 50,
           }}
         >
-          <MessageSquare size={20} />
+          <MessageSquare size={19} />
           <span>WhatsApp</span>
         </Link>
       </nav>

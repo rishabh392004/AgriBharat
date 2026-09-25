@@ -241,6 +241,7 @@ export default function FarmerDashboard() {
     <div className="animate-fadeIn space-y-5" style={{ paddingBottom: 40 }}>
       {/* 1. Header Command Card with Live Field Telemetry */}
       <header
+        className="fd-hero-header"
         style={{
           background: 'linear-gradient(135deg, #1b4d2e 0%, #153e24 60%, #0d2817 100%)',
           borderRadius: 24,
@@ -448,7 +449,7 @@ export default function FarmerDashboard() {
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>
             {isHindi ? 'सक्रिय खेत फसल चुनें:' : isMarathi ? 'सक्रिय पीक निवडा:' : 'Active Field Crop Profile:'}
           </span>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' as any, paddingBottom: 4, scrollbarWidth: 'none' as any }}>
             {(Object.keys(CROPS) as CropKey[]).map((ck) => {
               const cp = CROPS[ck]
               const active = selectedCropKey === ck
@@ -1077,7 +1078,7 @@ export default function FarmerDashboard() {
           </div>
 
           {/* Simple 3 Time Buttons */}
-          <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.12)', padding: 4, borderRadius: 12 }}>
+          <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.12)', padding: 4, borderRadius: 12, overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none' as any }}>
             {[
               { id: 'morning', label: isHindi ? 'सुबह (7-9 AM)' : 'Morning' },
               { id: 'noon', label: isHindi ? 'दोपहर (12-3 PM)' : 'Afternoon' },

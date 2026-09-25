@@ -131,26 +131,44 @@ export function FloatingFarmerAiButton() {
           30% { transform: translate(3px, -3px) rotate(8deg); }
           70% { transform: translate(-2px, 2px) rotate(-6deg); }
         }
-        @keyframes sprayMist {
-          0% { opacity: 0; transform: scale(0.5) translate(0, 0); }
-          50% { opacity: 0.8; }
-          100% { opacity: 0; transform: scale(1.4) translate(-14px, -12px); }
+        .floating-ai-dock {
+          position: fixed;
+          bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+          right: 14px;
+          z-index: 85;
+          display: flex;
+          align-items: flex-end;
+          flex-direction: column;
+          gap: 8px;
+          pointer-events: none;
+        }
+        @media (min-width: 769px) {
+          .floating-ai-dock {
+            bottom: 24px;
+            right: 24px;
+          }
+        }
+        .floating-ai-mascot {
+          width: 54px;
+          height: 54px;
+        }
+        @media (min-width: 769px) {
+          .floating-ai-mascot {
+            width: 70px;
+            height: 70px;
+          }
+        }
+        .floating-ai-bubble {
+          max-width: min(220px, calc(100vw - 36px));
+        }
+        @media (min-width: 769px) {
+          .floating-ai-bubble {
+            max-width: 240px;
+          }
         }
       `}</style>
 
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'flex-end',
-          flexDirection: 'column',
-          gap: 8,
-          pointerEvents: 'none',
-        }}
-      >
+      <div className="floating-ai-dock">
         {/* Interactive Speech Bubble Callout */}
         {!isMinimized && isBubbleVisible && (
           <div
@@ -162,7 +180,6 @@ export function FloatingFarmerAiButton() {
               color: '#1b4d2e',
               borderRadius: '18px 18px 4px 18px',
               padding: '10px 14px',
-              maxWidth: 240,
               boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
               border: '1.5px solid #d4e8db',
               display: 'flex',
@@ -174,7 +191,7 @@ export function FloatingFarmerAiButton() {
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="hover:scale-103"
+            className="floating-ai-bubble hover:scale-103"
           >
             {/* Top row with category badge & close */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
@@ -234,27 +251,26 @@ export function FloatingFarmerAiButton() {
           onClick={handleClick}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
+          className="floating-ai-mascot"
           style={{
             pointerEvents: 'auto',
             cursor: 'pointer',
             position: 'relative',
-            width: 72,
-            height: 72,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #1b4d2e 0%, #2b7a4d 50%, #3ca368 100%)',
-            border: '3px solid #ffffff',
+            border: '2.5px solid #ffffff',
             display: 'grid',
             placeItems: 'center',
             animation: 'farmerFloat 3.8s ease-in-out infinite, haloPulse 2.8s ease-in-out infinite',
             transition: 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-            transform: isHovered ? 'scale(1.1) translateY(-4px)' : 'scale(1)',
+            transform: isHovered ? 'scale(1.08) translateY(-3px)' : 'scale(1)',
           }}
           title="Click to open Multilingual Kisan AI Chatbot"
         >
           {/* Detailed SVG Illustration of the Lively Farmer Mascot */}
           <svg
-            width="58"
-            height="58"
+            width="82%"
+            height="82%"
             viewBox="0 0 100 100"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"

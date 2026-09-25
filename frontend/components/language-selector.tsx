@@ -60,10 +60,12 @@ export function LanguageSelector({ align = 'right' }: { align?: 'left' | 'right'
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-label={`Change Language, current language: ${languageDetails[locale]?.english || localeLabels[locale]}`}
         title="Change Language"
       >
-        <Globe2 size={16} />
-        <span>{languageDetails[locale]?.native || localeLabels[locale]}</span>
+        <Globe2 size={15} style={{ flexShrink: 0 }} />
+        <span className="lang-full-label">{languageDetails[locale]?.native || localeLabels[locale]}</span>
+        <span className="lang-short-label">{locale.toUpperCase()}</span>
         <span className="caret" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
           ▾
         </span>

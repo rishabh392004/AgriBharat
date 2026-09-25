@@ -21,6 +21,7 @@ import { toast } from '@/components/toast'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 import { authService } from '@/services/authService'
+import type { SessionUser } from '@/types'
 
 const AUTH_STYLES = `
 :root {
