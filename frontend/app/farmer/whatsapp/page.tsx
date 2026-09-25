@@ -49,6 +49,7 @@ export default function WhatsAppPage() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [farmerInput, setFarmerInput] = useState('')
+  const [copiedWebhook, setCopiedWebhook] = useState(false)
   const [messages, setMessages] = useState<SimulatedMessage[]>([
     {
       id: 'm1',
@@ -186,46 +187,80 @@ export default function WhatsAppPage() {
           padding: '18px 22px',
           border: '1.5px solid #334155',
           display: 'flex',
-          alignItems: 'flex-start',
+          flexDirection: 'column',
           gap: 16,
-          flexWrap: 'wrap',
         }}
       >
-        {/* Left: Status Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 220 }}>
-          <div
-            style={{
-              width: 44, height: 44, borderRadius: 12,
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              display: 'grid', placeItems: 'center', flexShrink: 0,
-            }}
-          >
-            <Info size={22} color="#ffffff" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <ShieldCheck size={22} color="#ffffff" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#34d399', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Live Production Webhook Ready
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#ffffff' }}>
+                Next.js Serverless Twilio Endpoint Active
+              </div>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Integration Status
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
-              Backend Webhook: Ready to Deploy
-            </div>
+
+          {/* Copy Webhook Pill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.08)', padding: '6px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.15)' }}>
+            <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#93c5fd' }}>
+              https://agri-bharat-pgpc.vercel.app/api/whatsapp/webhook
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof navigator !== 'undefined') {
+                  navigator.clipboard.writeText('https://agri-bharat-pgpc.vercel.app/api/whatsapp/webhook')
+                  setCopiedWebhook(true)
+                  setTimeout(() => setCopiedWebhook(false), 2000)
+                }
+              }}
+              style={{
+                background: copiedWebhook ? '#22c55e' : '#3b82f6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '4px 8px',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {copiedWebhook ? '✓ Copied!' : 'Copy Webhook URL'}
+            </button>
           </div>
         </div>
 
-        {/* Right: Status Grid */}
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+        {/* Status Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
           {[
-            { label: 'Interactive Demo Simulator', status: '✅ Live Now', color: '#22c55e', desc: 'Full chat simulation running on this page' },
-            { label: 'Backend Webhook Endpoint', status: '✅ Code Ready', color: '#22c55e', desc: 'POST /api/v1/whatsapp/webhook — compiled & registered' },
-            { label: 'ML → WhatsApp Pipeline', status: '✅ Code Ready', color: '#22c55e', desc: 'ResNet-34 → TwiML response chain implemented' },
-            { label: 'Twilio Credentials', status: '⚙️ Pending Config', color: '#f59e0b', desc: 'Set TWILIO_ACCOUNT_SID + AUTH_TOKEN in .env to go live' },
+            { label: 'Interactive Demo Simulator', status: '✅ Live', color: '#22c55e', desc: 'Full chat & voice simulation running below' },
+            { label: 'Serverless Webhook', status: '✅ Live on Vercel', color: '#22c55e', desc: 'POST /api/whatsapp/webhook active' },
+            { label: 'ML → WhatsApp Pipeline', status: '✅ Ready', color: '#22c55e', desc: 'ResNet-34 + ICAR spray recipe chain active' },
+            { label: 'Twilio WhatsApp Number', status: '✅ Verified', color: '#22c55e', desc: '+1 (415) 523-8886 (Twilio Sandbox)' },
           ].map((item) => (
             <div
               key={item.label}
               style={{
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 10, padding: '10px 12px',
+                borderRadius: 10,
+                padding: '10px 12px',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
@@ -244,43 +279,69 @@ export default function WhatsAppPage() {
           background: '#f0fdf4',
           border: '1.5px solid #86efac',
           borderRadius: 16,
-          padding: '14px 18px',
+          padding: '16px 20px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <CheckCircle2 size={18} color="#16a34a" />
-          <strong style={{ fontSize: 13, color: '#15803d' }}>
-            3-Step Activation — Go Live in &lt;10 Minutes
-          </strong>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CheckCircle2 size={18} color="#16a34a" />
+            <strong style={{ fontSize: 13, color: '#15803d' }}>
+              Final 2 Steps to Connect WhatsApp
+            </strong>
+          </div>
+          <a
+            href="https://console.twilio.com/us1/develop/sms/settings/whatsapp-sandbox"
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#047857',
+              textDecoration: 'underline',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span>Open Twilio WhatsApp Sandbox Settings</span>
+            <ExternalLink size={12} />
+          </a>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
           {[
             {
               step: '1',
-              title: 'Get Free Twilio Account',
-              desc: 'twilio.com/try-twilio → "Try WhatsApp" → Join Sandbox (free)',
+              title: 'Opt-in from your WhatsApp',
+              desc: 'Message +1 415 523 8886 on WhatsApp with your sandbox join code (e.g. join <your-keyword>) from Twilio Console.',
               color: '#2563eb',
             },
             {
               step: '2',
-              title: 'Expose Backend via ngrok',
-              desc: 'ngrok http 5000 → Copy HTTPS URL → Set in .env as TWILIO_*',
-              color: '#7c3aed',
+              title: 'Paste Webhook URL in Twilio',
+              desc: 'In Twilio Sandbox Settings, paste https://agri-bharat-pgpc.vercel.app/api/whatsapp/webhook into "WHEN A MESSAGE COMES IN" and click Save.',
+              color: '#059669',
             },
             {
               step: '3',
-              title: 'Set Webhook in Twilio Console',
-              desc: 'Paste https://<ngrok>/api/v1/whatsapp/webhook → Save → Done',
-              color: '#059669',
+              title: 'Send Leaf Photo',
+              desc: 'Send any diseased crop photo to +1 415 523 8886. You will instantly receive the AI diagnosis, spray dosage, and precautions!',
+              color: '#7c3aed',
             },
           ].map((s) => (
             <div key={s.step} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <div
                 style={{
-                  width: 24, height: 24, borderRadius: '50%',
-                  background: s.color, color: '#fff',
-                  display: 'grid', placeItems: 'center',
-                  fontSize: 11, fontWeight: 800, flexShrink: 0,
+                  width: 26,
+                  height: 26,
+                  borderRadius: '50%',
+                  background: s.color,
+                  color: '#fff',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  flexShrink: 0,
                 }}
               >
                 {s.step}
