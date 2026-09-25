@@ -32,10 +32,36 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- RAG VECTOR DATABASE (CHROMA DB) INTEGRATION ---
+rag_collection = None
+embedder = None
 
+try:
+    import chromadb
+    from sentence_transformers import SentenceTransformer
 
+    chroma_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rag_chroma_db")
+    if os.path.exists(chroma_path):
+        client = chromadb.PersistentClient(path=chroma_path)
+        rag_collection = client.get_collection(name="agri_knowledge_base")
+        embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        print("RAG ChromaDB knowledge base loaded successfully.")
+except Exception as e:
+    print(f"Notice: Vector RAG fallback ({e}). Running with Gemini AI and native agronomy knowledge base.")
+
+def retrieve_rag_context(query: str, top_k: int = 3) -> str:
+    """Retrieves authoritative agronomic passages from indexed CIBRC & TNAU publications."""
+    if not rag_collection or not embedder:
+        return ""
+    try:
+        query_emb = embedder.encode([query]).tolist()
+        results = rag_collection.query(query_embeddings=query_emb, n_results=top_k)
+        docs = results.get("documents", [[]])[0]
+        if docs:
+            return "\n\nAUTHORITATIVE GOVERNMENT AGRONOMIC REFERENCES:\n" + "\n---\n".join(docs)
+    except Exception:
+        pass
+    return ""
 
 FARMER_FAQ_SYSTEM_PROMPT = """
 You are 'Kisan Salahkar', an expert AI voice and agricultural advisor for Indian farmers.
@@ -210,11 +236,14 @@ async def ask_farmer_faq(payload: FAQQuery):
         )
 
     try:
+        rag_context = retrieve_rag_context(payload.question)
+        instruction = FARMER_FAQ_SYSTEM_PROMPT + (f"\n\n{rag_context}" if rag_context else "")
+
         response = ai_client.models.generate_content(
             model=GEMINI_MODEL,
             contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=FARMER_FAQ_SYSTEM_PROMPT,
+                system_instruction=instruction,
                 temperature=0.4,
                 max_output_tokens=600
             )
