@@ -159,6 +159,77 @@ export async function POST(req: Request) {
       }
     }
 
+    // 1.5. Try Direct Python ML Service if NEXT_ML_URL is configured
+    const mlBase = (
+      process.env.NEXT_ML_URL ||
+      process.env.NEXT_ML_UTL ||
+      process.env.NEXT_PUBLIC_ML_URL ||
+      process.env.ML_SERVICE_URL ||
+      ''
+    ).trim().replace(/\/+$/, '')
+
+    if (mlBase && !mlBase.includes('localhost') && imageUrl.startsWith('data:')) {
+      try {
+        const mlController = new AbortController()
+        const mlTimeout = setTimeout(() => mlController.abort(), 9000)
+
+        const commaIdx = imageUrl.indexOf(',')
+        const base64Data = imageUrl.slice(commaIdx + 1)
+        const mimeMatch = imageUrl.match(/data:([^;]+);/)
+        const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+        const byteCharacters = Buffer.from(base64Data, 'base64')
+        const blob = new Blob([byteCharacters], { type: mimeType })
+        const formData = new FormData()
+        formData.append('image', blob, 'scan.jpg')
+        formData.append('crop_name', cleanCrop)
+        formData.append('latitude', String(latitude))
+        formData.append('longitude', String(longitude))
+
+        const mlRes = await fetch(`${mlBase}/predict`, {
+          method: 'POST',
+          body: formData,
+          signal: mlController.signal,
+        })
+        clearTimeout(mlTimeout)
+
+        if (mlRes.ok) {
+          const mlData = await mlRes.json()
+          if (mlData && mlData.predicted_disease) {
+            const rawDisease = mlData.predicted_disease.replace(/___/g, ' - ').replace(/_/g, ' ')
+            const conf = Math.round((mlData.confidence || 0.9) * 100)
+            return NextResponse.json({
+              status: 'success',
+              diagnosis: {
+                scanId,
+                disease: rawDisease,
+                confidence: conf,
+                severity: conf > 90 ? 'Severe' : conf > 75 ? 'Moderate' : 'Mild',
+                foliarDamagePercent: mlData.foliar_damage_percent ?? 18.0,
+                economicThresholdStatus: mlData.economic_threshold_status || 'Approaching ETL',
+                etlBadgeColor: mlData.etl_badge_color || 'amber',
+                explainability: {
+                  method: 'ResNet34-Grad-CAM',
+                  heatmap_base64: mlData.explainability?.heatmap_base64,
+                },
+                recommendation: {
+                  actions: [
+                    mlData.recommended_solution?.chemical_control,
+                    mlData.recommended_solution?.biological_control,
+                    mlData.recommended_solution?.mechanical_control,
+                  ].filter(Boolean),
+                  precautions: mlData.recommended_solution?.precautions || [],
+                },
+                pestOutbreakRisk: mlData.pest_outbreak_risk || 'Moderate',
+                provider: 'resnet34-fastapi',
+              },
+            })
+          }
+        }
+      } catch (mlErr) {
+        console.warn('[ScanRoute] Direct ML service call failed:', mlErr)
+      }
+    }
+
     // 2. Try Direct Google Gemini Vision AI if API key is provided
     const geminiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '').trim()
     if (geminiKey && geminiKey.length > 10 && imageUrl.startsWith('data:')) {
